@@ -26,7 +26,7 @@ pkgincludedir = $(includedir)/$(PACKAGE)
 top_builddir = 
 
 # all dirs
-DIRS = $(DESTDIR)$(bindir) $(DESTDIR)/etc $(DESTDIR)$(pkgdatadir)
+DIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(sysconfdir) $(DESTDIR)$(pkgdatadir)
 
 
 # INSTALL scripts 
