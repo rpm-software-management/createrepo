@@ -27,7 +27,7 @@ import types
 import struct
 import re
 import stat
-
+from genpkgmetadata import _gzipOpen
 
 def returnHdr(ts, package):
     """hand back the rpm header or raise an Error if the pkg is fubar"""
@@ -595,6 +595,9 @@ def repoXML(node, cmds):
         workfiles.append((cmds['groupfile'], 'group'))
     
     for (file, ftype) in workfiles:
+        zfo = _gzipOpen(os.path.join(cmds['tempdir'], file))
+        uncsum = getChecksum(sumtype, zfo)
+        zfo.close()
         csum = getChecksum(sumtype, os.path.join(cmds['tempdir'], file))
         timestamp = os.stat(os.path.join(cmds['tempdir'], file))[8]
         data = node.newChild(None, 'data', None)
@@ -606,4 +609,6 @@ def repoXML(node, cmds):
         checksum = data.newChild(None, 'checksum', csum)
         checksum.newProp('type', sumtype)
         timestamp = data.newChild(None, 'timestamp', str(timestamp))
-            
+        unchecksum = unchecksum = data.newChild(None, 'open-checksum', uncsum)
+        unchecksum.newProp('type', sumtype)
+        
