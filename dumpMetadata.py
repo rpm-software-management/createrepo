@@ -86,28 +86,29 @@ def getChecksum(sumtype, file, CHUNK=2**16):
 
 def utf8String(string):
     """hands back a unicoded string"""
-    try:
-        string = unicode(string)
-    except UnicodeError:
-        newstring = ''
-        for char in string:
-            if ord(char) > 127:
-                newstring = newstring + '?'
-            else:
-                newstring = newstring + char
-        return unicode(newstring)
-    else:
+    if isinstance(string, unicode):
         return string
+    try:
+        x = unicode(string, 'ascii')
+        return string
+    except UnicodeError:
+        encodings = ['utf-8', 'iso-8859-1', 'iso-8859-15', 'iso-8859-2']
+        for enc in encodings:
+            try:
+                x = unicode(string, enc)
+            except UnicodeError:
+                pass
+            else:
+                if x.encode(enc) == string:
+                    return x.encode('utf-8')
+    newstring = ''
+    for char in string:
+        if ord(char) > 127:
+            newstring = newstring + '?'
+        else:
+            newstring = newstring + char
+    return newstring
 
-def xmlCleanString(doc, string):
-    """hands back a special-char encoded and utf8 cleaned string
-       Takes a libxml2 document object and the string to clean
-       document object is needed to not require expensive get_doc function
-    """
-    string = utf8String(string)
-    string = doc.encodeSpecialChars(string)
-    return string
-    
         
 def byteranges(file):
     """takes an rpm file or fileobject and returns byteranges for location of the header"""
@@ -506,7 +507,6 @@ def generateXML(doc, node, formatns, rpmObj, sumtype):
         value = utf8String(value)
         value = re.sub("\n$", '', value)
         entry = pkgNode.newChild(None, tag, None)
-        value = xmlCleanString(doc, value)
         entry.addContent(value)
         
     time = pkgNode.newChild(None, 'time', None)
@@ -526,7 +526,6 @@ def generateXML(doc, node, formatns, rpmObj, sumtype):
         value = utf8String(value)
         value = re.sub("\n$", '', value)
         entry = format.newChild(formatns, tag, None)
-        value = xmlCleanString(doc, value)
         entry.addContent(value)
         
     hr = format.newChild(formatns, 'header-range', None)
@@ -580,11 +579,11 @@ def generateXML(doc, node, formatns, rpmObj, sumtype):
         
     for file in rpmObj.usefulFiles():
         files = format.newChild(None, 'file', None)
-        file = xmlCleanString(doc, file)
+        file = utf8String(file)
         files.addContent(file)
     for directory in rpmObj.usefulDirs():
         files = format.newChild(None, 'file', None)
-        directory = xmlCleanString(doc, directory)
+        directory = utf8String(directory)
         files.addContent(directory)
         files.newProp('type', 'dir')
     
@@ -601,16 +600,16 @@ def fileListXML(doc, node, rpmObj):
     version.newProp('rel', str(rpmObj.tagByName('release')))
     for file in rpmObj.filenames:
         files = pkg.newChild(None, 'file', None)
-        file = xmlCleanString(doc, file)
+        file = utf8String(file)
         files.addContent(file)
     for directory in rpmObj.dirnames:
         files = pkg.newChild(None, 'file', None)
-        directory = xmlCleanString(doc, directory)
+        directory = utf8String(directory)
         files.addContent(directory)
         files.newProp('type', 'dir')
     for ghost in rpmObj.ghostnames:
         files = pkg.newChild(None, 'file', None)
-        ghost = xmlCleanString(doc, ghost)
+        ghost = utf8String(ghost)
         files.addContent(ghost)
         files.newProp('type', 'ghost')
     return pkg
@@ -627,8 +626,7 @@ def otherXML(doc, node, rpmObj):
     clogs = rpmObj.changelogLists()
     for (name, time, text) in clogs:
         clog = pkg.newChild(None, 'changelog', None)
-        text = xmlCleanString(doc, text)
-        clog.addContent(text)
+        clog.addContent(utf8String(text))
         clog.newProp('author', utf8String(name))
         clog.newProp('date', str(time))
     return pkg

@@ -288,7 +288,7 @@ def doPkgMetadata(cmds, ts):
                 errorprint(_('\nAn error occurred creating primary metadata: %s') % e)
                 continue
             else:
-                output = node.serialize(None, cmds['pretty'])
+                output = node.serialize('UTF-8', cmds['pretty'])
                 basefile.write(output)
                 basefile.write('\n')
                 node.unlinkNode()
@@ -301,7 +301,7 @@ def doPkgMetadata(cmds, ts):
                 errorprint(_('\nAn error occurred creating filelists: %s') % e)
                 continue
             else:
-                output = node.serialize(None, cmds['pretty'])
+                output = node.serialize('UTF-8', cmds['pretty'])
                 flfile.write(output)
                 flfile.write('\n')
                 node.unlinkNode()
@@ -314,7 +314,7 @@ def doPkgMetadata(cmds, ts):
                 errorprint(_('\nAn error occurred: %s') % e)
                 continue
             else:
-                output = node.serialize(None, cmds['pretty'])
+                output = node.serialize('UTF-8', cmds['pretty'])
                 otherfile.write(output)
                 otherfile.write('\n')
                 node.unlinkNode()
