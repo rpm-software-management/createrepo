@@ -580,4 +580,26 @@ def otherXML(doc, node, rpmObj):
         clog.newProp('author', utf8String(name))
         clog.newProp('date', str(time))
 
+def repoXML(doc, node, cmds):
+    """generate the repomd.xml file that stores the info on the other files"""
+    sumtype = cmds['sumtype']
+    workfiles = [(cmds['otherfile'], 'other',),
+                 (cmds['filelistsfile'], 'filelists'),
+                 (cmds['primaryfile'], 'primary')]
     
+    if cmds['groupfile'] is not None:
+        workfiles.append((cmds['groupfile'], 'group'))
+    
+    for (file, ftype) in workfiles:
+        csum = getChecksum(sumtype, file)
+        timestamp = os.stat(file)[8]
+        data = node.newChild(None, 'data', None)
+        data.newProp('type', ftype)
+        location = data.newChild(None, 'location', None)
+        if cmds['baseurl'] is not None:
+            location.newProp('xml:base', cmds['baseurl'])
+        location.newProp('href', file)
+        checksum = data.newChild(None, 'checksum', csum)
+        checksum.newProp('type', sumtype)
+        timestamp = data.newChild(None, 'timestamp', str(timestamp))
+            

@@ -152,6 +152,8 @@ def parseArgs(args):
     return cmds, directory
 
 def doPkgMetadata(cmds, ts):
+    """all the heavy lifting for the package metadata"""
+    
     # setup the base metadata doc
     basedoc = libxml2.newDoc("1.0")
     baseroot =  basedoc.newChild(None, "metadata", None)
@@ -236,44 +238,23 @@ def doPkgMetadata(cmds, ts):
    
 
 def doRepoMetadata(cmds):
-    """generate the repomd.xml file that stores the info on the other files"""
-    #<repomd>
-    #  <data type='other'>
-    #    <location base=foo href=relative/>
-    #    <checksum type="md5">md5sumhere</checksum>
-    #    <timestamp>timestamp</timestamp>
-    #  </data>
+    """wrapper to generate the repomd.xml file that stores the info on the other files"""
     repodoc = libxml2.newDoc("1.0")
     reporoot = repodoc.newChild(None, "repomd", None)
     repons = reporoot.newNs('http://linux.duke.edu/metadata/repo', None)
     reporoot.setNs(repons)
-    sumtype = cmds['sumtype']
-    
-    if cmds['groupfile'] is not None:
-        workfiles = [(cmds['otherfile'], 'other',),
-                     (cmds['filelistsfile'], 'filelists'),
-                     (cmds['primaryfile'], 'primary'),
-                     (cmds['groupfile'], 'group')]
-                     
-    else:
-        workfiles = [(cmds['otherfile'], 'other',),
-                     (cmds['filelistsfile'], 'filelists'),
-                     (cmds['primaryfile'], 'primary')]
-    
-    for (file, ftype) in workfiles:
-        csum = dumpMetadata.getChecksum(sumtype, file)
-        timestamp = os.stat(file)[8]
-        data = reporoot.newChild(None, 'data', None)
-        data.newProp('type', ftype)
-        location = data.newChild(None, 'location', None)
-        if cmds['baseurl'] is not None:
-            location.newProp('xml:base', cmds['baseurl'])
-        location.newProp('href', file)
-        checksum = data.newChild(None, 'checksum', csum)
-        checksum.newProp('type', sumtype)
-        timestamp = data.newChild(None, 'timestamp', str(timestamp))
+    try:
+        dumpMetadata.repoXML(repodoc, reporoot, cmds)
+    except dumpMetadata.MDError, e:
+        errorprint('Error generating repo xml file: %s' % e)
+        sys.exit(1)
         
-    repodoc.saveFormatFileEnc('.repomd.xml.gz', 'UTF-8', 1)
+    try:        
+        repodoc.saveFormatFileEnc('.repomd.xml.gz', 'UTF-8', 1)
+    except:
+        errorprint('Error saving temp file for rep xml')
+        sys.exit(1)
+        
     try:
         os.rename('.repomd.xml.gz', cmds['repomdfile'])
     except OSError, e:
