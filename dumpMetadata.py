@@ -81,7 +81,7 @@ def getChecksum(sumtype, file, CHUNK=2**16):
             
         return sum.hexdigest()
     except:
-        raise MDError, 'Error opening file for checksum'
+        raise MDError, 'Error opening file for checksum: %s' % file
 
 
 def utf8String(string):
@@ -639,8 +639,6 @@ def repoXML(node, cmds):
                  (cmds['filelistsfile'], 'filelists'),
                  (cmds['primaryfile'], 'primary')]
     
-    if cmds['groupfile'] is not None:
-        workfiles.append((cmds['groupfile'], 'group'))
     
     for (file, ftype) in workfiles:
         zfo = _gzipOpen(os.path.join(cmds['tempdir'], file))
@@ -657,6 +655,27 @@ def repoXML(node, cmds):
         checksum = data.newChild(None, 'checksum', csum)
         checksum.newProp('type', sumtype)
         timestamp = data.newChild(None, 'timestamp', str(timestamp))
-        unchecksum = unchecksum = data.newChild(None, 'open-checksum', uncsum)
+        unchecksum = data.newChild(None, 'open-checksum', uncsum)
         unchecksum.newProp('type', sumtype)
-        
+    
+    # if we've got a group file then checksum it once and be done
+    if cmds['groupfile'] is not None:
+        grpfile = cmds['groupfile']
+        timestamp = os.stat(grpfile)[8]
+        sfile = os.path.basename(grpfile)
+        fo = open(grpfile, 'r')
+        output = open(os.path.join(cmds['tempdir'], sfile), 'w')
+        output.write(fo.read())
+        output.close()
+        csum = getChecksum(sumtype, fo)
+        fo.close()
+
+        data = node.newChild(None, 'data', None)
+        data.newProp('type', 'group')
+        location = data.newChild(None, 'location', None)
+        if cmds['baseurl'] is not None:
+            location.newProp('xml:base', cmds['baseurl'])
+        location.newProp('href', os.path.join(cmds['finaldir'], grpfile))
+        checksum = data.newChild(None, 'checksum', csum)
+        checksum.newProp('type', sumtype)
+        timestamp = data.newChild(None, 'timestamp', str(timestamp))

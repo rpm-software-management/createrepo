@@ -50,6 +50,7 @@ def usage():
      -u, --baseurl = optional base url location for all files
      -x, --exclude = files globs to exclude, can be specified multiple times
      -q, --quiet = run quietly
+     -g, --groupfile <filename> to point to for group information (precreated)
      -v, --verbose = run verbosely
      -s, --checksum = md5 or sha - select type of checksum to use (default: md5)
      -h, --help = show this help
@@ -188,13 +189,16 @@ def parseArgs(args):
                     usage()
                 else:
                     cmds['baseurl'] = a
-#            elif arg in ['-g', '--groupfile']:
-#                if cmds['groupfile'] is not None:
-#                    errorprint(_('Error: Only one groupfile allowed.'))
-#                    usage()
-#                else:
-#                    cmds['groupfile'] = a
-                    
+            elif arg in ['-g', '--groupfile']:
+                if cmds['groupfile'] is not None:
+                    errorprint(_('Error: Only one groupfile allowed.'))
+                    usage()
+                else:
+                    if os.path.exists(a):
+                        cmds['groupfile'] = a
+                    else:
+                        errorprint(_('Error: groupfile %s cannot be found.' % a))
+                        usage()
             elif arg in ['-x', '--exclude']:
                 cmds['excludes'].append(a)
             elif arg in ['-p', '--pretty']:
@@ -402,13 +406,6 @@ def main(args):
         errorprint(_('Old data directory exists, please remove: %s') % cmds['olddir'])
         sys.exit(1)
         
-    # check out the group file if specified
-#    if cmds['groupfile'] is not None:
-#        grpfile = os.path.join(directory, cmds['groupfile'])
-#        if not os.access(grpfile, os.R_OK):
-#            errorprint(_('Groupfile %s must exist and be readable') % grpfile)
-#            usage()
-
     # change to the basedir to work from w/i the path - for relative url paths
     os.chdir(directory)
 
@@ -453,9 +450,12 @@ def main(args):
         os.chdir(curdir)
         sys.exit(1)
         
-
-    for file in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile']:
-        oldfile = os.path.join(cmds['olddir'], cmds[file])
+    for file in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile', 'groupfile']:
+        if cmds[file]:
+            fn = os.path.basename(cmds[file])
+        else:
+            continue
+        oldfile = os.path.join(cmds['olddir'], fn)
         if os.path.exists(oldfile):
             try:
                 os.remove(oldfile)
@@ -464,6 +464,7 @@ def main(args):
                 errorprint(_('Error was %s') % e)
                 os.chdir(curdir)
                 sys.exit(1)
+            
     try:
         os.rmdir(cmds['olddir'])
     except OSError, e:
