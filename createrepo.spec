@@ -1,6 +1,6 @@
 Summary: Creates a common metadata repository
 Name: createrepo
-Version: 0.4.1
+Version: 0.4.2
 Release: 1
 License: GPL
 Group: System Environment/Base
@@ -33,6 +33,10 @@ rpm packages
 %{_bindir}/%{name}
 
 %changelog
+* Mon Jan 17 2005 Seth Vidal <skvidal@phy.duke.edu>
+- 0.4.2
+
+
 * Thu Oct 21 2004 Seth Vidal <skvidal@phy.duke.edu>
 - ghost files not being added into primary file list if 
   matching regex
