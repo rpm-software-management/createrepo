@@ -18,7 +18,7 @@ infodir = ${prefix}/info
 docdir = 
 includedir = ${prefix}/include
 oldincludedir = /usr/include
-mandir = ${prefix}/man
+mandir = ${prefix}/share/man
 
 pkgdatadir = $(datadir)/$(PACKAGE)
 pkglibdir = $(libdir)/$(PACKAGE)
@@ -26,7 +26,7 @@ pkgincludedir = $(includedir)/$(PACKAGE)
 top_builddir = 
 
 # all dirs
-DIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(sysconfdir) $(DESTDIR)$(pkgdatadir)
+DIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(sysconfdir) $(DESTDIR)$(pkgdatadir) $(DESTDIR)$(mandir)
 
 
 # INSTALL scripts 

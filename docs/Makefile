@@ -24,7 +24,7 @@ pkgincludedir = $(includedir)/$(PACKAGE)
 top_builddir = ../
 
 # all dirs
-DIRS = $(DESTDIR)$(bindir) $(DESTDIR)/etc $(DESTDIR)$(pkgdatadir)
+DIRS = $(DESTDIR)$(bindir) $(DESTDIR)/etc $(DESTDIR)$(pkgdatadir) $(DESTDIR)$(mandir)
 
 
 # INSTALL scripts 
@@ -39,10 +39,9 @@ RM 		= rm -f
 all: 
 	echo "nothing to do"
 
-
 install: all installdirs
-	mkdir -p $(DESTDIR)/usr/share/man/man8
-	$(INSTALL_DATA) createrepo.8 $(DESTDIR)/usr/share/man/man8/creatrepo.8
+	mkdir -p $(DESTDIR)$(mandir)/man8
+	$(INSTALL_DATA) createrepo.8 $(DESTDIR)$(mandir)/man8/createrepo.8
 
 
 uninstall:
