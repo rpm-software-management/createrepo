@@ -23,6 +23,7 @@ import string
 import fnmatch
 import dumpMetadata
 
+__version__ = '0.1'
 
 def errorprint(stuff):
     print >> sys.stderr, stuff
@@ -40,6 +41,7 @@ def usage():
      -v, --verbose = run verbosely
      -s, --checksum = md5 or sha - select type of checksum to use (default: md5)
      -h, --help = show this help
+     -V, --version = output version
 
     """ % os.path.basename(sys.argv[0])
     
@@ -101,10 +103,10 @@ def parseArgs(args):
     cmds['sumtype'] = 'md5'
 
     try:
-        gopts, argsleft = getopt.getopt(args, 'hqvg:s:x:u:', ['help', 'exclude', 
+        gopts, argsleft = getopt.getopt(args, 'hqVvg:s:x:u:', ['help', 'exclude', 
                                                               'quiet', 'verbose', 
                                                               'baseurl=', 'groupfile=',
-                                                              'checksum='])
+                                                              'checksum=', 'version'])
     except getopt.error, e:
         errorprint('Options Error: %s.' % e)
         usage()
@@ -113,6 +115,9 @@ def parseArgs(args):
         for arg,a in gopts:
             if arg in ['-h','--help']:
                 usage()
+            elif arg in ['-V', '--version']:
+                print '%s' % __version__
+                sys.exit(0)
             elif arg == '-v':
                 cmds['verbose'] = 1
             elif arg == "-q":
@@ -244,7 +249,7 @@ def doRepoMetadata(cmds):
     repons = reporoot.newNs('http://linux.duke.edu/metadata/repo', None)
     reporoot.setNs(repons)
     try:
-        dumpMetadata.repoXML(repodoc, reporoot, cmds)
+        dumpMetadata.repoXML(reporoot, cmds)
     except dumpMetadata.MDError, e:
         errorprint('Error generating repo xml file: %s' % e)
         sys.exit(1)
@@ -321,7 +326,7 @@ def main(args):
     except:
         os.chdir(curdir)
         raise
-
+    # take us home mr. data
     os.chdir(curdir)
         
 
