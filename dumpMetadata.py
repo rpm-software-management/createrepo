@@ -65,8 +65,10 @@ def returnFD(filename):
     
 def returnHdr(ts, package):
     """hand back the rpm header or raise an Error if the pkg is fubar"""
+    opened_here = 0
     try:
         if type(package) is types.StringType:
+            opened_here = 1
             fdno = os.open(package, os.O_RDONLY)
         else: 
             fdno = package # let's assume this is an fdno and go with it :)
@@ -80,9 +82,11 @@ def returnHdr(ts, package):
     if type(hdr) != rpm.hdr:
         raise MDError, "Error opening package"
     ts.setVSFlags(0)
-    if type(package) is types.StringType:
+    
+    if opened_here:
         os.close(fdno)
         del fdno
+
     return hdr
     
 def getChecksum(sumtype, file, CHUNK=2**16):
@@ -92,10 +96,12 @@ def getChecksum(sumtype, file, CHUNK=2**16):
        CHUNK=65536 by default"""
        
     # chunking brazenly lifted from Ryan Tomayko
+    opened_here = 0
     try:
         if type(file) is not types.StringType:
             fo = file # assume it's a file-like-object
-        else:           
+        else:
+            opened_here = 1
             fo = open(file, 'r', CHUNK)
             
         if sumtype == 'md5':
@@ -109,7 +115,7 @@ def getChecksum(sumtype, file, CHUNK=2**16):
             chunk = fo.read(CHUNK)
             sum.update(chunk)
 
-        if type(file) is types.StringType:
+        if opened_here:
             fo.close()
             del fo
             
@@ -148,9 +154,11 @@ def utf8String(string):
         
 def byteranges(file):
     """takes an rpm file or fileobject and returns byteranges for location of the header"""
+    opened_here = 0
     if type(file) is not types.StringType:
         fo = file
     else:
+        opened_here = 1
         fo = open(file, 'r')
     #read in past lead and first 8 bytes of sig header
     fo.seek(104)
@@ -187,7 +195,7 @@ def byteranges(file):
     
     # header end is hdrstart + hdrsize 
     hdrend = hdrstart + hdrsize 
-    if type(file) is types.StringType:
+    if opened_here:
         fo.close()
         del fo
     return (hdrstart, hdrend)
@@ -215,13 +223,17 @@ class RpmMetaData:
         
         self.localurl = url
         self.relativepath = filename
-        self.fd = returnFD(filename)
-        self.hdr = returnHdr(ts, self.fd)
-        fo = os.fdopen(self.fd)
+        fd = returnFD(filename)
+        self.hdr = returnHdr(ts, fd)
+        os.lseek(fd, 0, 0)
+        fo = os.fdopen(fd)
         self.pkgid = getChecksum(sumtype, fo)
         fo.seek(0)
         (self.rangestart, self.rangeend) = byteranges(fo)
-
+        fo.close()
+        del fo
+        del fd
+        
         # setup our regex objects
         fileglobs = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
         dirglobs = ['.*bin\/.*', '^\/etc\/.*']
