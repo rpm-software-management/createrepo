@@ -401,7 +401,6 @@ class RpmMetaData:
                 continue
             if mode is None:
                 continue
-            print '%s - %s - %s' % (file, mode, flag)
             if stat.S_ISDIR(mode):
                 self.dirnames.append(file)
             else:
