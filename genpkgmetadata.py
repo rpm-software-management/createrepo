@@ -44,7 +44,7 @@ def _(args):
     
 def usage():
     print _("""
-    %s [options] directory-of-packages
+    createrepo [options] directory-of-packages
     
     Options:
      -u, --baseurl = optional base url location for all files
@@ -56,8 +56,7 @@ def usage():
      -h, --help = show this help
      -V, --version = output version
      -p, --pretty = output xml files in pretty format.
-    """) % os.path.basename(sys.argv[0])
-    
+    """) 
 
     sys.exit(1)
 
