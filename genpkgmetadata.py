@@ -52,7 +52,7 @@ def usage():
      -q, --quiet = run quietly
      -g, --groupfile <filename> to point to for group information (precreated)
      -v, --verbose = run verbosely
-     -s, --checksum = md5 or sha - select type of checksum to use (default: md5)
+     -s, --checksum = md5 or sha - select type of checksum to use (default: sha)
      -h, --help = show this help
      -V, --version = output version
      -p, --pretty = output xml files in pretty format.
@@ -158,7 +158,7 @@ def parseArgs(args):
     cmds['excludes'] = []
     cmds['baseurl'] = None
     cmds['groupfile'] = None
-    cmds['sumtype'] = 'md5'
+    cmds['sumtype'] = 'sha'
     cmds['pretty'] = 0
 
     try:
