@@ -220,6 +220,24 @@ class RpmMetaData:
                 returnflags.append(newflag)
         return returnflags
 
+    def _checkPreReq(self, flags):
+        reqs=[]
+        if flags is None:
+            return reqs
+
+        if type(flags) is not types.ListType:
+            flags = [flags]
+        for flag in flags:
+            newflag = flag
+            if flag is not None:
+                newflag = flag & 64
+                if newflag == 64:
+                    reqs.append(1)
+                else:
+                    reqs.append(0)
+        return reqs
+
+
     def _correctVersion(self, vers):
         returnvers = []
         vertuple = (None, None, None)
@@ -418,9 +436,10 @@ class RpmMetaData:
         names = self.hdr[rpm.RPMTAG_REQUIRENAME]
         tmpflags = self.hdr[rpm.RPMTAG_REQUIREFLAGS]
         flags = self._correctFlags(tmpflags)
+        prereq = self._checkPreReq(tmpflags)
         ver = self._correctVersion(self.hdr[rpm.RPMTAG_REQUIREVERSION])
         if names is not None:
-            lst = zip(names, flags, ver)
+            lst = zip(names, flags, ver, prereq)
         return self._uniq(lst)
         
     def obsoletesList(self):
@@ -512,8 +531,7 @@ def generateXML(doc, node, formatns, rpmObj, sumtype):
     hr.newProp('start', str(rpmObj.rangestart))
     hr.newProp('end', str(rpmObj.rangeend))
     #pkgNode.newChild(None, 'color', 'greenishpurple')
-    for (lst, nodename) in [(rpmObj.depsList(), 'requires'), 
-                            (rpmObj.providesList(), 'provides'),
+    for (lst, nodename) in [(rpmObj.providesList(), 'provides'),
                             (rpmObj.conflictsList(), 'conflicts'),
                             (rpmObj.obsoletesList(), 'obsoletes')]:
         if len(lst) > 0:               
@@ -536,7 +554,29 @@ def generateXML(doc, node, formatns, rpmObj, sumtype):
                     if r:
                         entry.newProp('rel', str(r))
 
-    
+    depsList = rpmObj.depsList()
+    if len(depsList) > 0:
+        rpconode = format.newChild(formatns, 'requires', None)    
+        for (name, flags, (e,v,r), prereq) in depsList:
+            entry = rpconode.newChild(formatns, 'entry', None)
+            entry.newProp('name', name)
+            if flags != 0:
+                if flags == 2: arg = 'LT'
+                if flags == 4: arg = 'GT'
+                if flags == 8: arg = 'EQ'
+                if flags == 10: arg = 'LE'
+                if flags == 12: arg = 'GE'
+                entry.newProp('flags', arg)
+                # if we've got a flag we've got a version, I hope :)
+                if e:
+                    entry.newProp('epoch', str(e))
+                if v:
+                    entry.newProp('ver', str(v))
+                if r:
+                    entry.newProp('rel', str(r))
+            if prereq == 1:
+                entry.newProp('pre', str(prereq))
+        
     for file in rpmObj.usefulFiles():
         files = format.newChild(None, 'file', None)
         file = xmlCleanString(doc, file)
