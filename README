@@ -5,3 +5,9 @@ run createrepo -h for usage syntax
 
 http://linux.duke.edu/metadata/
 
+anoncvs:
+   :pserver:anonymous@devel.linux.duke.edu:/cvsroot/metadata/cvs-root
+
+module name is 'generate'
+
+
