@@ -33,7 +33,7 @@ from zlib import error as zlibError
 from gzip import write32u, FNAME
 
 import dumpMetadata
-__version__ = '0.3.9'
+__version__ = '0.4.0'
 
 def errorprint(stuff):
     print >> sys.stderr, stuff
@@ -179,7 +179,8 @@ def parseArgs(args):
     except ValueError, e:
         errorprint(_('Options Error: %s') % e)
         usage()
-        
+    
+
     # make sure our dir makes sense before we continue
     if len(argsleft) > 1:
         errorprint(_('Error: Only one directory allowed per run.'))

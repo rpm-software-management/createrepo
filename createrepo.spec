@@ -1,6 +1,6 @@
 Summary: Creates a common metadata repository
 Name: createrepo
-Version: 0.3.9
+Version: 0.4.0
 Release: 1
 License: GPL
 Group: System Environment/Base
@@ -33,6 +33,9 @@ rpm packages
 %{_bindir}/%{name}
 
 %changelog
+* Mon Oct 11 2004 Seth Vidal <skvidal@phy.duke.edu>
+- 0.4.0
+
 * Thu Sep 30 2004 Seth Vidal <skvidal@phy.duke.edu>
 - 0.3.9
 - fix for groups checksum creation
