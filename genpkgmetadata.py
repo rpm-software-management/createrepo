@@ -471,10 +471,11 @@ def main(args):
     except OSError, e:
         errorprint(_('Could not remove old metadata dir: %s') % cmds['olddir'])
         errorprint(_('Error was %s') % e)
+        errorprint(_('Please clean up this directory manually.'))
         os.chdir(curdir)
-        sys.exit(1)
         
-            
+        
+        
         
     # take us home mr. data
     os.chdir(curdir)
