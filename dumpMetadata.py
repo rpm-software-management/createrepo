@@ -396,13 +396,22 @@ class RpmMetaData:
         filemodes = self.listTagByName('filemodes')
         filetuple = zip(files, filemodes, fileflags)
         for (file, mode, flag) in filetuple:
+            #garbage checks
+            if file == '' or file is None:
+                continue
+            if mode is None:
+                continue
+            print '%s - %s - %s' % (file, mode, flag)
             if stat.S_ISDIR(mode):
-                self.dirnames.append(file)                
+                self.dirnames.append(file)
             else:
-                if (flag & 64): 
-                    self.ghostnames.append(file)
-                else:
+                if flag is None:
                     self.filenames.append(file)
+                else:
+                    if (flag & 64): 
+                        self.ghostnames.append(file)
+                    else:
+                        self.filenames.append(file)
 
         
     def usefulFiles(self):
