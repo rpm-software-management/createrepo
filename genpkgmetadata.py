@@ -42,7 +42,7 @@ def _(args):
     """Stub function for translation"""
     return args
     
-def usage():
+def usage(retval=1):
     print _("""
     createrepo [options] directory-of-packages
     
@@ -58,7 +58,7 @@ def usage():
      -p, --pretty = output xml files in pretty format.
     """) 
 
-    sys.exit(1)
+    sys.exit(retval)
 
 
 def getFileList(path, ext, filelist):
@@ -150,8 +150,6 @@ def parseArgs(args):
        Parse the command line args return a commands dict and directory.
        Sanity check all the things being passed in.
     """
-    if  len(args) == 0:
-        usage()
     cmds = {}
     cmds['quiet'] = 0
     cmds['verbose'] = 0
@@ -170,21 +168,31 @@ def parseArgs(args):
     except getopt.error, e:
         errorprint(_('Options Error: %s.') % e)
         usage()
+
+    try: 
+        for arg,a in gopts:
+            if arg in ['-h','--help']:
+                usage(retval=0)
+            elif arg in ['-V', '--version']:
+                print '%s' % __version__
+                sys.exit(0)
+    except ValueError, e:
+        errorprint(_('Options Error: %s') % e)
+        usage()
+        
     # make sure our dir makes sense before we continue
-    if len(argsleft) != 1:
+    if len(argsleft) > 1:
         errorprint(_('Error: Only one directory allowed per run.'))
+        usage()
+    elif len(argsleft) == 0:
+        errorprint(_('Error: Must specify a directory to index.'))
         usage()
     else:
         directory = argsleft[0]
    
     try: 
         for arg,a in gopts:
-            if arg in ['-h','--help']:
-                usage()
-            elif arg in ['-V', '--version']:
-                print '%s' % __version__
-                sys.exit(0)
-            elif arg == '-v':
+            if arg == '-v':
                 cmds['verbose'] = 1
             elif arg == "-q":
                 cmds['quiet'] = 1
