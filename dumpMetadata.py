@@ -29,6 +29,13 @@ import re
 import stat
 from genpkgmetadata import _gzipOpen
 
+def returnFD(filename):
+    try:
+        fdno = os.open(filename, os.O_RDONLY)
+    except OSError:
+        raise MDError, "Error opening file"
+    return fdno
+    
 def returnHdr(ts, package):
     """hand back the rpm header or raise an Error if the pkg is fubar"""
     try:
@@ -181,9 +188,12 @@ class RpmMetaData:
         
         self.localurl = url
         self.relativepath = filename
-        self.hdr = returnHdr(ts, filename)
-        self.pkgid = getChecksum(sumtype, filename)
-        (self.rangestart, self.rangeend) = byteranges(filename)
+        self.fd = returnFD(filename)
+        self.hdr = returnHdr(ts, self.fd)
+        fo = os.fdopen(self.fd)
+        self.pkgid = getChecksum(sumtype, fo)
+        fo.seek(0)
+        (self.rangestart, self.rangeend) = byteranges(fo)
 
         # setup our regex objects
         fileglobs = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']

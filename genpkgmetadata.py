@@ -158,6 +158,8 @@ def parseArgs(args):
     cmds['groupfile'] = None
     cmds['sumtype'] = 'sha'
     cmds['pretty'] = 0
+    cmds['file-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
+    cmds['dir-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*']
 
     try:
         gopts, argsleft = getopt.getopt(args, 'phqVvg:s:x:u:', ['help', 'exclude=', 
@@ -494,8 +496,10 @@ def main(args):
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         if sys.argv[1] == 'profile':
-            import profile
-            profile.run('main(sys.argv[2:])')
+            import hotshot
+            p = hotshot.Profile(os.path.expanduser("~/createrepo.prof"))
+            p.run('main(sys.argv[2:])')
+            p.close()
         else:
             main(sys.argv[1:])
     else:
