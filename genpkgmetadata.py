@@ -33,7 +33,7 @@ from zlib import error as zlibError
 from gzip import write32u, FNAME
 
 import dumpMetadata
-__version__ = '0.3.3'
+__version__ = '0.3.4'
 
 def errorprint(stuff):
     print >> sys.stderr, stuff
