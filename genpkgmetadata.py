@@ -160,7 +160,7 @@ def parseArgs(args):
     cmds['pretty'] = 0
 
     try:
-        gopts, argsleft = getopt.getopt(args, 'phqVvg:s:x:u:', ['help', 'exclude', 
+        gopts, argsleft = getopt.getopt(args, 'phqVvg:s:x:u:', ['help', 'exclude=', 
                                                               'quiet', 'verbose', 
                                                               'baseurl=', 'groupfile=',
                                                               'checksum=', 'version',
