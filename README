@@ -1,0 +1,7 @@
+This program generates an metadata-compliant dir and xml files for a 
+repository of rpms.
+
+run createrepo -h for usage syntax
+
+http://linux.duke.edu/metadata/
+

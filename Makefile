@@ -1,5 +1,5 @@
 PACKAGE = createrepo
-VERSION = 0.2
+VERSION = 0.3
 SHELL = /bin/sh
 top_srcdir = .
 srcdir = .
@@ -133,6 +133,7 @@ dailyfiles:
 	cp \
 	$(srcdir)/*.py \
 	$(srcdir)/Makefile \
+	$(srcdir)/ChangeLog \
 	$(srcdir)/$(PACKAGE).spec
 	$(top_srcdir)/.disttmp/$$distdir
 	for subdir in $(SUBDIRS) ; do \
@@ -144,6 +145,7 @@ distfiles:
 	cp \
 	$(srcdir)/*.py \
 	$(srcdir)/Makefile \
+	$(srcdir)/ChangeLog \
 	$(srcdir)/$(PACKAGE).spec \
 	$(top_srcdir)/.disttmp/$$distdir
 	for subdir in $(SUBDIRS) ; do \

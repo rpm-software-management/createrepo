@@ -1,6 +1,6 @@
 Summary: Creates a common metadata repository
 Name: createrepo
-Version: 0.2
+Version: 0.3
 Release: 1
 License: GPL
 Group: System Environment/Base
@@ -28,10 +28,14 @@ rpm packages
 %files
 %defattr(-, root, root)
 %dir %{_datadir}/%{name}
+%doc ChangeLog
 %{_datadir}/%{name}/*
 %{_bindir}/%{name}
 
 %changelog
+* Sun Jan 18 2004 Seth Vidal <skvidal@phy.duke.edu>
+- 0.3
+
 * Tue Jan 13 2004 Seth Vidal <skvidal@phy.duke.edu>
 - 0.2 - 
 
