@@ -250,6 +250,7 @@ def doPkgMetadata(cmds, ts):
             else:
                 output = node.serialize(None, 1)
                 basefile.write(output)
+                basefile.write('\n')
                 node.unlinkNode()
                 node.freeNode()
                 del node
@@ -262,6 +263,7 @@ def doPkgMetadata(cmds, ts):
             else:
                 output = node.serialize(None, 1)
                 flfile.write(output)
+                flfile.write('\n')
                 node.unlinkNode()
                 node.freeNode()
                 del node
@@ -274,6 +276,7 @@ def doPkgMetadata(cmds, ts):
             else:
                 output = node.serialize(None, 1)
                 otherfile.write(output)
+                otherfile.write('\n')
                 node.unlinkNode()
                 node.freeNode()
                 del node

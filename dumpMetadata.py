@@ -26,7 +26,7 @@ import sha
 import types
 import struct
 import re
-
+import stat
 
 
 def returnHdr(ts, package):
@@ -246,7 +246,7 @@ class RpmMetaData:
     def _stringToVersion(self, strng):
         i = strng.find(':')
         if i != -1:
-            epoch = long(strng[:i])
+            epoch = strng[:i]
         else:
             epoch = '0'
         j = strng.find('-')
@@ -367,21 +367,17 @@ class RpmMetaData:
         """produces lists of dirs and files for this header in two lists"""
         
         files = self.listTagByName('filenames')
-        fileclasses = self.listTagByName('fileclass')
         fileflags = self.listTagByName('fileflags')
-        filetuple = zip(files, fileclasses, fileflags)
-        classdict = self.listTagByName('classdict')
-        for (file, fileclass, flags) in filetuple:
-            if fileclass is None or file is None: # this is a dumb test
-                self.filenames.append(file)
-                continue
-            if (flags & 64): # check for ghost
-                self.ghostnames.append(file)
-                continue
-            if classdict[fileclass] == 'directory':
-                self.dirnames.append(file)
+        filemodes = self.listTagByName('filemodes')
+        filetuple = zip(files, filemodes, fileflags)
+        for (file, mode, flag) in filetuple:
+            if stat.S_ISDIR(mode):
+                self.dirnames.append(file)                
             else:
-                self.filenames.append(file)
+                if (flag & 64): 
+                    self.ghostnames.append(file)
+                else:
+                    self.filenames.append(file)
 
         
     def usefulFiles(self):
