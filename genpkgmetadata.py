@@ -27,13 +27,10 @@ import rpm
 import libxml2
 import string
 import fnmatch
-# done to fix gzip randomly changing the checksum
-import gzip
-from zlib import error as zlibError
-from gzip import write32u, FNAME
 
 import dumpMetadata
-__version__ = '0.4.1'
+from dumpMetadata import _gzipOpen
+__version__ = '0.4.2'
 
 def errorprint(stuff):
     print >> sys.stderr, stuff
@@ -123,28 +120,6 @@ def checkAndMakeDir(dir):
     return result
 
 
-# this is done to make the hdr writing _more_ sane for rsync users especially
-__all__ = ["GzipFile","open"]
-
-class GzipFile(gzip.GzipFile):
-    def _write_gzip_header(self):
-        self.fileobj.write('\037\213')             # magic header
-        self.fileobj.write('\010')                 # compression method
-        fname = self.filename[:-3]
-        flags = 0
-        if fname:
-            flags = FNAME
-        self.fileobj.write(chr(flags))
-        write32u(self.fileobj, long(0))
-        self.fileobj.write('\002')
-        self.fileobj.write('\377')
-        if fname:
-            self.fileobj.write(fname + '\000')
-
-
-def _gzipOpen(filename, mode="rb", compresslevel=9):
-    return GzipFile(filename, mode, compresslevel)
-    
 def parseArgs(args):
     """
        Parse the command line args return a commands dict and directory.
@@ -158,15 +133,15 @@ def parseArgs(args):
     cmds['groupfile'] = None
     cmds['sumtype'] = 'sha'
     cmds['pretty'] = 0
+#    cmds['updategroupsonly'] = 0
     cmds['file-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
     cmds['dir-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*']
 
     try:
         gopts, argsleft = getopt.getopt(args, 'phqVvg:s:x:u:', ['help', 'exclude=', 
-                                                              'quiet', 'verbose', 
-                                                              'baseurl=', 'groupfile=',
-                                                              'checksum=', 'version',
-                                                              'pretty'])
+                                            'quiet', 'verbose',
+                                            'baseurl=', 'groupfile=', 'checksum=',
+                                            'version', 'pretty'])
     except getopt.error, e:
         errorprint(_('Options Error: %s.') % e)
         usage()
@@ -219,6 +194,8 @@ def parseArgs(args):
                 cmds['excludes'].append(a)
             elif arg in ['-p', '--pretty']:
                 cmds['pretty'] = 1
+#            elif arg in ['--update-groups-only']:
+#                cmds['updategroupsonly'] = 1
             elif arg in ['-s', '--checksum']:
                 if a not in ['md5', 'sha']:
                     errorprint(_('Error: checksums are: md5 or sha.'))

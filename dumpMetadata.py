@@ -27,7 +27,34 @@ import types
 import struct
 import re
 import stat
-from genpkgmetadata import _gzipOpen
+
+# done to fix gzip randomly changing the checksum
+import gzip
+from zlib import error as zlibError
+from gzip import write32u, FNAME
+
+__all__ = ["GzipFile","open"]
+
+class GzipFile(gzip.GzipFile):
+    def _write_gzip_header(self):
+        self.fileobj.write('\037\213')             # magic header
+        self.fileobj.write('\010')                 # compression method
+        fname = self.filename[:-3]
+        flags = 0
+        if fname:
+            flags = FNAME
+        self.fileobj.write(chr(flags))
+        write32u(self.fileobj, long(0))
+        self.fileobj.write('\002')
+        self.fileobj.write('\377')
+        if fname:
+            self.fileobj.write(fname + '\000')
+
+
+def _gzipOpen(filename, mode="rb", compresslevel=9):
+    return GzipFile(filename, mode, compresslevel)
+    
+
 
 def returnFD(filename):
     try:
