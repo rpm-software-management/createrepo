@@ -183,7 +183,7 @@ class RpmMetaData:
         (self.rangestart, self.rangeend) = byteranges(filename)
 
         # setup our regex objects
-        fileglobs = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']        
+        fileglobs = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
         dirglobs = ['.*bin\/.*', '^\/etc\/.*']
         self.dirrc = []
         self.filerc = []
@@ -368,9 +368,10 @@ class RpmMetaData:
     def listTagByName(self, tag):
         """take a tag that should be a list and make sure it is one"""
         lst = []
-        data = self.tagByName(tag)
+        data = self.hdr[tag]
         if data is None:
-            pass
+            return lst
+            
         if type(data) is types.ListType:
             lst.extend(data)
         else:
@@ -384,10 +385,6 @@ class RpmMetaData:
         else:
             return self.tagByName('epoch')
             
-    def color(self):
-        # do something here - but what I don't know
-        pass
-        
     def genFileLists(self):
         """produces lists of dirs and files for this header in two lists"""
         
@@ -397,9 +394,8 @@ class RpmMetaData:
         filetuple = zip(files, filemodes, fileflags)
         for (file, mode, flag) in filetuple:
             #garbage checks
-            if file == '' or file is None:
-                continue
-            if mode is None:
+            if mode is None or mode == '':
+                self.filenames.append(file)
                 continue
             if stat.S_ISDIR(mode):
                 self.dirnames.append(file)
@@ -409,8 +405,8 @@ class RpmMetaData:
                 else:
                     if (flag & 64): 
                         self.ghostnames.append(file)
-                    else:
-                        self.filenames.append(file)
+                        continue
+                    self.filenames.append(file)
 
         
     def usefulFiles(self):
@@ -525,8 +521,6 @@ def generateXML(doc, node, formatns, rpmObj, sumtype):
         location.newProp('xml:base', rpmObj.localurl)
     location.newProp('href', rpmObj.relativepath)
     format = pkgNode.newChild(ns, 'format', None)
-    #formatns = format.newNs('http://linux.duke.edu/metadata/rpm', 'rpm')
-    #format.setNs(ns)
     for tag in ['license', 'vendor', 'group', 'buildhost', 'sourcerpm']:
         value = rpmObj.tagByName(tag)
         value = utf8String(value)
@@ -538,7 +532,6 @@ def generateXML(doc, node, formatns, rpmObj, sumtype):
     hr = format.newChild(formatns, 'header-range', None)
     hr.newProp('start', str(rpmObj.rangestart))
     hr.newProp('end', str(rpmObj.rangeend))
-    #pkgNode.newChild(None, 'color', 'greenishpurple')
     for (lst, nodename) in [(rpmObj.providesList(), 'provides'),
                             (rpmObj.conflictsList(), 'conflicts'),
                             (rpmObj.obsoletesList(), 'obsoletes')]:
