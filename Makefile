@@ -1,5 +1,5 @@
 PACKAGE = createrepo
-VERSION = 0.1
+VERSION = 0.2
 SHELL = /bin/sh
 top_srcdir = .
 srcdir = .
@@ -49,7 +49,7 @@ MODULES = $(srcdir)/genpkgmetadata.py \
 
 all: $(MODULES)
 	for subdir in $(SUBDIRS) ; do \
-	  $(MAKE) -C $$subdir ; \
+	  $(MAKE) -C $$subdir VERSION=$(VERSION) PACKAGE=$(PACKAGE); \
 	done
 
 check: 
@@ -58,7 +58,7 @@ check:
 install: all installdirs
 	$(INSTALL_MODULES) $(srcdir)/$(MODULES) $(DESTDIR)$(pkgdatadir)
 	for subdir in $(SUBDIRS) ; do \
-	  $(MAKE) -C $$subdir install ; \
+	  $(MAKE) -C $$subdir install VERSION=$(VERSION) PACKAGE=$(PACKAGE); \
 	done
 
 installdirs:
@@ -72,13 +72,13 @@ uninstall:
 	  $(RM) $(pkgdatadir)/$$module ; \
 	done
 	for subdir in $(SUBDIRS) ; do \
-	  $(MAKE) -C $$subdir uninstall ; \
+	  $(MAKE) -C $$subdir uninstall VERSION=$(VERSION) PACKAGE=$(PACKAGE); \
 	done
 
 clean:
 	$(RM)  *.pyc *.pyo
 	for subdir in $(SUBDIRS) ; do \
-	  $(MAKE) -C $$subdir clean ; \
+	  $(MAKE) -C $$subdir clean VERSION=$(VERSION) PACKAGE=$(PACKAGE); \
 	done
 
 distclean: clean
@@ -86,7 +86,7 @@ distclean: clean
 	$(RM) core
 	$(RM) *~
 	for subdir in $(SUBDIRS) ; do \
-	  $(MAKE) -C $$subdir distclean ; \
+	  $(MAKE) -C $$subdir distclean VERSION=$(VERSION) PACKAGE=$(PACKAGE); \
 	done
 
 mostlyclean:
@@ -136,7 +136,7 @@ dailyfiles:
 	$(srcdir)/$(PACKAGE).spec
 	$(top_srcdir)/.disttmp/$$distdir
 	for subdir in $(SUBDIRS) ; do \
-	  $(MAKE) -C $$subdir dailyfiles ; \
+	  $(MAKE) -C $$subdir dailyfiles VERSION=$(VERSION) PACKAGE=$(PACKAGE); \
 	done
 
 distfiles:
@@ -147,7 +147,7 @@ distfiles:
 	$(srcdir)/$(PACKAGE).spec \
 	$(top_srcdir)/.disttmp/$$distdir
 	for subdir in $(SUBDIRS) ; do \
-	  $(MAKE) -C $$subdir distfiles ; \
+	  $(MAKE) -C $$subdir distfiles VERSION=$(VERSION) PACKAGE=$(PACKAGE); \
 	done
 
 archive: dist

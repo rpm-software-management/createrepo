@@ -541,7 +541,9 @@ def generateXML(doc, node, rpmObj, sumtype):
         directory = xmlCleanString(doc, directory)
         files.addContent(directory)
         files.newProp('type', 'dir')
-
+    
+    return pkgNode
+    
 def fileListXML(doc, node, rpmObj):
     pkg = node.newChild(None, 'package', None)
     pkg.newProp('pkgid', rpmObj.pkgid)
@@ -565,7 +567,8 @@ def fileListXML(doc, node, rpmObj):
         ghost = xmlCleanString(doc, ghost)
         files.addContent(ghost)
         files.newProp('type', 'ghost')
-              
+    return pkg
+       
 def otherXML(doc, node, rpmObj):
     pkg = node.newChild(None, 'package', None)
     pkg.newProp('pkgid', rpmObj.pkgid)
@@ -582,7 +585,8 @@ def otherXML(doc, node, rpmObj):
         clog.addContent(text)
         clog.newProp('author', utf8String(name))
         clog.newProp('date', str(time))
-
+    return pkg
+    
 def repoXML(node, cmds):
     """generate the repomd.xml file that stores the info on the other files"""
     sumtype = cmds['sumtype']

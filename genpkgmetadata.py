@@ -27,8 +27,12 @@ import rpm
 import libxml2
 import string
 import fnmatch
-import dumpMetadata
+# done to fix gzip randomly changing the checksum
+import gzip
+from zlib import error as zlibError
+from gzip import write32u, FNAME
 
+import dumpMetadata
 __version__ = '0.1'
 
 def errorprint(stuff):
@@ -96,6 +100,27 @@ def trimRpms(rpms, excludeGlobs):
     # print 'Post-Trim Len: %d' % len(rpms)
     return rpms
 
+# this is done to make the hdr writing _more_ sane for rsync users especially
+__all__ = ["GzipFile","open"]
+
+class GzipFile(gzip.GzipFile):
+    def _write_gzip_header(self):
+        self.fileobj.write('\037\213')             # magic header
+        self.fileobj.write('\010')                 # compression method
+        fname = self.filename[:-3]
+        flags = 0
+        if fname:
+            flags = FNAME
+        self.fileobj.write(chr(flags))
+        write32u(self.fileobj, long(0))
+        self.fileobj.write('\002')
+        self.fileobj.write('\377')
+        if fname:
+            self.fileobj.write(fname + '\000')
+
+
+def _gzipOpen(filename, mode="rb", compresslevel=9):
+    return GzipFile(filename, mode, compresslevel)
     
 def parseArgs(args):
     """
@@ -174,17 +199,29 @@ def doPkgMetadata(cmds, ts):
     baseroot =  basedoc.newChild(None, "metadata", None)
     basens = baseroot.newNs('http://linux.duke.edu/metadata/common', None)
     baseroot.setNs(basens)
+    basefile = _gzipOpen('.primary.xml.gz', 'w')
+    basefile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+    basefile.write('<metadata xmlns="http://linux.duke.edu/metadata/common">\n')
+
     # setup the file list doc
     filesdoc = libxml2.newDoc("1.0")
     filesroot = filesdoc.newChild(None, "filelists", None)
     filesns = filesroot.newNs('http://linux.duke.edu/metadata/filelists', None)
     filesroot.setNs(filesns)
+    flfile = _gzipOpen('.filelists.xml.gz', 'w')    
+    flfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+    flfile.write('<filelists xmlns="http://linux.duke.edu/metadata/filelists">\n')
+    
+    
     # setup the other doc
     otherdoc = libxml2.newDoc("1.0")
     otherroot = otherdoc.newChild(None, "otherdata", None)
     otherns = otherroot.newNs('http://linux.duke.edu/metadata/other', None)
     otherroot.setNs(otherns)
-
+    otherfile = _gzipOpen('.other.xml.gz', 'w')
+    otherfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+    otherfile.write('<otherdata xmlns="http://linux.duke.edu/metadata/other">\n')
+    
     files = []
     files = getFileList('./', '.rpm', files)
     files = trimRpms(files, cmds['excludes'])
@@ -206,38 +243,63 @@ def doPkgMetadata(cmds, ts):
             continue
         else:
             try:
-                dumpMetadata.generateXML(basedoc, baseroot, mdobj, cmds['sumtype'])
+                node = dumpMetadata.generateXML(basedoc, baseroot, mdobj, cmds['sumtype'])
             except dumpMetadata.MDError, e:
                 errorprint(_('\nAn error occurred creating primary metadata: %s') % e)
                 continue
+            else:
+                output = node.serialize(None, 1)
+                basefile.write(output)
+                node.unlinkNode()
+                node.freeNode()
+                del node
+
             try:
-                dumpMetadata.fileListXML(filesdoc, filesroot, mdobj)
+                node = dumpMetadata.fileListXML(filesdoc, filesroot, mdobj)
             except dumpMetadata.MDError, e:
                 errorprint(_('\nAn error occurred creating filelists: %s') % e)
                 continue
+            else:
+                output = node.serialize(None, 1)
+                flfile.write(output)
+                node.unlinkNode()
+                node.freeNode()
+                del node
+
             try:
-                dumpMetadata.otherXML(otherdoc, otherroot, mdobj)
+                node = dumpMetadata.otherXML(otherdoc, otherroot, mdobj)
             except dumpMetadata.MDError, e:
                 errorprint(_('\nAn error occurred: %s') % e)
                 continue
+            else:
+                output = node.serialize(None, 1)
+                otherfile.write(output)
+                node.unlinkNode()
+                node.freeNode()
+                del node
+
+        
     if not cmds['quiet']:
         print ''
         
     # save them up to the tmp locations:
-    basedoc.setDocCompressMode(9)                
     if not cmds['quiet']:
         print _('Saving Primary metadata')
-    basedoc.saveFormatFileEnc('.primary.xml.gz', 'UTF-8', 1)
+    basefile.write('\n</metadata>')
+    basefile.close()
+    basedoc.freeDoc()
     
-    filesdoc.setDocCompressMode(9)
     if not cmds['quiet']:
         print _('Saving file lists metadata')
-    filesdoc.saveFormatFileEnc('.filelists.xml.gz', 'UTF-8', 1)
+    flfile.write('\n</filelists>')
+    flfile.close()
+    filesdoc.freeDoc()
     
-    otherdoc.setDocCompressMode(9)
     if not cmds['quiet']:
         print _('Saving other metadata')
-    otherdoc.saveFormatFileEnc('.other.xml.gz', 'UTF-8', 1)
+    otherfile.write('\n</otherdata>')
+    otherfile.close()
+    otherdoc.freeDoc()
     
     # move them to their final locations
     for (tmp, dest) in [('.other.xml.gz', cmds['otherfile']), 
@@ -342,8 +404,11 @@ def main(args):
 
         
 if __name__ == "__main__":
-    if sys.argv[1] == 'profile':
-        import profile
-        profile.run('main(sys.argv[2:])')
-    else:    
+    if len(sys.argv) > 1:
+        if sys.argv[1] == 'profile':
+            import profile
+            profile.run('main(sys.argv[2:])')
+        else:
+            main(sys.argv[1:])
+    else:
         main(sys.argv[1:])

@@ -1,5 +1,3 @@
-PACKAGE = createrepo
-VERSION = 0.1
 SHELL = /bin/sh
 top_srcdir = ..
 srcdir = ../bin
@@ -38,15 +36,15 @@ INSTALL_MODULES = $(INSTALL) -m 755 -D
 RM 		= rm -f
 
 
-all: $(srcdir)/createrepo
+all: $(srcdir)/$(PACKAGE)
 
 
 install: all installdirs
-	$(INSTALL_BIN) $(srcdir)/createrepo $(DESTDIR)$(bindir)/createrepo
+	$(INSTALL_BIN) $(srcdir)/$(PACKAGE) $(DESTDIR)$(bindir)/$(PACKAGE)
 
 
 uninstall:
-	$(RM) $(bindir)/createrepo
+	$(RM) $(bindir)/$(PACKAGE)
 
 
 
@@ -71,7 +69,7 @@ distfiles:
 	distdir=$(PACKAGE)-$(VERSION); \
 	mkdir $(top_srcdir)/.disttmp/$$distdir/bin;\
 	cp \
-	$(srcdir)/createrepo \
+	$(srcdir)/$(PACKAGE) \
 	$(srcdir)/Makefile \
 	$(top_srcdir)/.disttmp/$$distdir/bin
 
@@ -79,7 +77,7 @@ dailyfiles:
 	distdir=$(PACKAGE); \
 	mkdir $(top_srcdir)/.disttmp/$$distdir/bin;\
 	cp \
-	$(srcdir)/createrepo \
+	$(srcdir)/$(PACKAGE) \
 	$(srcdir)/Makefile \
 	$(top_srcdir)/.disttmp/$$distdir/bin
 
