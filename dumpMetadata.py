@@ -423,7 +423,18 @@ class RpmMetaData:
                     returns[item] = 1
         return returns
                     
-        
+    def usefulGhosts(self):
+        """search for useful ghost file names"""
+        returns = {}
+        for item in self.ghostnames:
+            if item is None:
+                continue
+            for glob in self.filerc:
+                if glob.match(item):
+                    returns[item] = 1
+        return returns
+
+
     def usefulDirs(self):
         """search for good dirs"""
         returns = {}
@@ -588,7 +599,12 @@ def generateXML(doc, node, formatns, rpmObj, sumtype):
         directory = utf8String(directory)
         files.addContent(directory)
         files.newProp('type', 'dir')
-    
+    for directory in rpmObj.usefulGhosts():
+        files = format.newChild(None, 'file', None)
+        directory = utf8String(directory)
+        files.addContent(directory)
+        files.newProp('type', 'ghost')
+
     return pkgNode
     
 def fileListXML(doc, node, rpmObj):
