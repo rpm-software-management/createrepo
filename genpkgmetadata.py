@@ -33,7 +33,7 @@ from zlib import error as zlibError
 from gzip import write32u, FNAME
 
 import dumpMetadata
-__version__ = '0.3.2'
+__version__ = '0.1'
 
 def errorprint(stuff):
     print >> sys.stderr, stuff
@@ -157,8 +157,7 @@ def parseArgs(args):
     cmds['verbose'] = 0
     cmds['excludes'] = []
     cmds['baseurl'] = None
-    cmds['zgroupfile'] = None
-    cmds['groupfile'] = None    
+    cmds['groupfile'] = None
     cmds['sumtype'] = 'md5'
     cmds['pretty'] = 0
 
@@ -228,7 +227,7 @@ def doPkgMetadata(cmds, ts):
     basens = baseroot.newNs('http://linux.duke.edu/metadata/common', None)
     baseroot.setNs(basens)
     basefilepath = os.path.join(cmds['tempdir'], cmds['primaryfile'])
-    basefile = open(basefilepath, 'w')
+    basefile = _gzipOpen(basefilepath, 'w')
     basefile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
     basefile.write('<metadata xmlns="http://linux.duke.edu/metadata/common">\n')
 
@@ -238,7 +237,7 @@ def doPkgMetadata(cmds, ts):
     filesns = filesroot.newNs('http://linux.duke.edu/metadata/filelists', None)
     filesroot.setNs(filesns)
     filelistpath = os.path.join(cmds['tempdir'], cmds['filelistsfile'])
-    flfile = open(filelistpath, 'w')    
+    flfile = _gzipOpen(filelistpath, 'w')    
     flfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
     flfile.write('<filelists xmlns="http://linux.duke.edu/metadata/filelists">\n')
     
@@ -249,7 +248,7 @@ def doPkgMetadata(cmds, ts):
     otherns = otherroot.newNs('http://linux.duke.edu/metadata/other', None)
     otherroot.setNs(otherns)
     otherfilepath = os.path.join(cmds['tempdir'], cmds['otherfile'])
-    otherfile = open(otherfilepath, 'w')
+    otherfile = _gzipOpen(otherfilepath, 'w')
     otherfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
     otherfile.write('<otherdata xmlns="http://linux.duke.edu/metadata/other">\n')
     
@@ -357,33 +356,14 @@ def doRepoMetadata(cmds):
         
     del repodoc
         
-
-def compressMetadata(cmds):
-    """gzip compress the metadata files"""
-    compresslist = [('primaryfile', 'zprimaryfile'),
-                    ('filelistsfile', 'zfilelistsfile'),
-                    ('otherfile', 'zotherfile')]
-
-    for (un, com) in compresslist:
-        fn = os.path.join(cmds['tempdir'], cmds[un])
-        zfn = os.path.join(cmds['tempdir'], cmds[com])
-        zfo = _gzipOpen(zfn, mode='wb')
-        fo = open(fn, 'r')
-        zfo.write(fo.read())
-        fo.close()
-        zfo.close()
-
-                    
+   
 
 def main(args):
     cmds, directory = parseArgs(args)
     #setup some defaults
-    cmds['primaryfile'] = 'primary.xml'
-    cmds['filelistsfile'] = 'filelists.xml'
-    cmds['otherfile'] = 'other.xml'
-    cmds['zprimaryfile'] = 'primary.xml.gz'
-    cmds['zfilelistsfile'] = 'filelists.xml.gz'
-    cmds['zotherfile'] = 'other.xml.gz'
+    cmds['primaryfile'] = 'primary.xml.gz'
+    cmds['filelistsfile'] = 'filelists.xml.gz'
+    cmds['otherfile'] = 'other.xml.gz'
     cmds['repomdfile'] = 'repomd.xml'
     cmds['tempdir'] = '.repodata'
     cmds['finaldir'] = 'repodata'
@@ -442,9 +422,6 @@ def main(args):
         # always clean up your messes
         os.chdir(curdir)
         raise
-
-    # compress it
-    compressMetadata(cmds)
     
     try:
         doRepoMetadata(cmds)
@@ -470,8 +447,7 @@ def main(args):
         sys.exit(1)
         
 
-    for file in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile',
-                 'zprimaryfile', 'zfilelistsfile', 'zotherfile']:
+    for file in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile']:
         oldfile = os.path.join(cmds['olddir'], cmds[file])
         if os.path.exists(oldfile):
             try:
@@ -488,19 +464,7 @@ def main(args):
         errorprint(_('Error was %s') % e)
         os.chdir(curdir)
         sys.exit(1)
-
-    # get rid of the uncompressed files
-    for file in ['primaryfile', 'filelistsfile', 'otherfile']:
-        unfile = os.path.join(cmds['finaldir'], cmds[file])
-        if os.path.exists(unfile):
-            try:
-                os.remove(unfile)
-            except OSError, e:
-                errorprint(_('Could not remove uncompressed metadata file: %s') % unfile)
-                errorprint(_('Error was %s') % e)
-                os.chdir(curdir)
-                sys.exit(1)
-                
+        
             
         
     # take us home mr. data
