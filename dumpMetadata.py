@@ -1,4 +1,6 @@
 #!/usr/bin/python -tt
+# base classes and functions for dumping out package Metadata
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
@@ -14,11 +16,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # Copyright 2003 Duke University
 
-# take an list of rpms
-# pull a bunch of pertinent info out of them and write it out to a file
-# just a 'proof of concept'
 $Id$
-
 
 import os
 import rpm
