@@ -1,0 +1,67 @@
+.TH "createrepo" "8" "2005 Jan 2" "Seth Vidal" ""
+
+.SH "NAME"
+createrepo \- Create repomd (xml-rpm-metadata) repository
+
+.SH "SYNOPSIS"
+\fBcreaterepo\fP [options] <directory>
+.PP
+
+.SH "DESCRIPTION"
+\fBcreaterepo\fP is a program that creates a repomd (xml-based rpm metadata) repository from a set of rpms.
+
+.SH "OPTIONS"
+.IP "\fB\-u --baseurl\fP <url>"
+Optional base url location for all files. (not used by any clients at this
+time)
+.IP "\fB\-x --exclude\fP <package>"
+File globs to exclude, can be specified multiple times.
+.IP "\fB\-q --quiet\fP"
+Run quietly.
+.IP "\fB\-g --groupfile\fP <groupfile>"
+A precreated xml filename to point to for group information.
+.br
+See examples section below for further explanation.
+.IP "\fB\-v --verbose\fP"
+Run verbosely.
+.IP "\fB\-s --checksum\fP <type>"
+Select type of checksum to use (md5 or sha).
+.br
+Default: sha
+.IP "\fB\-p --pretty\fP"
+Output xml files in pretty format.
+.IP "\fB\-V --version\fP"
+Output version.
+.IP "\fB\-h --help\fP"
+Show help menu.
+
+.SH "EXAMPLES"
+Here is an example of a repository with a groups file. Note that the
+groups file should be in the same directory as the rpm packages
+(i.e. /path/to/rpms/comps.xml).
+.br
+.PP
+\fBcreaterepo\fP \-g comps.xml /path/to/rpms
+
+.SH "FILES"
+.nf
+repodata/filelists.xml.gz
+repodata/other.xml.gz
+repodata/primary.xml.gz
+repodata/repomd.xml 
+.fi
+.PP 
+.SH "SEE ALSO"
+.I yum (8) yum.conf (5)
+
+.PP 
+.SH "AUTHORS"
+.nf 
+Seth Vidal <skvidal@phy.duke.edu>
+.fi 
+
+.PP 
+.SH "BUGS"
+Any bugs which are found should be emailed to the mailing list:
+rpm-metadata@linux.duke.edu
+.fi
