@@ -86,7 +86,9 @@ def getChecksum(sumtype, file, CHUNK=2**16):
 
 def utf8String(string):
     """hands back a unicoded string"""
-    if isinstance(string, unicode):
+    if string is None:
+        return ''
+    elif isinstance(string, unicode):    
         return string
     try:
         x = unicode(string, 'ascii')
@@ -674,7 +676,7 @@ def repoXML(node, cmds):
         location = data.newChild(None, 'location', None)
         if cmds['baseurl'] is not None:
             location.newProp('xml:base', cmds['baseurl'])
-        location.newProp('href', os.path.join(cmds['finaldir'], grpfile))
+        location.newProp('href', os.path.join(cmds['finaldir'], sfile))
         checksum = data.newChild(None, 'checksum', csum)
         checksum.newProp('type', sumtype)
         timestamp = data.newChild(None, 'timestamp', str(timestamp))
