@@ -168,11 +168,14 @@ class RpmMetaData:
        it opens the file, and pulls the information out in bite-sized chunks :)
     """
     def __init__(self, ts, filename, url, sumtype):
-        stats = os.stat(filename)
-        self.size = stats[6]
-        self.mtime = stats[8]
-        del stats
-
+        try:
+            stats = os.stat(filename)
+            self.size = stats[6]
+            self.mtime = stats[8]
+            del stats
+        except OSError, e:
+            raise MDError, "Error Stat'ing file %s" % filename
+        
         self.localurl = url
         self.relativepath = filename
         self.hdr = returnHdr(ts, filename)
