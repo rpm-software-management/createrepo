@@ -16,7 +16,7 @@ infodir = ${prefix}/info
 docdir = 
 includedir = ${prefix}/include
 oldincludedir = /usr/include
-mandir = ${prefix}/man
+mandir = ${datadir}/man
 
 pkgdatadir = $(datadir)/$(PACKAGE)
 pkglibdir = $(libdir)/$(PACKAGE)
