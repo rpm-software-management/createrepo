@@ -99,7 +99,9 @@ def trimRpms(rpms, excludeGlobs):
     return rpms
 
 def checkAndMakeDir(dir):
-    """check out the dir and make it, if possible, return 1 if done, else return 0"""
+    """
+     check out the dir and make it, if possible, return 1 if done, else return 0
+    """
     if os.path.exists(dir):
         if not os.path.isdir(dir):
             errorprint(_('%s is not a dir') % dir)

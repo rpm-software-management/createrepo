@@ -594,14 +594,14 @@ def repoXML(node, cmds):
         workfiles.append((cmds['groupfile'], 'group'))
     
     for (file, ftype) in workfiles:
-        csum = getChecksum(sumtype, file)
-        timestamp = os.stat(file)[8]
+        csum = getChecksum(sumtype, os.path.join(cmds['tempdir'], file))
+        timestamp = os.stat(os.path.join(cmds['tempdir'], file))[8]
         data = node.newChild(None, 'data', None)
         data.newProp('type', ftype)
         location = data.newChild(None, 'location', None)
         if cmds['baseurl'] is not None:
             location.newProp('xml:base', cmds['baseurl'])
-        location.newProp('href', file)
+        location.newProp('href', os.path.join(cmds['finaldir'], file))
         checksum = data.newChild(None, 'checksum', csum)
         checksum.newProp('type', sumtype)
         timestamp = data.newChild(None, 'timestamp', str(timestamp))
