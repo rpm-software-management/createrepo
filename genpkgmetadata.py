@@ -54,7 +54,7 @@ def usage():
      -s, --checksum = md5 or sha - select type of checksum to use (default: md5)
      -h, --help = show this help
      -V, --version = output version
-
+     -p, --pretty = output xml files in pretty format.
     """) % os.path.basename(sys.argv[0])
     
 
@@ -159,13 +159,14 @@ def parseArgs(args):
     cmds['baseurl'] = None
     cmds['groupfile'] = None
     cmds['sumtype'] = 'md5'
-
+    cmds['pretty'] = 0
 
     try:
-        gopts, argsleft = getopt.getopt(args, 'hqVvg:s:x:u:', ['help', 'exclude', 
+        gopts, argsleft = getopt.getopt(args, 'phqVvg:s:x:u:', ['help', 'exclude', 
                                                               'quiet', 'verbose', 
                                                               'baseurl=', 'groupfile=',
-                                                              'checksum=', 'version'])
+                                                              'checksum=', 'version',
+                                                              'pretty'])
     except getopt.error, e:
         errorprint(_('Options Error: %s.') % e)
         usage()
@@ -196,6 +197,8 @@ def parseArgs(args):
                     
             elif arg in ['-x', '--exclude']:
                 cmds['excludes'].append(a)
+            elif arg in ['-p', '--pretty']:
+                cmds['pretty'] = 1
             elif arg in ['-s', '--checksum']:
                 if a not in ['md5', 'sha']:
                     errorprint(_('Error: checksums are: md5 or sha.'))
@@ -275,7 +278,7 @@ def doPkgMetadata(cmds, ts):
                 errorprint(_('\nAn error occurred creating primary metadata: %s') % e)
                 continue
             else:
-                output = node.serialize(None, 1)
+                output = node.serialize(None, cmds['pretty'])
                 basefile.write(output)
                 basefile.write('\n')
                 node.unlinkNode()
@@ -288,7 +291,7 @@ def doPkgMetadata(cmds, ts):
                 errorprint(_('\nAn error occurred creating filelists: %s') % e)
                 continue
             else:
-                output = node.serialize(None, 1)
+                output = node.serialize(None, cmds['pretty'])
                 flfile.write(output)
                 flfile.write('\n')
                 node.unlinkNode()
@@ -301,7 +304,7 @@ def doPkgMetadata(cmds, ts):
                 errorprint(_('\nAn error occurred: %s') % e)
                 continue
             else:
-                output = node.serialize(None, 1)
+                output = node.serialize(None, cmds['pretty'])
                 otherfile.write(output)
                 otherfile.write('\n')
                 node.unlinkNode()
