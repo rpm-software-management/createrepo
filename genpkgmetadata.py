@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python -t
 # primary functions and glue for generating the repository metadata
 #
 
@@ -16,7 +16,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # Copyright 2003 Duke University
-$Id$
+
+# $Id$
+
+
 import os
 import sys
 import getopt
@@ -31,8 +34,12 @@ __version__ = '0.1'
 def errorprint(stuff):
     print >> sys.stderr, stuff
 
+def _(args):
+    """Stub function for translation"""
+    return args
+    
 def usage():
-    print """
+    print _("""
     %s [options] directory-of-packages
     
     Options:
@@ -46,7 +53,7 @@ def usage():
      -h, --help = show this help
      -V, --version = output version
 
-    """ % os.path.basename(sys.argv[0])
+    """) % os.path.basename(sys.argv[0])
     
 
     sys.exit(1)
@@ -60,7 +67,7 @@ def getFileList(path, ext, filelist):
     try:
         dir_list = os.listdir(path)
     except OSError, e:
-        errorprint('Error accessing directory %s, %s' % (path, e))
+        errorprint(_('Error accessing directory %s, %s') % (path, e))
         sys.exit(1)
         
     for d in dir_list:
@@ -111,7 +118,7 @@ def parseArgs(args):
                                                               'baseurl=', 'groupfile=',
                                                               'checksum=', 'version'])
     except getopt.error, e:
-        errorprint('Options Error: %s.' % e)
+        errorprint(_('Options Error: %s.') % e)
         usage()
    
     try: 
@@ -127,13 +134,13 @@ def parseArgs(args):
                 cmds['quiet'] = 1
             elif arg in ['-u', '--baseurl']:
                 if cmds['baseurl'] is not None:
-                    errorprint('Error: Only one baseurl allowed.')
+                    errorprint(_('Error: Only one baseurl allowed.'))
                     usage()
                 else:
                     cmds['baseurl'] = a
             elif arg in ['-g', '--groupfile']:
                 if cmds['groupfile'] is not None:
-                    errorprint('Error: Only one groupfile allowed.')
+                    errorprint(_('Error: Only one groupfile allowed.'))
                     usage()
                 else:
                     cmds['groupfile'] = a
@@ -142,17 +149,17 @@ def parseArgs(args):
                 cmds['excludes'].append(a)
             elif arg in ['-s', '--checksum']:
                 if a not in ['md5', 'sha']:
-                    errorprint('Error: checksums are: md5 or sha.')
+                    errorprint(_('Error: checksums are: md5 or sha.'))
                     usage()
                 else:
                     cmds['sumtype'] = a
     
     except ValueError, e:
-        errorprint('Options Error: %s' % e)
+        errorprint(_('Options Error: %s') % e)
         usage()
 
     if len(argsleft) != 1:
-        errorprint('Error: Only one directory allowed per run.')
+        errorprint(_('Error: Only one directory allowed per run.'))
         usage()
     else:
         directory = argsleft[0]
@@ -201,17 +208,17 @@ def doPkgMetadata(cmds, ts):
             try:
                 dumpMetadata.generateXML(basedoc, baseroot, mdobj, cmds['sumtype'])
             except dumpMetadata.MDError, e:
-                errorprint('\nan error occurred creating primary metadata - hmm %s' % e)
+                errorprint(_('\nAn error occurred creating primary metadata: %s') % e)
                 continue
             try:
                 dumpMetadata.fileListXML(filesdoc, filesroot, mdobj)
             except dumpMetadata.MDError, e:
-                errorprint('\nan error occurred creating filelists- hmm %s' % e)
+                errorprint(_('\nAn error occurred creating filelists: %s') % e)
                 continue
             try:
                 dumpMetadata.otherXML(otherdoc, otherroot, mdobj)
             except dumpMetadata.MDError, e:
-                errorprint('\nan error occurred - hmm %s' % e)
+                errorprint(_('\nAn error occurred: %s') % e)
                 continue
     if not cmds['quiet']:
         print ''
@@ -219,17 +226,17 @@ def doPkgMetadata(cmds, ts):
     # save them up to the tmp locations:
     basedoc.setDocCompressMode(9)                
     if not cmds['quiet']:
-        print 'Saving Primary metadata'
+        print _('Saving Primary metadata')
     basedoc.saveFormatFileEnc('.primary.xml.gz', 'UTF-8', 1)
     
     filesdoc.setDocCompressMode(9)
     if not cmds['quiet']:
-        print 'Saving file lists metadata'
+        print _('Saving file lists metadata')
     filesdoc.saveFormatFileEnc('.filelists.xml.gz', 'UTF-8', 1)
     
     otherdoc.setDocCompressMode(9)
     if not cmds['quiet']:
-        print 'Saving other metadata'
+        print _('Saving other metadata')
     otherdoc.saveFormatFileEnc('.other.xml.gz', 'UTF-8', 1)
     
     # move them to their final locations
@@ -239,8 +246,8 @@ def doPkgMetadata(cmds, ts):
         try:
             os.rename(tmp, dest)
         except OSError, e:
-            errorprint('Error finishing file %s: %s' % (dest, e))
-            errorprint('Exiting.')
+            errorprint(_('Error finishing file %s: %s') % (dest, e))
+            errorprint(_('Exiting.'))
             os.unlink(tmp)
             sys.exit(1)
    
@@ -254,20 +261,20 @@ def doRepoMetadata(cmds):
     try:
         dumpMetadata.repoXML(reporoot, cmds)
     except dumpMetadata.MDError, e:
-        errorprint('Error generating repo xml file: %s' % e)
+        errorprint(_('Error generating repo xml file: %s') % e)
         sys.exit(1)
         
     try:        
         repodoc.saveFormatFileEnc('.repomd.xml.gz', 'UTF-8', 1)
     except:
-        errorprint('Error saving temp file for rep xml')
+        errorprint(_('Error saving temp file for rep xml'))
         sys.exit(1)
         
     try:
         os.rename('.repomd.xml.gz', cmds['repomdfile'])
     except OSError, e:
-        errorprint('Error finishing file %s: %s' % (cmds['repomdfile'], e))
-        errorprint('Exiting.')
+        errorprint(_('Error finishing file %s: %s') % (cmds['repomdfile'], e))
+        errorprint(_('Exiting.'))
         os.unlink('.repomd.xml.gz')
         sys.exit(1)
     else:
@@ -287,19 +294,19 @@ def main(args):
     curdir = os.getcwd()
     # start the sanity/stupidity checks
     if not os.path.exists(directory):
-        errorprint('Directory must exist')
+        errorprint(_('Directory must exist'))
         usage()
     if not os.path.isdir(directory):
-        errorprint('Directory of packages must be a directory.')
+        errorprint(_('Directory of packages must be a directory.'))
         usage()
     if not os.access(directory, os.W_OK):
-        errorprint('Directory must be writable.')
+        errorprint(_('Directory must be writable.'))
         usage()
     # check out the group file if specified
     if cmds['groupfile'] is not None:
         grpfile = os.path.join(directory, cmds['groupfile'])
         if not os.access(grpfile, os.R_OK):
-            errorprint('groupfile %s must exist and be readable' % grpfile)
+            errorprint(_('Groupfile %s must exist and be readable') % grpfile)
             usage()
     # make sure we can write to where we want to write to:
         for file in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile']:
@@ -307,11 +314,11 @@ def main(args):
             dirpath = os.path.dirname(filepath)
             if os.path.exists(filepath):
                 if not os.access(filepath, os.W_OK):
-                    errorprint('error in must be able to write to metadata files:\n  -> %s' % filepath)
+                    errorprint(_('error in must be able to write to metadata files:\n  -> %s') % filepath)
                     usage()
             else:                
                 if not os.access(dirpath, os.W_OK):
-                    errorprint('must be able to write to path for metadata files:\n  -> %s' % dirpath)
+                    errorprint(_('must be able to write to path for metadata files:\n  -> %s') % dirpath)
                     usage()
                     
     # change to the basedir to work from w/i the path - for relative url paths

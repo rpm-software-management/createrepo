@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python -t
 # base classes and functions for dumping out package Metadata
 #
 # This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # Copyright 2003 Duke University
 
-$Id$
+# $Id$
 
 import os
 import rpm
