@@ -668,6 +668,7 @@ def repoXML(node, cmds):
         output = open(os.path.join(cmds['tempdir'], sfile), 'w')
         output.write(fo.read())
         output.close()
+        fo.seek(0)
         csum = getChecksum(sumtype, fo)
         fo.close()
 
