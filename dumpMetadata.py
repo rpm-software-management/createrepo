@@ -496,7 +496,7 @@ def generateXML(doc, node, rpmObj, sumtype):
         value = rpmObj.tagByName(tag)
         value = utf8String(value)
         value = re.sub("\n$", '', value)
-        entry = format.newChild(None, tag, None)
+        entry = format.newChild(formatns, tag, None)
         value = xmlCleanString(doc, value)
         entry.addContent(value)
         
