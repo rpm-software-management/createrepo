@@ -17,6 +17,8 @@
 # take an list of rpms
 # pull a bunch of pertinent info out of them and write it out to a file
 # just a 'proof of concept'
+$Id$
+
 
 import os
 import rpm
