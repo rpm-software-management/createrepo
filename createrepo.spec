@@ -31,8 +31,12 @@ rpm packages
 %doc ChangeLog README
 %{_datadir}/%{name}/*
 %{_bindir}/%{name}
+%{_mandir}/man8/createrepo.8*
 
 %changelog
+* Tue Jan 18 2005 Seth Vidal <skvidal@phy.duke.edu>
+- add man page
+
 * Mon Jan 17 2005 Seth Vidal <skvidal@phy.duke.edu>
 - 0.4.2
 

@@ -37,7 +37,7 @@ INSTALL_DATA    = $(INSTALL) -m 644
 INSTALL_MODULES = $(INSTALL) -m 755 -D 
 RM              = rm -f
 
-SUBDIRS = bin
+SUBDIRS = bin docs
 
 MODULES = $(srcdir)/genpkgmetadata.py \
     	  $(srcdir)/dumpMetadata.py 
@@ -49,7 +49,7 @@ MODULES = $(srcdir)/genpkgmetadata.py \
 
 all: $(MODULES)
 	for subdir in $(SUBDIRS) ; do \
-	  $(MAKE) -C $$subdir VERSION=$(VERSION) PACKAGE=$(PACKAGE); \
+	  $(MAKE) -C $$subdir VERSION=$(VERSION) PACKAGE=$(PACKAGE) DESTDIR=$(DESTDIR); \
 	done
 
 check: 
