@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-# Copyright 2003 Duke University
+# Copyright 2004 Duke University
 
 # $Id$
 
@@ -504,8 +504,10 @@ def generateXML(doc, node, rpmObj, sumtype):
     hr.newProp('start', str(rpmObj.rangestart))
     hr.newProp('end', str(rpmObj.rangeend))
     #pkgNode.newChild(None, 'color', 'greenishpurple')
-    for (lst, nodename) in [(rpmObj.depsList(), 'requires'), (rpmObj.providesList(), 'provides'),
-                            (rpmObj.conflictsList(), 'conflicts'), (rpmObj.obsoletesList(), 'obsoletes')]:
+    for (lst, nodename) in [(rpmObj.depsList(), 'requires'), 
+                            (rpmObj.providesList(), 'provides'),
+                            (rpmObj.conflictsList(), 'conflicts'),
+                            (rpmObj.obsoletesList(), 'obsoletes')]:
         if len(lst) > 0:               
             rpconode = format.newChild(formatns, nodename, None)
             for (name, flags, (e,v,r)) in lst:
@@ -518,14 +520,13 @@ def generateXML(doc, node, rpmObj, sumtype):
                     if flags == 10: arg = 'LE'
                     if flags == 12: arg = 'GE'
                     entry.newProp('flags', arg)
-                    if e or v or r:
-                        version = entry.newChild(ns, 'version', None)
+                    # if we've got a flag we've got a version, I hope :)
                     if e:
-                        version.newProp('epoch', str(e))
+                        entry.newProp('epoch', str(e))
                     if v:
-                        version.newProp('ver', str(v))
+                        entry.newProp('ver', str(v))
                     if r:
-                        version.newProp('rel', str(r))
+                        entry.newProp('rel', str(r))
 
     
     for file in rpmObj.usefulFiles():
