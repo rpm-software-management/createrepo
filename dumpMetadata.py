@@ -587,16 +587,17 @@ def otherXML(doc, node, rpmObj):
 def repoXML(node, cmds):
     """generate the repomd.xml file that stores the info on the other files"""
     sumtype = cmds['sumtype']
-    workfiles = [(cmds['otherfile'], 'other',),
-                 (cmds['filelistsfile'], 'filelists'),
-                 (cmds['primaryfile'], 'primary')]
+    workfiles = [(cmds['zotherfile'], 'other', cmds['otherfile']),
+                 (cmds['zfilelistsfile'], 'filelists', cmds['filelistsfile']),
+                 (cmds['zprimaryfile'], 'primary', cmds['primaryfile'])]
+
+    if cmds['zgroupfile'] is not None:
+        workfiles.append((cmds['zgroupfile'], 'group', cmds['groupfile']))
     
-    if cmds['groupfile'] is not None:
-        workfiles.append((cmds['groupfile'], 'group'))
-    
-    for (file, ftype) in workfiles:
+    for (file, ftype, un) in workfiles:
         csum = getChecksum(sumtype, os.path.join(cmds['tempdir'], file))
         timestamp = os.stat(os.path.join(cmds['tempdir'], file))[8]
+        uncsum = getChecksum(sumtype, os.path.join(cmds['tempdir'], un))
         data = node.newChild(None, 'data', None)
         data.newProp('type', ftype)
         location = data.newChild(None, 'location', None)
@@ -606,4 +607,6 @@ def repoXML(node, cmds):
         checksum = data.newChild(None, 'checksum', csum)
         checksum.newProp('type', sumtype)
         timestamp = data.newChild(None, 'timestamp', str(timestamp))
-            
+        unchecksum = data.newChild(None, 'uncompressed-checksum', uncsum)
+        unchecksum.newProp('type', sumtype)
+        
