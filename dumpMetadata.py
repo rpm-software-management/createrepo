@@ -338,7 +338,14 @@ class RpmMetaData:
         return u
 
     def tagByName(self, tag):
-        return self.hdr[tag]
+        data = self.hdr[tag]
+        if type(data) is types.ListType:
+            if len(data) > 0:
+                return data[0]
+            else:
+                return ''
+        else:
+            return data
     
     def listTagByName(self, tag):
         """take a tag that should be a list and make sure it is one"""
@@ -456,7 +463,7 @@ class RpmMetaData:
         return lst
     
     
-def generateXML(doc, node, rpmObj, sumtype):
+def generateXML(doc, node, formatns, rpmObj, sumtype):
     """takes an xml doc object and a package metadata entry node, populates a 
        package node with the md information"""
     ns = node.ns()
@@ -490,8 +497,9 @@ def generateXML(doc, node, rpmObj, sumtype):
     if rpmObj.localurl is not None:
         location.newProp('xml:base', rpmObj.localurl)
     location.newProp('href', rpmObj.relativepath)
-    format = pkgNode.newChild(None, 'format', None)
-    formatns = format.newNs('http://linux.duke.edu/metadata/rpm', 'rpm')
+    format = pkgNode.newChild(ns, 'format', None)
+    #formatns = format.newNs('http://linux.duke.edu/metadata/rpm', 'rpm')
+    #format.setNs(ns)
     for tag in ['license', 'vendor', 'group', 'buildhost', 'sourcerpm']:
         value = rpmObj.tagByName(tag)
         value = utf8String(value)

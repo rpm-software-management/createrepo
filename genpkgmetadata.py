@@ -231,11 +231,12 @@ def doPkgMetadata(cmds, ts):
     basedoc = libxml2.newDoc("1.0")
     baseroot =  basedoc.newChild(None, "metadata", None)
     basens = baseroot.newNs('http://linux.duke.edu/metadata/common', None)
+    formatns = baseroot.newNs('http://linux.duke.edu/metadata/rpm', 'rpm')
     baseroot.setNs(basens)
     basefilepath = os.path.join(cmds['tempdir'], cmds['primaryfile'])
     basefile = _gzipOpen(basefilepath, 'w')
     basefile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-    basefile.write('<metadata xmlns="http://linux.duke.edu/metadata/common" packages="%s">\n' % 
+    basefile.write('<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="%s">\n' % 
                    pkgcount)
 
     # setup the file list doc
@@ -279,7 +280,7 @@ def doPkgMetadata(cmds, ts):
             continue
         else:
             try:
-                node = dumpMetadata.generateXML(basedoc, baseroot, mdobj, cmds['sumtype'])
+                node = dumpMetadata.generateXML(basedoc, baseroot, formatns, mdobj, cmds['sumtype'])
             except dumpMetadata.MDError, e:
                 errorprint(_('\nAn error occurred creating primary metadata: %s') % e)
                 continue
