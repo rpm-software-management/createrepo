@@ -1,2 +1,2 @@
 #!/bin/sh
-exec /usr/share/createrepo/genpkgmetadata.py $*
+exec /usr/share/createrepo/genpkgmetadata.py "$@"
