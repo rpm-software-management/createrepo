@@ -170,6 +170,12 @@ def parseArgs(args):
     except getopt.error, e:
         errorprint(_('Options Error: %s.') % e)
         usage()
+    # make sure our dir makes sense before we continue
+    if len(argsleft) != 1:
+        errorprint(_('Error: Only one directory allowed per run.'))
+        usage()
+    else:
+        directory = argsleft[0]
    
     try: 
         for arg,a in gopts:
@@ -193,7 +199,7 @@ def parseArgs(args):
                     errorprint(_('Error: Only one groupfile allowed.'))
                     usage()
                 else:
-                    if os.path.exists(a):
+                    if os.path.exists(directory + '/' + a):
                         cmds['groupfile'] = a
                     else:
                         errorprint(_('Error: groupfile %s cannot be found.' % a))
@@ -213,11 +219,6 @@ def parseArgs(args):
         errorprint(_('Options Error: %s') % e)
         usage()
 
-    if len(argsleft) != 1:
-        errorprint(_('Error: Only one directory allowed per run.'))
-        usage()
-    else:
-        directory = argsleft[0]
         
     return cmds, directory
 
@@ -370,6 +371,7 @@ def doRepoMetadata(cmds):
 
 def main(args):
     cmds, directory = parseArgs(args)
+    
     #setup some defaults
     cmds['primaryfile'] = 'primary.xml.gz'
     cmds['filelistsfile'] = 'filelists.xml.gz'
