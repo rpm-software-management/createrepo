@@ -134,6 +134,7 @@ dailyfiles:
 	$(srcdir)/*.py \
 	$(srcdir)/Makefile \
 	$(srcdir)/ChangeLog \
+	$(srcdir)/README \
 	$(srcdir)/$(PACKAGE).spec
 	$(top_srcdir)/.disttmp/$$distdir
 	for subdir in $(SUBDIRS) ; do \
@@ -146,6 +147,7 @@ distfiles:
 	$(srcdir)/*.py \
 	$(srcdir)/Makefile \
 	$(srcdir)/ChangeLog \
+	$(srcdir)/README \
 	$(srcdir)/$(PACKAGE).spec \
 	$(top_srcdir)/.disttmp/$$distdir
 	for subdir in $(SUBDIRS) ; do \

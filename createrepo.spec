@@ -28,7 +28,7 @@ rpm packages
 %files
 %defattr(-, root, root)
 %dir %{_datadir}/%{name}
-%doc ChangeLog
+%doc ChangeLog README
 %{_datadir}/%{name}/*
 %{_bindir}/%{name}
 
