@@ -135,7 +135,7 @@ dailyfiles:
 	$(srcdir)/Makefile \
 	$(srcdir)/ChangeLog \
 	$(srcdir)/README \
-	$(srcdir)/$(PACKAGE).spec
+	$(srcdir)/$(PACKAGE).spec \
 	$(top_srcdir)/.disttmp/$$distdir
 	for subdir in $(SUBDIRS) ; do \
 	  $(MAKE) -C $$subdir dailyfiles VERSION=$(VERSION) PACKAGE=$(PACKAGE); \
