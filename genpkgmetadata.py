@@ -220,6 +220,12 @@ def parseArgs(args):
 
 def doPkgMetadata(cmds, ts):
     """all the heavy lifting for the package metadata"""
+
+    # rpms we're going to be dealing with
+    files = []
+    files = getFileList('./', '.rpm', files)
+    files = trimRpms(files, cmds['excludes'])
+    pkgcount = len(files)
     
     # setup the base metadata doc
     basedoc = libxml2.newDoc("1.0")
@@ -229,7 +235,8 @@ def doPkgMetadata(cmds, ts):
     basefilepath = os.path.join(cmds['tempdir'], cmds['primaryfile'])
     basefile = _gzipOpen(basefilepath, 'w')
     basefile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-    basefile.write('<metadata xmlns="http://linux.duke.edu/metadata/common">\n')
+    basefile.write('<metadata xmlns="http://linux.duke.edu/metadata/common" packages="%s">\n' % 
+                   pkgcount)
 
     # setup the file list doc
     filesdoc = libxml2.newDoc("1.0")
@@ -239,7 +246,8 @@ def doPkgMetadata(cmds, ts):
     filelistpath = os.path.join(cmds['tempdir'], cmds['filelistsfile'])
     flfile = _gzipOpen(filelistpath, 'w')    
     flfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-    flfile.write('<filelists xmlns="http://linux.duke.edu/metadata/filelists">\n')
+    flfile.write('<filelists xmlns="http://linux.duke.edu/metadata/filelists" packages="%s">\n' % 
+                   pkgcount)
     
     
     # setup the other doc
@@ -250,11 +258,9 @@ def doPkgMetadata(cmds, ts):
     otherfilepath = os.path.join(cmds['tempdir'], cmds['otherfile'])
     otherfile = _gzipOpen(otherfilepath, 'w')
     otherfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-    otherfile.write('<otherdata xmlns="http://linux.duke.edu/metadata/other">\n')
+    otherfile.write('<otherdata xmlns="http://linux.duke.edu/metadata/other" packages="%s">\n' % 
+                   pkgcount)
     
-    files = []
-    files = getFileList('./', '.rpm', files)
-    files = trimRpms(files, cmds['excludes'])
     
     current = 0
     for file in files:
