@@ -48,8 +48,6 @@ def usage():
     
     Options:
      -u, --baseurl = optional base url location for all files
-     -g, --groupfile = optional groups xml file for this repository
-                       this should be relative to the 'directory-of-packages'
      -x, --exclude = files globs to exclude, can be specified multiple times
      -q, --quiet = run quietly
      -v, --verbose = run verbosely
@@ -100,6 +98,29 @@ def trimRpms(rpms, excludeGlobs):
     # print 'Post-Trim Len: %d' % len(rpms)
     return rpms
 
+def checkAndMakeDir(dir):
+    """check out the dir and make it, if possible, return 1 if done, else return 0"""
+    if os.path.exists(dir):
+        if not os.path.isdir(dir):
+            errorprint(_('%s is not a dir') % dir)
+            result = 0
+        else:
+            if not os.access(dir, os.W_OK):
+                errorprint(_('%s is not writable') % dir)
+                result = 0
+            else:
+                result = 1
+    else:
+        try:
+            os.mkdir(dir)
+        except OSError, e:
+            errorprint(_('Error creating dir %s: %s') % (dir, e))
+            result = 0
+        else:
+            result = 1
+    return result
+
+
 # this is done to make the hdr writing _more_ sane for rsync users especially
 __all__ = ["GzipFile","open"]
 
@@ -137,6 +158,7 @@ def parseArgs(args):
     cmds['groupfile'] = None
     cmds['sumtype'] = 'md5'
 
+
     try:
         gopts, argsleft = getopt.getopt(args, 'hqVvg:s:x:u:', ['help', 'exclude', 
                                                               'quiet', 'verbose', 
@@ -163,12 +185,12 @@ def parseArgs(args):
                     usage()
                 else:
                     cmds['baseurl'] = a
-            elif arg in ['-g', '--groupfile']:
-                if cmds['groupfile'] is not None:
-                    errorprint(_('Error: Only one groupfile allowed.'))
-                    usage()
-                else:
-                    cmds['groupfile'] = a
+#            elif arg in ['-g', '--groupfile']:
+#                if cmds['groupfile'] is not None:
+#                    errorprint(_('Error: Only one groupfile allowed.'))
+#                    usage()
+#                else:
+#                    cmds['groupfile'] = a
                     
             elif arg in ['-x', '--exclude']:
                 cmds['excludes'].append(a)
@@ -199,7 +221,8 @@ def doPkgMetadata(cmds, ts):
     baseroot =  basedoc.newChild(None, "metadata", None)
     basens = baseroot.newNs('http://linux.duke.edu/metadata/common', None)
     baseroot.setNs(basens)
-    basefile = _gzipOpen('.primary.xml.gz', 'w')
+    basefilepath = os.path.join(cmds['tempdir'], cmds['primaryfile'])
+    basefile = _gzipOpen(basefilepath, 'w')
     basefile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
     basefile.write('<metadata xmlns="http://linux.duke.edu/metadata/common">\n')
 
@@ -208,7 +231,8 @@ def doPkgMetadata(cmds, ts):
     filesroot = filesdoc.newChild(None, "filelists", None)
     filesns = filesroot.newNs('http://linux.duke.edu/metadata/filelists', None)
     filesroot.setNs(filesns)
-    flfile = _gzipOpen('.filelists.xml.gz', 'w')    
+    filelistpath = os.path.join(cmds['tempdir'], cmds['filelistsfile'])
+    flfile = _gzipOpen(filelistpath, 'w')    
     flfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
     flfile.write('<filelists xmlns="http://linux.duke.edu/metadata/filelists">\n')
     
@@ -218,7 +242,8 @@ def doPkgMetadata(cmds, ts):
     otherroot = otherdoc.newChild(None, "otherdata", None)
     otherns = otherroot.newNs('http://linux.duke.edu/metadata/other', None)
     otherroot.setNs(otherns)
-    otherfile = _gzipOpen('.other.xml.gz', 'w')
+    otherfilepath = os.path.join(cmds['tempdir'], cmds['otherfile'])
+    otherfile = _gzipOpen(otherfilepath, 'w')
     otherfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
     otherfile.write('<otherdata xmlns="http://linux.duke.edu/metadata/other">\n')
     
@@ -303,19 +328,6 @@ def doPkgMetadata(cmds, ts):
     otherfile.write('\n</otherdata>')
     otherfile.close()
     otherdoc.freeDoc()
-    
-    # move them to their final locations
-    for (tmp, dest) in [('.other.xml.gz', cmds['otherfile']), 
-                        ('.primary.xml.gz', cmds['primaryfile']), 
-                        ('.filelists.xml.gz', cmds['filelistsfile'])]:
-        try:
-            os.rename(tmp, dest)
-        except OSError, e:
-            errorprint(_('Error finishing file %s: %s') % (dest, e))
-            errorprint(_('Exiting.'))
-            os.unlink(tmp)
-            sys.exit(1)
-   
 
 def doRepoMetadata(cmds):
     """wrapper to generate the repomd.xml file that stores the info on the other files"""
@@ -323,6 +335,8 @@ def doRepoMetadata(cmds):
     reporoot = repodoc.newChild(None, "repomd", None)
     repons = reporoot.newNs('http://linux.duke.edu/metadata/repo', None)
     reporoot.setNs(repons)
+    repofilepath = os.path.join(cmds['tempdir'], cmds['repomdfile'])
+    
     try:
         dumpMetadata.repoXML(reporoot, cmds)
     except dumpMetadata.MDError, e:
@@ -330,20 +344,12 @@ def doRepoMetadata(cmds):
         sys.exit(1)
         
     try:        
-        repodoc.saveFormatFileEnc('.repomd.xml.gz', 'UTF-8', 1)
+        repodoc.saveFormatFileEnc(repofilepath, 'UTF-8', 1)
     except:
-        errorprint(_('Error saving temp file for rep xml'))
+        errorprint(_('Error saving temp file for rep xml: %s') % repofilepath)
         sys.exit(1)
         
-    try:
-        os.rename('.repomd.xml.gz', cmds['repomdfile'])
-    except OSError, e:
-        errorprint(_('Error finishing file %s: %s') % (cmds['repomdfile'], e))
-        errorprint(_('Exiting.'))
-        os.unlink('.repomd.xml.gz')
-        sys.exit(1)
-    else:
-        del repodoc
+    del repodoc
         
    
 
@@ -354,40 +360,56 @@ def main(args):
     cmds['filelistsfile'] = 'filelists.xml.gz'
     cmds['otherfile'] = 'other.xml.gz'
     cmds['repomdfile'] = 'repomd.xml'
+    cmds['tempdir'] = '.repodata'
+    cmds['finaldir'] = 'repodata'
+    cmds['olddir'] = '.olddata'
     
     # save where we are right now
     curdir = os.getcwd()
     # start the sanity/stupidity checks
     if not os.path.exists(directory):
         errorprint(_('Directory must exist'))
-        usage()
+        sys.exit(1)
+        
     if not os.path.isdir(directory):
         errorprint(_('Directory of packages must be a directory.'))
-        usage()
+        sys.exit(1)
+        
     if not os.access(directory, os.W_OK):
         errorprint(_('Directory must be writable.'))
-        usage()
+        sys.exit(1)
+
+ 
+    if not checkAndMakeDir(os.path.join(directory, cmds['tempdir'])):
+        sys.exit(1)
+        
+    if not checkAndMakeDir(os.path.join(directory, cmds['finaldir'])):
+        sys.exit(1)
+        
+    if os.path.exists(os.path.join(directory, cmds['olddir'])):
+        errorprint(_('Old data directory exists, please remove: %s') % cmds['olddir'])
+        sys.exit(1)
+        
     # check out the group file if specified
-    if cmds['groupfile'] is not None:
-        grpfile = os.path.join(directory, cmds['groupfile'])
-        if not os.access(grpfile, os.R_OK):
-            errorprint(_('Groupfile %s must exist and be readable') % grpfile)
-            usage()
+#    if cmds['groupfile'] is not None:
+#        grpfile = os.path.join(directory, cmds['groupfile'])
+#        if not os.access(grpfile, os.R_OK):
+#            errorprint(_('Groupfile %s must exist and be readable') % grpfile)
+#            usage()
+
+    # change to the basedir to work from w/i the path - for relative url paths
+    os.chdir(directory)
+
     # make sure we can write to where we want to write to:
+    for direc in ['tempdir', 'finaldir']:
         for file in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile']:
-            filepath = os.path.join(directory, cmds[file])
-            dirpath = os.path.dirname(filepath)
+            filepath = os.path.join(cmds[direc], cmds[file])
             if os.path.exists(filepath):
                 if not os.access(filepath, os.W_OK):
                     errorprint(_('error in must be able to write to metadata files:\n  -> %s') % filepath)
-                    usage()
-            else:                
-                if not os.access(dirpath, os.W_OK):
-                    errorprint(_('must be able to write to path for metadata files:\n  -> %s') % dirpath)
+                    os.chdir(curdir)
                     usage()
                     
-    # change to the basedir to work from w/i the path - for relative url paths
-    os.chdir(directory)
     ts = rpm.TransactionSet()
     try:
         doPkgMetadata(cmds, ts)
@@ -401,6 +423,45 @@ def main(args):
     except:
         os.chdir(curdir)
         raise
+        
+    if os.path.exists(cmds['finaldir']):
+        try:
+            os.rename(cmds['finaldir'], cmds['olddir'])
+        except:
+            errorprint(_('Error moving final to old dir'))
+            os.chdir(curdir)
+            sys.exit(1)
+        
+    try:
+        os.rename(cmds['tempdir'], cmds['finaldir'])
+    except:
+        errorprint(_('Error moving final metadata into place'))
+        # put the old stuff back
+        os.rename(cmds['olddir'], cmds['finaldir'])
+        os.chdir(curdir)
+        sys.exit(1)
+        
+
+    for file in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile']:
+        oldfile = os.path.join(cmds['olddir'], cmds[file])
+        if os.path.exists(oldfile):
+            try:
+                os.remove(oldfile)
+            except OSError, e:
+                errorprint(_('Could not remove old metadata file: %s') % oldfile)
+                errorprint(_('Error was %s') % e)
+                os.chdir(curdir)
+                sys.exit(1)
+    try:
+        os.rmdir(cmds['olddir'])
+    except OSError, e:
+        errorprint(_('Could not remove old metadata dir: %s') % cmds['olddir'])
+        errorprint(_('Error was %s') % e)
+        os.chdir(curdir)
+        sys.exit(1)
+        
+            
+        
     # take us home mr. data
     os.chdir(curdir)
         
