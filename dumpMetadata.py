@@ -580,7 +580,7 @@ def otherXML(doc, node, rpmObj):
         clog.newProp('author', utf8String(name))
         clog.newProp('date', str(time))
 
-def repoXML(doc, node, cmds):
+def repoXML(node, cmds):
     """generate the repomd.xml file that stores the info on the other files"""
     sumtype = cmds['sumtype']
     workfiles = [(cmds['otherfile'], 'other',),
