@@ -170,9 +170,9 @@ def parseArgs(args):
    
     try: 
         for arg,a in gopts:
-            if arg == '-v':
+            if arg in ['-v', '--verbose']:
                 cmds['verbose'] = 1
-            elif arg == "-q":
+            elif arg in ["-q", '--quiet']:
                 cmds['quiet'] = 1
             elif arg in ['-u', '--baseurl']:
                 if cmds['baseurl'] is not None:

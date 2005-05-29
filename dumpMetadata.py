@@ -74,7 +74,7 @@ def returnHdr(ts, package):
             fdno = package # let's assume this is an fdno and go with it :)
     except OSError:
         raise MDError, "Error opening file"
-    ts.setVSFlags(~(rpm.RPMVSF_NOMD5|rpm.RPMVSF_NEEDPAYLOAD))
+    ts.setVSFlags((rpm.RPMVSF_NOMD5|rpm.RPMVSF_NEEDPAYLOAD))
     try:
         hdr = ts.hdrFromFdno(fdno)
     except rpm.error:
@@ -102,7 +102,7 @@ def getChecksum(sumtype, file, CHUNK=2**16):
             fo = file # assume it's a file-like-object
         else:
             opened_here = 1
-            fo = open(file, 'r', CHUNK)
+            fo = open(file, 'rb', CHUNK)
             
         if sumtype == 'md5':
             sum = md5.new()
@@ -226,7 +226,7 @@ class RpmMetaData:
         fd = returnFD(filename)
         self.hdr = returnHdr(ts, fd)
         os.lseek(fd, 0, 0)
-        fo = os.fdopen(fd)
+        fo = os.fdopen(fd, 'rb')
         self.pkgid = getChecksum(sumtype, fo)
         fo.seek(0)
         (self.rangestart, self.rangeend) = byteranges(fo)
