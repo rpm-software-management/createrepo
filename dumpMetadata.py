@@ -212,7 +212,7 @@ class RpmMetaData:
     """each rpm is one object, you pass it an rpm file
        it opens the file, and pulls the information out in bite-sized chunks :)
     """
-    def __init__(self, ts, filename, url, sumtype):
+    def __init__(self, ts, filename, options):
         try:
             stats = os.stat(filename)
             self.size = stats[6]
@@ -221,13 +221,14 @@ class RpmMetaData:
         except OSError, e:
             raise MDError, "Error Stat'ing file %s" % filename
         
-        self.localurl = url
+        self.options = options
+        self.localurl = options['baseurl']
         self.relativepath = filename
         fd = returnFD(filename)
         self.hdr = returnHdr(ts, fd)
         os.lseek(fd, 0, 0)
         fo = os.fdopen(fd, 'rb')
-        self.pkgid = getChecksum(sumtype, fo)
+        self.pkgid = self.doChecksumCache(fo)
         fo.seek(0)
         (self.rangestart, self.rangeend) = byteranges(fo)
         fo.close()
@@ -235,8 +236,10 @@ class RpmMetaData:
         del fd
         
         # setup our regex objects
-        fileglobs = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
-        dirglobs = ['.*bin\/.*', '^\/etc\/.*']
+        fileglobs = options['file-pattern-match']
+        #['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
+        dirglobs = options['dir-pattern-match']
+        #['.*bin\/.*', '^\/etc\/.*']
         self.dirrc = []
         self.filerc = []
         for glob in fileglobs:
@@ -548,6 +551,33 @@ class RpmMetaData:
             lst = zip(names, times, texts)
         return lst
     
+    def doChecksumCache(self, fo):
+        """return a checksum for a package:
+           - check if the checksum cache is enabled
+              if not - return the checksum
+              if so - check to see if it has a cache file
+                if so, open it and return the first line's contents
+                if not, grab the checksum and write it to a file for this pkg
+            """
+        if not self.options['cache']:
+            return getChecksum(self.options['sumtype'], fo)
+        
+        csumtag = '%s-%s' % (self.hdr['name'] , self.hdr['hdrid'])
+        csumfile = '%s/%s' % (self.options['cachedir'], csumtag)
+        if os.path.exists(csumfile):
+            csumo = open(csumfile, 'r')
+            checksum = csumo.readline()
+            csumo.close()
+            
+        else:
+            checksum = getChecksum(self.options['sumtype'], fo)
+            csumo = open(csumfile, 'w')
+            csumo.write(checksum)
+            csumo.close()
+            
+        return checksum
+
+
     
 def generateXML(doc, node, formatns, rpmObj, sumtype):
     """takes an xml doc object and a package metadata entry node, populates a 

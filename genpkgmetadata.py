@@ -49,7 +49,7 @@ def usage(retval=1):
      -q, --quiet = run quietly
      -g, --groupfile <filename> to point to for group information (precreated)
      -v, --verbose = run verbosely
-     -s, --checksum = md5 or sha - select type of checksum to use (default: sha)
+     -c, --cachedir <dir> = specify which dir to use for the checksum cache
      -h, --help = show this help
      -V, --version = output version
      -p, --pretty = output xml files in pretty format.
@@ -102,21 +102,21 @@ def checkAndMakeDir(dir):
     if os.path.exists(dir):
         if not os.path.isdir(dir):
             errorprint(_('%s is not a dir') % dir)
-            result = 0
+            result = False
         else:
             if not os.access(dir, os.W_OK):
                 errorprint(_('%s is not writable') % dir)
-                result = 0
+                result = False
             else:
-                result = 1
+                result = True
     else:
         try:
             os.mkdir(dir)
         except OSError, e:
             errorprint(_('Error creating dir %s: %s') % (dir, e))
-            result = 0
+            result = False
         else:
-            result = 1
+            result = True
     return result
 
 
@@ -134,12 +134,14 @@ def parseArgs(args):
     cmds['sumtype'] = 'sha'
     cmds['pretty'] = 0
 #    cmds['updategroupsonly'] = 0
+    cmds['cachedir'] = None
+    cmds['cache'] = False
     cmds['file-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
     cmds['dir-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*']
 
     try:
-        gopts, argsleft = getopt.getopt(args, 'phqVvg:s:x:u:', ['help', 'exclude=', 
-                                            'quiet', 'verbose',
+        gopts, argsleft = getopt.getopt(args, 'phqVvg:s:x:u:c:', ['help', 'exclude=', 
+                                            'quiet', 'verbose', 'cachedir=',
                                             'baseurl=', 'groupfile=', 'checksum=',
                                             'version', 'pretty'])
     except getopt.error, e:
@@ -197,12 +199,14 @@ def parseArgs(args):
 #            elif arg in ['--update-groups-only']:
 #                cmds['updategroupsonly'] = 1
             elif arg in ['-s', '--checksum']:
-                if a not in ['md5', 'sha']:
-                    errorprint(_('Error: checksums are: md5 or sha.'))
+                errorprint(_('This option is deprecated'))
+            elif arg in ['-c', '--cachedir']:
+                cmds['cache'] = True
+                cmds['cachedir'] = a
+                if not checkAndMakeDir(a):
+                    errorprint(_('Error: cannot open/write to cache dir %s' % a))
                     usage()
-                else:
-                    cmds['sumtype'] = a
-    
+                    
     except ValueError, e:
         errorprint(_('Options Error: %s') % e)
         usage()
@@ -259,7 +263,7 @@ def doPkgMetadata(cmds, ts):
     for file in files:
         current+=1
         try:
-            mdobj = dumpMetadata.RpmMetaData(ts, file, cmds['baseurl'], cmds['sumtype'])
+            mdobj = dumpMetadata.RpmMetaData(ts, file, cmds)
             if not cmds['quiet']:
                 if cmds['verbose']:
                     print '%d/%d - %s' % (current, len(files), file)
