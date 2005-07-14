@@ -24,10 +24,12 @@ A precreated xml filename to point to for group information.
 See examples section below for further explanation.
 .IP "\fB\-v --verbose\fP"
 Run verbosely.
-.IP "\fB\-s --checksum\fP <type>"
-Select type of checksum to use (md5 or sha).
+.IP "\fB\-c --cachedir\fP <path>"
+Specify a directory to use as a cachedir. This allows createrepo to create a
+cache of checksums of packages in the repository. In consecutive runs of
+createrepo over the same repository of files that do not have a complete
+change out of all packages this decreases the processing time dramatically.
 .br
-Default: sha
 .IP "\fB\-p --pretty\fP"
 Output xml files in pretty format.
 .IP "\fB\-V --version\fP"
