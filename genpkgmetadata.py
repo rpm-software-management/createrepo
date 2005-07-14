@@ -30,7 +30,7 @@ import fnmatch
 
 import dumpMetadata
 from dumpMetadata import _gzipOpen
-__version__ = '0.4.2'
+__version__ = '0.4.3'
 
 def errorprint(stuff):
     print >> sys.stderr, stuff

@@ -1,6 +1,6 @@
 Summary: Creates a common metadata repository
 Name: createrepo
-Version: 0.4.2
+Version: 0.4.3
 Release: 1
 License: GPL
 Group: System Environment/Base
@@ -34,6 +34,10 @@ rpm packages
 %{_mandir}/man8/createrepo.8*
 
 %changelog
+* Thu Jul 14 2005 Seth Vidal <skvidal@phy.duke.edu>
+- enable caching option
+- 0.4.3
+
 * Tue Jan 18 2005 Seth Vidal <skvidal@phy.duke.edu>
 - add man page
 
