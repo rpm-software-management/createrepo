@@ -48,6 +48,7 @@ def usage(retval=1):
      -x, --exclude = files globs to exclude, can be specified multiple times
      -q, --quiet = run quietly
      -g, --groupfile <filename> to point to for group information (precreated)
+                    (<filename> relative to directory-of-packages)
      -v, --verbose = run verbosely
      -c, --cachedir <dir> = specify which dir to use for the checksum cache
      -h, --help = show this help
