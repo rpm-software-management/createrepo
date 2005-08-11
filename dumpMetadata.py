@@ -74,7 +74,7 @@ def returnHdr(ts, package):
             fdno = package # let's assume this is an fdno and go with it :)
     except OSError:
         raise MDError, "Error opening file"
-    ts.setVSFlags((rpm.RPMVSF_NOMD5|rpm.RPMVSF_NEEDPAYLOAD))
+    ts.setVSFlags((rpm._RPMVSF_NOSIGNATURES|rpm.RPMVSF_NOMD5|rpm.RPMVSF_NEEDPAYLOAD))
     try:
         hdr = ts.hdrFromFdno(fdno)
     except rpm.error:
