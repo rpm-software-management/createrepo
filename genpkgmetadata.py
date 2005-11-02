@@ -203,6 +203,8 @@ def parseArgs(args):
                 errorprint(_('This option is deprecated'))
             elif arg in ['-c', '--cachedir']:
                 cmds['cache'] = True
+                if not os.path.isabs(a):
+                   a = os.path.join(os.getcwd(), a)
                 cmds['cachedir'] = a
                 if not checkAndMakeDir(a):
                     errorprint(_('Error: cannot open/write to cache dir %s' % a))

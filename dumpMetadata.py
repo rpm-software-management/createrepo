@@ -562,7 +562,7 @@ class RpmMetaData:
         if not self.options['cache']:
             return getChecksum(self.options['sumtype'], fo)
         
-        csumtag = '%s-%s' % (self.hdr['name'] , self.hdr['hdrid'])
+        csumtag = '%s-%s' % (self.hdr['name'] , self.hdr[rpm.RPMTAG_SHA1HEADER])
         csumfile = '%s/%s' % (self.options['cachedir'], csumtag)
         if os.path.exists(csumfile):
             csumo = open(csumfile, 'r')
