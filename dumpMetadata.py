@@ -212,19 +212,18 @@ class RpmMetaData:
     """each rpm is one object, you pass it an rpm file
        it opens the file, and pulls the information out in bite-sized chunks :)
     """
-    def __init__(self, ts, filename, options):
+    def __init__(self, ts, basedir, filename, options):
         try:
-            stats = os.stat(filename)
+            stats = os.stat(os.path.join(basedir, filename))
             self.size = stats[6]
             self.mtime = stats[8]
             del stats
         except OSError, e:
-            raise MDError, "Error Stat'ing file %s" % filename
-        
+            raise MDError, "Error Stat'ing file %s %s" % (basedir, filename)
         self.options = options
         self.localurl = options['baseurl']
         self.relativepath = filename
-        fd = returnFD(filename)
+        fd = returnFD(os.path.join(basedir, filename))
         self.hdr = returnHdr(ts, fd)
         os.lseek(fd, 0, 0)
         fo = os.fdopen(fd, 'rb')
@@ -258,7 +257,7 @@ class RpmMetaData:
             return 'src'
         else:
             return self.tagByName('arch')
-            
+
     def _correctFlags(self, flags):
         returnflags=[]
         if flags is None:
@@ -737,11 +736,11 @@ def repoXML(node, cmds):
     
     
     for (file, ftype) in workfiles:
-        zfo = _gzipOpen(os.path.join(cmds['tempdir'], file))
+        zfo = _gzipOpen(os.path.join(cmds['basedir'], cmds['tempdir'], file))
         uncsum = getChecksum(sumtype, zfo)
         zfo.close()
-        csum = getChecksum(sumtype, os.path.join(cmds['tempdir'], file))
-        timestamp = os.stat(os.path.join(cmds['tempdir'], file))[8]
+        csum = getChecksum(sumtype, os.path.join(cmds['basedir'], cmds['tempdir'], file))
+        timestamp = os.stat(os.path.join(cmds['basedir'], cmds['tempdir'], file))[8]
         data = node.newChild(None, 'data', None)
         data.newProp('type', ftype)
         location = data.newChild(None, 'location', None)
@@ -760,7 +759,7 @@ def repoXML(node, cmds):
         timestamp = os.stat(grpfile)[8]
         sfile = os.path.basename(grpfile)
         fo = open(grpfile, 'r')
-        output = open(os.path.join(cmds['tempdir'], sfile), 'w')
+        output = open(os.path.join(cmds['basedir'], cmds['tempdir'], sfile), 'w')
         output.write(fo.read())
         output.close()
         fo.seek(0)

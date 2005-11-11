@@ -38,11 +38,11 @@ def errorprint(stuff):
 def _(args):
     """Stub function for translation"""
     return args
-    
+
 def usage(retval=1):
     print _("""
     createrepo [options] directory-of-packages
-    
+
     Options:
      -u, --baseurl = optional base url location for all files
      -x, --exclude = files globs to exclude, can be specified multiple times
@@ -54,30 +54,35 @@ def usage(retval=1):
      -h, --help = show this help
      -V, --version = output version
      -p, --pretty = output xml files in pretty format.
-    """) 
+    """)
 
     sys.exit(retval)
 
 
-def getFileList(path, ext, filelist):
+def getFileList(basepath, path, ext, filelist):
     """Return all files in path matching ext, store them in filelist, recurse dirs
        return list object"""
-    
+
     extlen = len(ext)
+    totalpath = os.path.normpath(os.path.join(basepath, path))
     try:
-        dir_list = os.listdir(path)
+        dir_list = os.listdir(totalpath)
     except OSError, e:
-        errorprint(_('Error accessing directory %s, %s') % (path, e))
+        errorprint(_('Error accessing directory %s, %s') % (totalpath, e))
         sys.exit(1)
-        
+
     for d in dir_list:
-        if os.path.isdir(path + '/' + d):
-            filelist = getFileList(path + '/' + d, ext, filelist)
+        if os.path.isdir(totalpath + '/' + d):
+            filelist = getFileList(basepath, os.path.join(path, d), ext, filelist)
         else:
             if string.lower(d[-extlen:]) == '%s' % (ext):
-               newpath = os.path.normpath(path + '/' + d)
-               filelist.append(newpath)
-                    
+                if totalpath.find(basepath) == 0:
+                    relativepath = totalpath.replace(basepath, "", 1)
+                    relativepath = relativepath.lstrip("/")
+                    filelist.append(os.path.join(relativepath, d))
+                else:
+                    raise "basepath '%s' not found in path '%s'" % (basepath, totalpath)
+
     return filelist
 
 
@@ -92,7 +97,7 @@ def trimRpms(rpms, excludeGlobs):
                     badrpms.append(file)
     for file in badrpms:
         if file in rpms:
-            rpms.remove(file)            
+            rpms.remove(file)
     # print 'Post-Trim Len: %d' % len(rpms)
     return rpms
 
@@ -136,20 +141,21 @@ def parseArgs(args):
     cmds['pretty'] = 0
 #    cmds['updategroupsonly'] = 0
     cmds['cachedir'] = None
+    cmds['basedir'] = os.getcwd()
     cmds['cache'] = False
     cmds['file-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
     cmds['dir-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*']
 
     try:
-        gopts, argsleft = getopt.getopt(args, 'phqVvg:s:x:u:c:', ['help', 'exclude=', 
-                                            'quiet', 'verbose', 'cachedir=',
-                                            'baseurl=', 'groupfile=', 'checksum=',
-                                            'version', 'pretty'])
+        gopts, argsleft = getopt.getopt(args, 'phqVvg:s:x:u:c:', ['help', 'exclude=',
+                                                                  'quiet', 'verbose', 'cachedir=', 'basedir=',
+                                                                  'baseurl=', 'groupfile=', 'checksum=',
+                                                                  'version', 'pretty'])
     except getopt.error, e:
         errorprint(_('Options Error: %s.') % e)
         usage()
 
-    try: 
+    try:
         for arg,a in gopts:
             if arg in ['-h','--help']:
                 usage(retval=0)
@@ -159,7 +165,7 @@ def parseArgs(args):
     except ValueError, e:
         errorprint(_('Options Error: %s') % e)
         usage()
-    
+
 
     # make sure our dir makes sense before we continue
     if len(argsleft) > 1:
@@ -170,8 +176,8 @@ def parseArgs(args):
         usage()
     else:
         directory = argsleft[0]
-   
-    try: 
+
+    try:
         for arg,a in gopts:
             if arg in ['-v', '--verbose']:
                 cmds['verbose'] = 1
@@ -188,7 +194,7 @@ def parseArgs(args):
                     errorprint(_('Error: Only one groupfile allowed.'))
                     usage()
                 else:
-                    if os.path.exists(directory + '/' + a):
+                    if os.path.exists(a):
                         cmds['groupfile'] = a
                     else:
                         errorprint(_('Error: groupfile %s cannot be found.' % a))
@@ -209,33 +215,35 @@ def parseArgs(args):
                 if not checkAndMakeDir(a):
                     errorprint(_('Error: cannot open/write to cache dir %s' % a))
                     usage()
+            elif arg == '--basedir':
+                cmds['basedir'] = a
                     
     except ValueError, e:
         errorprint(_('Options Error: %s') % e)
         usage()
 
-        
+
     return cmds, directory
 
-def doPkgMetadata(cmds, ts):
+def doPkgMetadata(directory, cmds, ts):
     """all the heavy lifting for the package metadata"""
 
     # rpms we're going to be dealing with
     files = []
-    files = getFileList('./', '.rpm', files)
+    files = getFileList(cmds['basedir'], directory, '.rpm', files)
     files = trimRpms(files, cmds['excludes'])
     pkgcount = len(files)
-    
+
     # setup the base metadata doc
     basedoc = libxml2.newDoc("1.0")
     baseroot =  basedoc.newChild(None, "metadata", None)
     basens = baseroot.newNs('http://linux.duke.edu/metadata/common', None)
     formatns = baseroot.newNs('http://linux.duke.edu/metadata/rpm', 'rpm')
     baseroot.setNs(basens)
-    basefilepath = os.path.join(cmds['tempdir'], cmds['primaryfile'])
+    basefilepath = os.path.join(cmds['basedir'], cmds['tempdir'], cmds['primaryfile'])
     basefile = _gzipOpen(basefilepath, 'w')
     basefile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-    basefile.write('<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="%s">\n' % 
+    basefile.write('<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="%s">\n' %
                    pkgcount)
 
     # setup the file list doc
@@ -243,30 +251,30 @@ def doPkgMetadata(cmds, ts):
     filesroot = filesdoc.newChild(None, "filelists", None)
     filesns = filesroot.newNs('http://linux.duke.edu/metadata/filelists', None)
     filesroot.setNs(filesns)
-    filelistpath = os.path.join(cmds['tempdir'], cmds['filelistsfile'])
-    flfile = _gzipOpen(filelistpath, 'w')    
+    filelistpath = os.path.join(cmds['basedir'], cmds['tempdir'], cmds['filelistsfile'])
+    flfile = _gzipOpen(filelistpath, 'w')
     flfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-    flfile.write('<filelists xmlns="http://linux.duke.edu/metadata/filelists" packages="%s">\n' % 
+    flfile.write('<filelists xmlns="http://linux.duke.edu/metadata/filelists" packages="%s">\n' %
                    pkgcount)
-    
-    
+
+
     # setup the other doc
     otherdoc = libxml2.newDoc("1.0")
     otherroot = otherdoc.newChild(None, "otherdata", None)
     otherns = otherroot.newNs('http://linux.duke.edu/metadata/other', None)
     otherroot.setNs(otherns)
-    otherfilepath = os.path.join(cmds['tempdir'], cmds['otherfile'])
+    otherfilepath = os.path.join(cmds['basedir'], cmds['tempdir'], cmds['otherfile'])
     otherfile = _gzipOpen(otherfilepath, 'w')
     otherfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-    otherfile.write('<otherdata xmlns="http://linux.duke.edu/metadata/other" packages="%s">\n' % 
+    otherfile.write('<otherdata xmlns="http://linux.duke.edu/metadata/other" packages="%s">\n' %
                    pkgcount)
-    
-    
+
+
     current = 0
     for file in files:
         current+=1
         try:
-            mdobj = dumpMetadata.RpmMetaData(ts, file, cmds)
+            mdobj = dumpMetadata.RpmMetaData(ts, cmds['basedir'], file, cmds)
             if not cmds['quiet']:
                 if cmds['verbose']:
                     print '%d/%d - %s' % (current, len(files), file)
@@ -317,23 +325,23 @@ def doPkgMetadata(cmds, ts):
                 node.freeNode()
                 del node
 
-        
+
     if not cmds['quiet']:
         print ''
-        
+
     # save them up to the tmp locations:
     if not cmds['quiet']:
         print _('Saving Primary metadata')
     basefile.write('\n</metadata>')
     basefile.close()
     basedoc.freeDoc()
-    
+
     if not cmds['quiet']:
         print _('Saving file lists metadata')
     flfile.write('\n</filelists>')
     flfile.close()
     filesdoc.freeDoc()
-    
+
     if not cmds['quiet']:
         print _('Saving other metadata')
     otherfile.write('\n</otherdata>')
@@ -346,27 +354,27 @@ def doRepoMetadata(cmds):
     reporoot = repodoc.newChild(None, "repomd", None)
     repons = reporoot.newNs('http://linux.duke.edu/metadata/repo', None)
     reporoot.setNs(repons)
-    repofilepath = os.path.join(cmds['tempdir'], cmds['repomdfile'])
-    
+    repofilepath = os.path.join(cmds['basedir'], cmds['tempdir'], cmds['repomdfile'])
+
     try:
         dumpMetadata.repoXML(reporoot, cmds)
     except dumpMetadata.MDError, e:
         errorprint(_('Error generating repo xml file: %s') % e)
         sys.exit(1)
-        
-    try:        
+
+    try:
         repodoc.saveFormatFileEnc(repofilepath, 'UTF-8', 1)
     except:
         errorprint(_('Error saving temp file for rep xml: %s') % repofilepath)
         sys.exit(1)
-        
+
     del repodoc
-        
-   
+
+
 
 def main(args):
     cmds, directory = parseArgs(args)
-    
+
     #setup some defaults
     cmds['primaryfile'] = 'primary.xml.gz'
     cmds['filelistsfile'] = 'filelists.xml.gz'
@@ -375,108 +383,84 @@ def main(args):
     cmds['tempdir'] = '.repodata'
     cmds['finaldir'] = 'repodata'
     cmds['olddir'] = '.olddata'
-    
-    # save where we are right now
-    curdir = os.getcwd()
+
     # start the sanity/stupidity checks
-    if not os.path.exists(directory):
+    if not os.path.exists(os.path.join(cmds['basedir'], directory)):
         errorprint(_('Directory must exist'))
         sys.exit(1)
-        
-    if not os.path.isdir(directory):
+
+    if not os.path.isdir(os.path.join(cmds['basedir'], directory)):
         errorprint(_('Directory of packages must be a directory.'))
         sys.exit(1)
-        
-    if not os.access(directory, os.W_OK):
+
+    if not os.access(cmds['basedir'], os.W_OK):
         errorprint(_('Directory must be writable.'))
         sys.exit(1)
 
- 
-    if not checkAndMakeDir(os.path.join(directory, cmds['tempdir'])):
+
+    if not checkAndMakeDir(os.path.join(cmds['basedir'], cmds['tempdir'])):
         sys.exit(1)
-        
-    if not checkAndMakeDir(os.path.join(directory, cmds['finaldir'])):
+
+    if not checkAndMakeDir(os.path.join(cmds['basedir'], cmds['finaldir'])):
         sys.exit(1)
-        
-    if os.path.exists(os.path.join(directory, cmds['olddir'])):
+
+    if os.path.exists(os.path.join(cmds['basedir'], cmds['olddir'])):
         errorprint(_('Old data directory exists, please remove: %s') % cmds['olddir'])
         sys.exit(1)
-        
-    # change to the basedir to work from w/i the path - for relative url paths
-    os.chdir(directory)
 
     # make sure we can write to where we want to write to:
     for direc in ['tempdir', 'finaldir']:
         for file in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile']:
-            filepath = os.path.join(cmds[direc], cmds[file])
+            filepath = os.path.join(cmds['basedir'], cmds[direc], cmds[file])
             if os.path.exists(filepath):
                 if not os.access(filepath, os.W_OK):
                     errorprint(_('error in must be able to write to metadata files:\n  -> %s') % filepath)
-                    os.chdir(curdir)
                     usage()
-                    
+
     ts = rpm.TransactionSet()
-    try:
-        doPkgMetadata(cmds, ts)
-    except:
-        # always clean up your messes
-        os.chdir(curdir)
-        raise
-    
-    try:
-        doRepoMetadata(cmds)
-    except:
-        os.chdir(curdir)
-        raise
-        
-    if os.path.exists(cmds['finaldir']):
+    doPkgMetadata(directory, cmds, ts)
+    doRepoMetadata(cmds)
+
+    if os.path.exists(os.path.join(cmds['basedir'], cmds['finaldir'])):
         try:
-            os.rename(cmds['finaldir'], cmds['olddir'])
+            os.rename(os.path.join(cmds['basedir'], cmds['finaldir']),
+                      os.path.join(cmds['basedir'], cmds['olddir']))
         except:
-            errorprint(_('Error moving final to old dir'))
-            os.chdir(curdir)
+            errorprint(_('Error moving final %s to old dir %s' % (os.path.join(cmds['basedir'], cmds['finaldir']),
+                                                                  os.path.join(cmds['basedir'], cmds['olddir']))))
             sys.exit(1)
-        
+
     try:
-        os.rename(cmds['tempdir'], cmds['finaldir'])
+        os.rename(os.path.join(cmds['basedir'], cmds['tempdir']),
+                  os.path.join(cmds['basedir'], cmds['finaldir']))
     except:
         errorprint(_('Error moving final metadata into place'))
         # put the old stuff back
-        os.rename(cmds['olddir'], cmds['finaldir'])
-        os.chdir(curdir)
+        os.rename(os.path.join(cmds['basedir'], cmds['olddir']),
+                  os.path.join(cmds['basedir'], cmds['finaldir']))
         sys.exit(1)
-        
+
     for file in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile', 'groupfile']:
         if cmds[file]:
             fn = os.path.basename(cmds[file])
         else:
             continue
-        oldfile = os.path.join(cmds['olddir'], fn)
+        oldfile = os.path.join(cmds['basedir'], cmds['olddir'], fn)
         if os.path.exists(oldfile):
             try:
                 os.remove(oldfile)
             except OSError, e:
                 errorprint(_('Could not remove old metadata file: %s') % oldfile)
                 errorprint(_('Error was %s') % e)
-                os.chdir(curdir)
                 sys.exit(1)
-            
+
     try:
-        os.rmdir(cmds['olddir'])
+        os.rmdir(os.path.join(cmds['basedir'], cmds['olddir']))
     except OSError, e:
         errorprint(_('Could not remove old metadata dir: %s') % cmds['olddir'])
         errorprint(_('Error was %s') % e)
         errorprint(_('Please clean up this directory manually.'))
-        os.chdir(curdir)
-        
-        
-        
-        
-    # take us home mr. data
-    os.chdir(curdir)
-        
 
-        
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         if sys.argv[1] == 'profile':
