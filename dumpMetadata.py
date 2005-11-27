@@ -212,6 +212,9 @@ class RpmMetaData:
     """each rpm is one object, you pass it an rpm file
        it opens the file, and pulls the information out in bite-sized chunks :)
     """
+
+    mode_cache = {}
+
     def __init__(self, ts, basedir, filename, options):
         try:
             stats = os.stat(os.path.join(basedir, filename))
@@ -451,7 +454,9 @@ class RpmMetaData:
             if mode is None or mode == '':
                 self.filenames.append(file)
                 continue
-            if stat.S_ISDIR(mode):
+            if not RpmMetaData.mode_cache.has_key(mode):
+                RpmMetaData.mode_cache[mode] = stat.S_ISDIR(mode)
+            if RpmMetaData.mode_cache[mode]:
                 self.dirnames.append(file)
             else:
                 if flag is None:
