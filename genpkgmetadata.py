@@ -397,11 +397,7 @@ def parseArgs(args):
                     errorprint(_('Error: Only one groupfile allowed.'))
                     usage()
                 else:
-                    if os.path.exists(a):
-                        cmds['groupfile'] = a
-                    else:
-                        errorprint(_('Error: groupfile %s cannot be found.' % a))
-                        usage()
+                    cmds['groupfile'] = a
             elif arg in ['-x', '--exclude']:
                 cmds['excludes'].append(a)
             elif arg in ['-p', '--pretty']:
@@ -412,12 +408,7 @@ def parseArgs(args):
                 errorprint(_('This option is deprecated'))
             elif arg in ['-c', '--cachedir']:
                 cmds['cache'] = True
-                if not os.path.isabs(a):
-                   a = os.path.join(os.getcwd(), a)
                 cmds['cachedir'] = a
-                if not checkAndMakeDir(a):
-                    errorprint(_('Error: cannot open/write to cache dir %s' % a))
-                    usage()
             elif arg == '--basedir':
                 cmds['basedir'] = a
                     
@@ -431,6 +422,34 @@ def parseArgs(args):
 def main(args):
     cmds, directories = parseArgs(args)
     directory = directories[0]
+# Fix paths
+    directory = os.path.normpath(directory)
+    if cmds['split']:
+        pass
+    elif os.path.isabs(directory):
+        cmds['basedir'] = directory
+        directory = '.'
+    else:
+        cmds['basedir'] = os.path.realpath(os.path.join(cmds['basedir'], directory))
+        directory = '.'
+    if cmds['groupfile']:
+        a = cmds['groupfile']
+        if cmds['split']:
+            a = os.path.join(cmds['basedir'], directory, cmds['groupfile'])
+        elif not os.path.isabs(a):
+            a = os.path.join(cmds['basedir'], cmds['groupfile'])
+        if not os.path.exists(a):
+            errorprint(_('Error: groupfile %s cannot be found.' % a))
+            usage()
+        cmds['groupfile'] = a
+    if cmds['cachedir']:
+        a = cmds ['cachedir']
+        if not os.path.isabs(a):
+            a = os.path.join(cmds['basedir'] ,a)
+        if not checkAndMakeDir(a):
+            errorprint(_('Error: cannot open/write to cache dir %s' % a))
+            usage()
+        cmds['cachdir'] = a
 
     #setup some defaults
     cmds['primaryfile'] = 'primary.xml.gz'
