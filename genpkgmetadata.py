@@ -62,10 +62,12 @@ class MetaDataGenerator:
     def __init__(self, cmds):
         self.cmds = cmds
         self.ts = rpm.TransactionSet()
+        self.pkgcount = 0
         self.files = []
 
-    def getFileList(self, basepath, path, ext):
-        """Return all files in path matching ext, store them in filelist, recurse dirs. Modifies self.files"""
+    def getFileList(self, basepath, path, ext, filelist):
+        """Return all files in path matching ext, store them in filelist,
+        recurse dirs. Returns a list object"""
 
         extlen = len(ext)
         totalpath = os.path.normpath(os.path.join(basepath, path))
@@ -77,37 +79,41 @@ class MetaDataGenerator:
 
         for d in dir_list:
             if os.path.isdir(totalpath + '/' + d):
-                self.getFileList(basepath, os.path.join(path, d), ext )
+                filelist = self.getFileList(basepath, os.path.join(path, d), ext, filelist)
             else:
                 if string.lower(d[-extlen:]) == '%s' % (ext):
                     if totalpath.find(basepath) == 0:
                         relativepath = totalpath.replace(basepath, "", 1)
                         relativepath = relativepath.lstrip("/")
-                        self.files.append(os.path.join(relativepath, d))
+                        filelist.append(os.path.join(relativepath, d))
                     else:
                         raise "basepath '%s' not found in path '%s'" % (basepath, totalpath)
 
-    def trimRpms(self):
+        return filelist
+
+
+    def trimRpms(self, files):
         badrpms = []
-        for file in self.files:
+        for file in files:
             for glob in self.cmds['excludes']:
                 if fnmatch.fnmatch(file, glob):
                     # print 'excluded: %s' % file
                     if file not in badrpms:
                         badrpms.append(file)
         for file in badrpms:
-            if file in self.files:
-                self.files.remove(file)
+            if file in files:
+                files.remove(file)
+        return files
 
     def doPkgMetadata(self, directory):
         """all the heavy lifting for the package metadata"""
 
         # rpms we're going to be dealing with
-        self.getFileList(self.cmds['basedir'], directory, '.rpm')
-        self.trimRpms()
-        self.pkgcount = len(self.files)
+        files = self.getFileList(self.cmds['basedir'], directory, '.rpm', [])
+        files = self.trimRpms(files)
+        self.pkgcount = len(files)
         self.openMetadataDocs()
-        self.writeMetadataDocs()
+        self.writeMetadataDocs(files)
         self.closeMetadataDocs()
 
 
@@ -153,9 +159,8 @@ class MetaDataGenerator:
         self.otherfile.write('<otherdata xmlns="http://linux.duke.edu/metadata/other" packages="%s">\n' %
                        self.pkgcount)
 
-    def writeMetadataDocs(self):
-        current = 0
-        for file in self.files:
+    def writeMetadataDocs(self, files, current=0):
+        for file in files:
             current+=1
             try:
                 mdobj = dumpMetadata.RpmMetaData(self.ts, self.cmds['basedir'], file, self.cmds)
@@ -164,7 +169,7 @@ class MetaDataGenerator:
                         print '%d/%d - %s' % (current, len(files), file)
                     else:
                         sys.stdout.write('\r' + ' ' * 80)
-                        sys.stdout.write("\r%d/%d - %s" % (current, len(self.files), file))
+                        sys.stdout.write("\r%d/%d - %s" % (current, self.pkgcount, file))
                         sys.stdout.flush()
             except dumpMetadata.MDError, e:
                 errorprint('\n%s - %s' % (e, file))
@@ -208,6 +213,7 @@ class MetaDataGenerator:
                     node.unlinkNode()
                     node.freeNode()
                     del node
+        return current
 
 
     def closeMetadataDocs(self):
@@ -255,6 +261,47 @@ class MetaDataGenerator:
 
         del repodoc
 
+class SplitMetaDataGenerator(MetaDataGenerator):
+
+    def __init__(self, cmds):
+        MetaDataGenerator.__init__(self, cmds)
+        self.initialdir = self.cmds['basedir']
+
+    def _getFragmentUrl(self, url, fragment):
+        import urlparse
+        urlparse.uses_fragment.append('media')
+        if not url:
+            return url
+        (scheme, netloc, path, query, fragid) = urlparse.urlsplit(url)
+        return urlparse.urlunsplit((scheme, netloc, path, query, str(fragment)))
+
+    def doPkgMetadata(self, directories):
+        """all the heavy lifting for the package metadata"""
+        import types
+        if type(directories) == types.StringType:
+            MetaDataGenerator.doPkgMetadata(self, directories)
+            return
+        filematrix = {}
+        for mydir in directories:
+            filematrix[mydir] = self.getFileList(os.path.join(self.initialdir, mydir), '.', '.rpm', [])
+            self.trimRpms(filematrix[mydir])
+            self.pkgcount += len(filematrix[mydir])
+
+        mediano = 1
+        current = 0
+        self.cmds['baseurl'] = self._getFragmentUrl(self.cmds['baseurl'], mediano)
+        self.cmds['basedir'] = os.path.join(self.initialdir, directories[0])
+        self.openMetadataDocs()
+        for mydir in directories:
+            self.cmds['basedir'] = os.path.join(self.initialdir, mydir)
+            self.cmds['baseurl'] = self._getFragmentUrl(self.cmds['baseurl'], mediano)
+            current = self.writeMetadataDocs(filematrix[mydir], current)
+            mediano += 1
+        self.cmds['basedir'] = os.path.join(self.initialdir, directories[0])
+        self.cmds['baseurl'] = self._getFragmentUrl(self.cmds['baseurl'], 1)
+        self.closeMetadataDocs()
+
+
 def checkAndMakeDir(dir):
     """
      check out the dir and make it, if possible, return 1 if done, else return 0
@@ -296,6 +343,7 @@ def parseArgs(args):
     cmds['cachedir'] = None
     cmds['basedir'] = os.getcwd()
     cmds['cache'] = False
+    cmds['split'] = False
     cmds['file-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
     cmds['dir-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*']
 
@@ -303,7 +351,7 @@ def parseArgs(args):
         gopts, argsleft = getopt.getopt(args, 'phqVvg:s:x:u:c:', ['help', 'exclude=',
                                                                   'quiet', 'verbose', 'cachedir=', 'basedir=',
                                                                   'baseurl=', 'groupfile=', 'checksum=',
-                                                                  'version', 'pretty'])
+                                                                  'version', 'pretty', 'split'])
     except getopt.error, e:
         errorprint(_('Options Error: %s.') % e)
         usage()
@@ -315,20 +363,22 @@ def parseArgs(args):
             elif arg in ['-V', '--version']:
                 print '%s' % __version__
                 sys.exit(0)
+            elif arg == '--split':
+                cmds['split'] = True
     except ValueError, e:
         errorprint(_('Options Error: %s') % e)
         usage()
 
 
     # make sure our dir makes sense before we continue
-    if len(argsleft) > 1:
+    if len(argsleft) > 1 and not cmds['split']:
         errorprint(_('Error: Only one directory allowed per run.'))
         usage()
     elif len(argsleft) == 0:
         errorprint(_('Error: Must specify a directory to index.'))
         usage()
     else:
-        directory = argsleft[0]
+        directories = argsleft
 
     try:
         for arg,a in gopts:
@@ -376,10 +426,11 @@ def parseArgs(args):
         usage()
 
 
-    return cmds, directory
+    return cmds, directories
 
 def main(args):
-    cmds, directory = parseArgs(args)
+    cmds, directories = parseArgs(args)
+    directory = directories[0]
 
     #setup some defaults
     cmds['primaryfile'] = 'primary.xml.gz'
@@ -403,7 +454,9 @@ def main(args):
         errorprint(_('Directory must be writable.'))
         sys.exit(1)
 
-
+    if cmds['split']:
+        oldbase = cmds['basedir']
+        cmds['basedir'] = os.path.join(cmds['basedir'], directory)
     if not checkAndMakeDir(os.path.join(cmds['basedir'], cmds['tempdir'])):
         sys.exit(1)
 
@@ -423,8 +476,13 @@ def main(args):
                     errorprint(_('error in must be able to write to metadata files:\n  -> %s') % filepath)
                     usage()
 
-    mdgen = MetaDataGenerator(cmds)
-    mdgen.doPkgMetadata(directory)
+    if cmds['split']:
+        cmds['basedir'] = oldbase
+        mdgen = SplitMetaDataGenerator(cmds)
+        mdgen.doPkgMetadata(directories)
+    else:
+        mdgen = MetaDataGenerator(cmds)
+        mdgen.doPkgMetadata(directory)
     mdgen.doRepoMetadata()
 
     if os.path.exists(os.path.join(cmds['basedir'], cmds['finaldir'])):
@@ -460,6 +518,7 @@ def main(args):
                 errorprint(_('Error was %s') % e)
                 sys.exit(1)
 
+#XXX: fix to remove tree as we mung basedir
     try:
         os.rmdir(os.path.join(cmds['basedir'], cmds['olddir']))
     except OSError, e:
