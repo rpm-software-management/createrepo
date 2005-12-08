@@ -58,48 +58,196 @@ def usage(retval=1):
 
     sys.exit(retval)
 
+class MetaDataGenerator:
+    def __init__(self):
+        pass
 
-def getFileList(basepath, path, ext, filelist):
-    """Return all files in path matching ext, store them in filelist, recurse dirs
-       return list object"""
+    def getFileList(self, basepath, path, ext, filelist):
+        """Return all files in path matching ext, store them in filelist, recurse dirs
+           return list object"""
 
-    extlen = len(ext)
-    totalpath = os.path.normpath(os.path.join(basepath, path))
-    try:
-        dir_list = os.listdir(totalpath)
-    except OSError, e:
-        errorprint(_('Error accessing directory %s, %s') % (totalpath, e))
-        sys.exit(1)
+        extlen = len(ext)
+        totalpath = os.path.normpath(os.path.join(basepath, path))
+        try:
+            dir_list = os.listdir(totalpath)
+        except OSError, e:
+            errorprint(_('Error accessing directory %s, %s') % (totalpath, e))
+            sys.exit(1)
 
-    for d in dir_list:
-        if os.path.isdir(totalpath + '/' + d):
-            filelist = getFileList(basepath, os.path.join(path, d), ext, filelist)
-        else:
-            if string.lower(d[-extlen:]) == '%s' % (ext):
-                if totalpath.find(basepath) == 0:
-                    relativepath = totalpath.replace(basepath, "", 1)
-                    relativepath = relativepath.lstrip("/")
-                    filelist.append(os.path.join(relativepath, d))
+        for d in dir_list:
+            if os.path.isdir(totalpath + '/' + d):
+                filelist = self.getFileList(basepath, os.path.join(path, d), ext, filelist)
+            else:
+                if string.lower(d[-extlen:]) == '%s' % (ext):
+                    if totalpath.find(basepath) == 0:
+                        relativepath = totalpath.replace(basepath, "", 1)
+                        relativepath = relativepath.lstrip("/")
+                        filelist.append(os.path.join(relativepath, d))
+                    else:
+                        raise "basepath '%s' not found in path '%s'" % (basepath, totalpath)
+
+        return filelist
+
+
+    def trimRpms(self, rpms, excludeGlobs):
+        # print 'Pre-Trim Len: %d' % len(rpms)
+        badrpms = []
+        for file in rpms:
+            for glob in excludeGlobs:
+                if fnmatch.fnmatch(file, glob):
+                    # print 'excluded: %s' % file
+                    if file not in badrpms:
+                        badrpms.append(file)
+        for file in badrpms:
+            if file in rpms:
+                rpms.remove(file)
+        # print 'Post-Trim Len: %d' % len(rpms)
+        return rpms
+
+    def doPkgMetadata(self, directory, cmds, ts):
+        """all the heavy lifting for the package metadata"""
+
+        # rpms we're going to be dealing with
+        files = []
+        files = self.getFileList(cmds['basedir'], directory, '.rpm', files)
+        files = self.trimRpms(files, cmds['excludes'])
+        pkgcount = len(files)
+
+        # setup the base metadata doc
+        basedoc = libxml2.newDoc("1.0")
+        baseroot =  basedoc.newChild(None, "metadata", None)
+        basens = baseroot.newNs('http://linux.duke.edu/metadata/common', None)
+        formatns = baseroot.newNs('http://linux.duke.edu/metadata/rpm', 'rpm')
+        baseroot.setNs(basens)
+        basefilepath = os.path.join(cmds['basedir'], cmds['tempdir'], cmds['primaryfile'])
+        basefile = _gzipOpen(basefilepath, 'w')
+        basefile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+        basefile.write('<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="%s">\n' %
+                       pkgcount)
+
+        # setup the file list doc
+        filesdoc = libxml2.newDoc("1.0")
+        filesroot = filesdoc.newChild(None, "filelists", None)
+        filesns = filesroot.newNs('http://linux.duke.edu/metadata/filelists', None)
+        filesroot.setNs(filesns)
+        filelistpath = os.path.join(cmds['basedir'], cmds['tempdir'], cmds['filelistsfile'])
+        flfile = _gzipOpen(filelistpath, 'w')
+        flfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+        flfile.write('<filelists xmlns="http://linux.duke.edu/metadata/filelists" packages="%s">\n' %
+                       pkgcount)
+
+
+        # setup the other doc
+        otherdoc = libxml2.newDoc("1.0")
+        otherroot = otherdoc.newChild(None, "otherdata", None)
+        otherns = otherroot.newNs('http://linux.duke.edu/metadata/other', None)
+        otherroot.setNs(otherns)
+        otherfilepath = os.path.join(cmds['basedir'], cmds['tempdir'], cmds['otherfile'])
+        otherfile = _gzipOpen(otherfilepath, 'w')
+        otherfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+        otherfile.write('<otherdata xmlns="http://linux.duke.edu/metadata/other" packages="%s">\n' %
+                       pkgcount)
+
+
+        current = 0
+        for file in files:
+            current+=1
+            try:
+                mdobj = dumpMetadata.RpmMetaData(ts, cmds['basedir'], file, cmds)
+                if not cmds['quiet']:
+                    if cmds['verbose']:
+                        print '%d/%d - %s' % (current, len(files), file)
+                    else:
+                        sys.stdout.write('\r' + ' ' * 80)
+                        sys.stdout.write("\r%d/%d - %s" % (current, len(files), file))
+                        sys.stdout.flush()
+            except dumpMetadata.MDError, e:
+                errorprint('\n%s - %s' % (e, file))
+                continue
+            else:
+                try:
+                    node = dumpMetadata.generateXML(basedoc, baseroot, formatns, mdobj, cmds['sumtype'])
+                except dumpMetadata.MDError, e:
+                    errorprint(_('\nAn error occurred creating primary metadata: %s') % e)
+                    continue
                 else:
-                    raise "basepath '%s' not found in path '%s'" % (basepath, totalpath)
+                    output = node.serialize('UTF-8', cmds['pretty'])
+                    basefile.write(output)
+                    basefile.write('\n')
+                    node.unlinkNode()
+                    node.freeNode()
+                    del node
 
-    return filelist
+                try:
+                    node = dumpMetadata.fileListXML(filesdoc, filesroot, mdobj)
+                except dumpMetadata.MDError, e:
+                    errorprint(_('\nAn error occurred creating filelists: %s') % e)
+                    continue
+                else:
+                    output = node.serialize('UTF-8', cmds['pretty'])
+                    flfile.write(output)
+                    flfile.write('\n')
+                    node.unlinkNode()
+                    node.freeNode()
+                    del node
+
+                try:
+                    node = dumpMetadata.otherXML(otherdoc, otherroot, mdobj)
+                except dumpMetadata.MDError, e:
+                    errorprint(_('\nAn error occurred: %s') % e)
+                    continue
+                else:
+                    output = node.serialize('UTF-8', cmds['pretty'])
+                    otherfile.write(output)
+                    otherfile.write('\n')
+                    node.unlinkNode()
+                    node.freeNode()
+                    del node
 
 
-def trimRpms(rpms, excludeGlobs):
-    # print 'Pre-Trim Len: %d' % len(rpms)
-    badrpms = []
-    for file in rpms:
-        for glob in excludeGlobs:
-            if fnmatch.fnmatch(file, glob):
-                # print 'excluded: %s' % file
-                if file not in badrpms:
-                    badrpms.append(file)
-    for file in badrpms:
-        if file in rpms:
-            rpms.remove(file)
-    # print 'Post-Trim Len: %d' % len(rpms)
-    return rpms
+        if not cmds['quiet']:
+            print ''
+
+        # save them up to the tmp locations:
+        if not cmds['quiet']:
+            print _('Saving Primary metadata')
+        basefile.write('\n</metadata>')
+        basefile.close()
+        basedoc.freeDoc()
+
+        if not cmds['quiet']:
+            print _('Saving file lists metadata')
+        flfile.write('\n</filelists>')
+        flfile.close()
+        filesdoc.freeDoc()
+
+        if not cmds['quiet']:
+            print _('Saving other metadata')
+        otherfile.write('\n</otherdata>')
+        otherfile.close()
+        otherdoc.freeDoc()
+
+    def doRepoMetadata(self, cmds):
+        """wrapper to generate the repomd.xml file that stores the info on the other files"""
+        repodoc = libxml2.newDoc("1.0")
+        reporoot = repodoc.newChild(None, "repomd", None)
+        repons = reporoot.newNs('http://linux.duke.edu/metadata/repo', None)
+        reporoot.setNs(repons)
+        repofilepath = os.path.join(cmds['basedir'], cmds['tempdir'], cmds['repomdfile'])
+
+        try:
+            dumpMetadata.repoXML(reporoot, cmds)
+        except dumpMetadata.MDError, e:
+            errorprint(_('Error generating repo xml file: %s') % e)
+            sys.exit(1)
+
+        try:
+            repodoc.saveFormatFileEnc(repofilepath, 'UTF-8', 1)
+        except:
+            errorprint(_('Error saving temp file for rep xml: %s') % repofilepath)
+            sys.exit(1)
+
+        del repodoc
 
 def checkAndMakeDir(dir):
     """
@@ -124,7 +272,6 @@ def checkAndMakeDir(dir):
         else:
             result = True
     return result
-
 
 def parseArgs(args):
     """
@@ -225,153 +372,6 @@ def parseArgs(args):
 
     return cmds, directory
 
-def doPkgMetadata(directory, cmds, ts):
-    """all the heavy lifting for the package metadata"""
-
-    # rpms we're going to be dealing with
-    files = []
-    files = getFileList(cmds['basedir'], directory, '.rpm', files)
-    files = trimRpms(files, cmds['excludes'])
-    pkgcount = len(files)
-
-    # setup the base metadata doc
-    basedoc = libxml2.newDoc("1.0")
-    baseroot =  basedoc.newChild(None, "metadata", None)
-    basens = baseroot.newNs('http://linux.duke.edu/metadata/common', None)
-    formatns = baseroot.newNs('http://linux.duke.edu/metadata/rpm', 'rpm')
-    baseroot.setNs(basens)
-    basefilepath = os.path.join(cmds['basedir'], cmds['tempdir'], cmds['primaryfile'])
-    basefile = _gzipOpen(basefilepath, 'w')
-    basefile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-    basefile.write('<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="%s">\n' %
-                   pkgcount)
-
-    # setup the file list doc
-    filesdoc = libxml2.newDoc("1.0")
-    filesroot = filesdoc.newChild(None, "filelists", None)
-    filesns = filesroot.newNs('http://linux.duke.edu/metadata/filelists', None)
-    filesroot.setNs(filesns)
-    filelistpath = os.path.join(cmds['basedir'], cmds['tempdir'], cmds['filelistsfile'])
-    flfile = _gzipOpen(filelistpath, 'w')
-    flfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-    flfile.write('<filelists xmlns="http://linux.duke.edu/metadata/filelists" packages="%s">\n' %
-                   pkgcount)
-
-
-    # setup the other doc
-    otherdoc = libxml2.newDoc("1.0")
-    otherroot = otherdoc.newChild(None, "otherdata", None)
-    otherns = otherroot.newNs('http://linux.duke.edu/metadata/other', None)
-    otherroot.setNs(otherns)
-    otherfilepath = os.path.join(cmds['basedir'], cmds['tempdir'], cmds['otherfile'])
-    otherfile = _gzipOpen(otherfilepath, 'w')
-    otherfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-    otherfile.write('<otherdata xmlns="http://linux.duke.edu/metadata/other" packages="%s">\n' %
-                   pkgcount)
-
-
-    current = 0
-    for file in files:
-        current+=1
-        try:
-            mdobj = dumpMetadata.RpmMetaData(ts, cmds['basedir'], file, cmds)
-            if not cmds['quiet']:
-                if cmds['verbose']:
-                    print '%d/%d - %s' % (current, len(files), file)
-                else:
-                    sys.stdout.write('\r' + ' ' * 80)
-                    sys.stdout.write("\r%d/%d - %s" % (current, len(files), file))
-                    sys.stdout.flush()
-        except dumpMetadata.MDError, e:
-            errorprint('\n%s - %s' % (e, file))
-            continue
-        else:
-            try:
-                node = dumpMetadata.generateXML(basedoc, baseroot, formatns, mdobj, cmds['sumtype'])
-            except dumpMetadata.MDError, e:
-                errorprint(_('\nAn error occurred creating primary metadata: %s') % e)
-                continue
-            else:
-                output = node.serialize('UTF-8', cmds['pretty'])
-                basefile.write(output)
-                basefile.write('\n')
-                node.unlinkNode()
-                node.freeNode()
-                del node
-
-            try:
-                node = dumpMetadata.fileListXML(filesdoc, filesroot, mdobj)
-            except dumpMetadata.MDError, e:
-                errorprint(_('\nAn error occurred creating filelists: %s') % e)
-                continue
-            else:
-                output = node.serialize('UTF-8', cmds['pretty'])
-                flfile.write(output)
-                flfile.write('\n')
-                node.unlinkNode()
-                node.freeNode()
-                del node
-
-            try:
-                node = dumpMetadata.otherXML(otherdoc, otherroot, mdobj)
-            except dumpMetadata.MDError, e:
-                errorprint(_('\nAn error occurred: %s') % e)
-                continue
-            else:
-                output = node.serialize('UTF-8', cmds['pretty'])
-                otherfile.write(output)
-                otherfile.write('\n')
-                node.unlinkNode()
-                node.freeNode()
-                del node
-
-
-    if not cmds['quiet']:
-        print ''
-
-    # save them up to the tmp locations:
-    if not cmds['quiet']:
-        print _('Saving Primary metadata')
-    basefile.write('\n</metadata>')
-    basefile.close()
-    basedoc.freeDoc()
-
-    if not cmds['quiet']:
-        print _('Saving file lists metadata')
-    flfile.write('\n</filelists>')
-    flfile.close()
-    filesdoc.freeDoc()
-
-    if not cmds['quiet']:
-        print _('Saving other metadata')
-    otherfile.write('\n</otherdata>')
-    otherfile.close()
-    otherdoc.freeDoc()
-
-def doRepoMetadata(cmds):
-    """wrapper to generate the repomd.xml file that stores the info on the other files"""
-    repodoc = libxml2.newDoc("1.0")
-    reporoot = repodoc.newChild(None, "repomd", None)
-    repons = reporoot.newNs('http://linux.duke.edu/metadata/repo', None)
-    reporoot.setNs(repons)
-    repofilepath = os.path.join(cmds['basedir'], cmds['tempdir'], cmds['repomdfile'])
-
-    try:
-        dumpMetadata.repoXML(reporoot, cmds)
-    except dumpMetadata.MDError, e:
-        errorprint(_('Error generating repo xml file: %s') % e)
-        sys.exit(1)
-
-    try:
-        repodoc.saveFormatFileEnc(repofilepath, 'UTF-8', 1)
-    except:
-        errorprint(_('Error saving temp file for rep xml: %s') % repofilepath)
-        sys.exit(1)
-
-    del repodoc
-
-
-
 def main(args):
     cmds, directory = parseArgs(args)
 
@@ -417,9 +417,10 @@ def main(args):
                     errorprint(_('error in must be able to write to metadata files:\n  -> %s') % filepath)
                     usage()
 
+    mdgen = MetaDataGenerator()
     ts = rpm.TransactionSet()
-    doPkgMetadata(directory, cmds, ts)
-    doRepoMetadata(cmds)
+    mdgen.doPkgMetadata(directory, cmds, ts)
+    mdgen.doRepoMetadata(cmds)
 
     if os.path.exists(os.path.join(cmds['basedir'], cmds['finaldir'])):
         try:
