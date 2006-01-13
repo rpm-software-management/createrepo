@@ -416,6 +416,14 @@ def parseArgs(args):
         errorprint(_('Options Error: %s') % e)
         usage()
 
+    #setup some defaults
+    cmds['primaryfile'] = 'primary.xml.gz'
+    cmds['filelistsfile'] = 'filelists.xml.gz'
+    cmds['otherfile'] = 'other.xml.gz'
+    cmds['repomdfile'] = 'repomd.xml'
+    cmds['tempdir'] = '.repodata'
+    cmds['finaldir'] = 'repodata'
+    cmds['olddir'] = '.olddata'
 
     return cmds, directories
 
@@ -449,16 +457,7 @@ def main(args):
         if not checkAndMakeDir(a):
             errorprint(_('Error: cannot open/write to cache dir %s' % a))
             usage()
-        cmds['cachdir'] = a
-
-    #setup some defaults
-    cmds['primaryfile'] = 'primary.xml.gz'
-    cmds['filelistsfile'] = 'filelists.xml.gz'
-    cmds['otherfile'] = 'other.xml.gz'
-    cmds['repomdfile'] = 'repomd.xml'
-    cmds['tempdir'] = '.repodata'
-    cmds['finaldir'] = 'repodata'
-    cmds['olddir'] = '.olddata'
+        cmds['cachedir'] = a
 
     # start the sanity/stupidity checks
     if not os.path.exists(os.path.join(cmds['basedir'], directory)):

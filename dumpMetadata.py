@@ -568,7 +568,7 @@ class RpmMetaData:
         
         csumtag = '%s-%s' % (self.hdr['name'] , self.hdr[rpm.RPMTAG_SHA1HEADER])
         csumfile = '%s/%s' % (self.options['cachedir'], csumtag)
-        if os.path.exists(csumfile):
+        if os.path.exists(csumfile) and self.mtime <= os.stat(csumfile)[8]:
             csumo = open(csumfile, 'r')
             checksum = csumo.readline()
             csumo.close()
