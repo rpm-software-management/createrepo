@@ -27,6 +27,7 @@ import rpm
 import libxml2
 import string
 import fnmatch
+import urlgrabber
 
 import dumpMetadata
 from dumpMetadata import _gzipOpen
@@ -51,6 +52,7 @@ def usage(retval=1):
                     (<filename> relative to directory-of-packages)
      -v, --verbose = run verbosely
      -c, --cachedir <dir> = specify which dir to use for the checksum cache
+     -U, --update-info-location <url> = acquire package update metadata
      -h, --help = show this help
      -V, --version = output version
      -p, --pretty = output xml files in pretty format.
@@ -181,6 +183,29 @@ class MetaDataGenerator:
                     errorprint(_('\nAn error occurred creating primary metadata: %s') % e)
                     continue
                 else:
+                    try:
+                        # Fetch the update metadata for this package
+                        if self.cmds['update-info-location']:
+                            metadata = urlgrabber.urlopen(
+                                    self.cmds['update-info-location'] +
+                                    '?pkg=%s' % file)
+                            filename = file.replace('.rpm', '.xml')
+                            metadata.filename = os.path.join(
+                                    self.cmds['basedir'], self.cmds['tempdir'],
+                                    self.cmds['update-info-dir'], filename)
+                            metadata._do_grab()
+                            metadata.close()
+
+                            # Get the update ID from the metadata
+                            md = libxml2.parseFile(metadata.filename)
+                            update_root = md.children
+                            update = node.newChild(None, 'update', None)
+                            update.newProp('id', update_root.prop('id'))
+                            update.newProp('location', os.path.join(
+                                    self.cmds['update-info-dir'], filename))
+                            del md, metadata
+                    except Exception, e:
+                        pass
                     output = node.serialize('UTF-8', self.cmds['pretty'])
                     self.basefile.write(output)
                     self.basefile.write('\n')
@@ -348,10 +373,11 @@ def parseArgs(args):
     cmds['dir-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*']
 
     try:
-        gopts, argsleft = getopt.getopt(args, 'phqVvg:s:x:u:c:', ['help', 'exclude=',
+        gopts, argsleft = getopt.getopt(args, 'phqVvg:s:x:u:c:U:', ['help', 'exclude=',
                                                                   'quiet', 'verbose', 'cachedir=', 'basedir=',
                                                                   'baseurl=', 'groupfile=', 'checksum=',
-                                                                  'version', 'pretty', 'split'])
+                                                                  'version', 'pretty', 'split',
+                                                                  'update-info-location='])
     except getopt.error, e:
         errorprint(_('Options Error: %s.') % e)
         usage()
@@ -409,6 +435,8 @@ def parseArgs(args):
             elif arg in ['-c', '--cachedir']:
                 cmds['cache'] = True
                 cmds['cachedir'] = a
+            elif arg in ['-U', '--update-info-location']:
+                cmds['update-info-location'] = a
             elif arg == '--basedir':
                 cmds['basedir'] = a
                     
@@ -424,6 +452,7 @@ def parseArgs(args):
     cmds['tempdir'] = '.repodata'
     cmds['finaldir'] = 'repodata'
     cmds['olddir'] = '.olddata'
+    cmds['update-info-dir'] = 'update-info'
 
     return cmds, directories
 
@@ -485,6 +514,12 @@ def main(args):
         errorprint(_('Old data directory exists, please remove: %s') % cmds['olddir'])
         sys.exit(1)
 
+    if cmds.has_key('update-info-location'):
+        if not checkAndMakeDir(os.path.join(cmds['basedir'],
+                               cmds['tempdir'], cmds['update-info-dir'])):
+            errorprint(_('Error: cannot open/write to update info dir %s' % a))
+            usage()
+
     # make sure we can write to where we want to write to:
     for direc in ['tempdir', 'finaldir']:
         for file in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile']:
@@ -535,6 +570,14 @@ def main(args):
                 errorprint(_('Could not remove old metadata file: %s') % oldfile)
                 errorprint(_('Error was %s') % e)
                 sys.exit(1)
+
+    # Clean up any update metadata
+    mdpath = os.path.join(cmds['basedir'], cmds['olddir'], cmds['update-info-dir'])
+    if os.path.isdir(mdpath):
+        for file in os.listdir(mdpath):
+            os.remove(os.path.join(mdpath, file))
+        os.rmdir(mdpath)
+
 
 #XXX: fix to remove tree as we mung basedir
     try:
