@@ -131,7 +131,7 @@ class MetaDataGenerator:
         basens = self.baseroot.newNs('http://linux.duke.edu/metadata/common', None)
         self.formatns = self.baseroot.newNs('http://linux.duke.edu/metadata/rpm', 'rpm')
         self.baseroot.setNs(basens)
-        basefilepath = os.path.join(self.cmds['basedir'], self.cmds['tempdir'], self.cmds['primaryfile'])
+        basefilepath = os.path.join(self.cmds['outputdir'], self.cmds['tempdir'], self.cmds['primaryfile'])
         self.basefile = _gzipOpen(basefilepath, 'w')
         self.basefile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         self.basefile.write('<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="%s">\n' %
@@ -143,7 +143,7 @@ class MetaDataGenerator:
         self.filesroot = self.filesdoc.newChild(None, "filelists", None)
         filesns = self.filesroot.newNs('http://linux.duke.edu/metadata/filelists', None)
         self.filesroot.setNs(filesns)
-        filelistpath = os.path.join(self.cmds['basedir'], self.cmds['tempdir'], self.cmds['filelistsfile'])
+        filelistpath = os.path.join(self.cmds['outputdir'], self.cmds['tempdir'], self.cmds['filelistsfile'])
         self.flfile = _gzipOpen(filelistpath, 'w')
         self.flfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         self.flfile.write('<filelists xmlns="http://linux.duke.edu/metadata/filelists" packages="%s">\n' %
@@ -155,7 +155,7 @@ class MetaDataGenerator:
         self.otherroot = self.otherdoc.newChild(None, "otherdata", None)
         otherns = self.otherroot.newNs('http://linux.duke.edu/metadata/other', None)
         self.otherroot.setNs(otherns)
-        otherfilepath = os.path.join(self.cmds['basedir'], self.cmds['tempdir'], self.cmds['otherfile'])
+        otherfilepath = os.path.join(self.cmds['outputdir'], self.cmds['tempdir'], self.cmds['otherfile'])
         self.otherfile = _gzipOpen(otherfilepath, 'w')
         self.otherfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         self.otherfile.write('<otherdata xmlns="http://linux.duke.edu/metadata/other" packages="%s">\n' %
@@ -270,7 +270,7 @@ class MetaDataGenerator:
         reporoot = repodoc.newChild(None, "repomd", None)
         repons = reporoot.newNs('http://linux.duke.edu/metadata/repo', None)
         reporoot.setNs(repons)
-        repofilepath = os.path.join(self.cmds['basedir'], self.cmds['tempdir'], self.cmds['repomdfile'])
+        repofilepath = os.path.join(self.cmds['outputdir'], self.cmds['tempdir'], self.cmds['repomdfile'])
 
         try:
             dumpMetadata.repoXML(reporoot, self.cmds)
@@ -369,6 +369,7 @@ def parseArgs(args):
     cmds['basedir'] = os.getcwd()
     cmds['cache'] = False
     cmds['split'] = False
+    cmds['outputdir'] = ""
     cmds['file-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
     cmds['dir-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*']
 
@@ -376,7 +377,7 @@ def parseArgs(args):
         gopts, argsleft = getopt.getopt(args, 'phqVvg:s:x:u:c:U:', ['help', 'exclude=',
                                                                   'quiet', 'verbose', 'cachedir=', 'basedir=',
                                                                   'baseurl=', 'groupfile=', 'checksum=',
-                                                                  'version', 'pretty', 'split',
+                                                                  'version', 'pretty', 'split', 'outputdir=',
                                                                   'update-info-location='])
     except getopt.error, e:
         errorprint(_('Options Error: %s.') % e)
@@ -439,25 +440,13 @@ def parseArgs(args):
                 cmds['update-info-location'] = a
             elif arg == '--basedir':
                 cmds['basedir'] = a
+            elif arg == '--outputdir':
+                cmds['outputdir'] = a
                     
     except ValueError, e:
         errorprint(_('Options Error: %s') % e)
         usage()
 
-    #setup some defaults
-    cmds['primaryfile'] = 'primary.xml.gz'
-    cmds['filelistsfile'] = 'filelists.xml.gz'
-    cmds['otherfile'] = 'other.xml.gz'
-    cmds['repomdfile'] = 'repomd.xml'
-    cmds['tempdir'] = '.repodata'
-    cmds['finaldir'] = 'repodata'
-    cmds['olddir'] = '.olddata'
-    cmds['update-info-dir'] = 'update-info'
-
-    return cmds, directories
-
-def main(args):
-    cmds, directories = parseArgs(args)
     directory = directories[0]
 # Fix paths
     directory = os.path.normpath(directory)
@@ -469,6 +458,8 @@ def main(args):
     else:
         cmds['basedir'] = os.path.realpath(os.path.join(cmds['basedir'], directory))
         directory = '.'
+    if not cmds['outputdir']:
+        cmds['outputdir'] = cmds['basedir']
     if cmds['groupfile']:
         a = cmds['groupfile']
         if cmds['split']:
@@ -488,6 +479,21 @@ def main(args):
             usage()
         cmds['cachedir'] = a
 
+    #setup some defaults
+    cmds['primaryfile'] = 'primary.xml.gz'
+    cmds['filelistsfile'] = 'filelists.xml.gz'
+    cmds['otherfile'] = 'other.xml.gz'
+    cmds['repomdfile'] = 'repomd.xml'
+    cmds['tempdir'] = '.repodata'
+    cmds['finaldir'] = 'repodata'
+    cmds['olddir'] = '.olddata'
+    cmds['update-info-dir'] = 'update-info'
+
+    return cmds, directories
+
+def main(args):
+    cmds, directories = parseArgs(args)
+    directory = directories[0]
     # start the sanity/stupidity checks
     if not os.path.exists(os.path.join(cmds['basedir'], directory)):
         errorprint(_('Directory must exist'))
@@ -497,20 +503,20 @@ def main(args):
         errorprint(_('Directory of packages must be a directory.'))
         sys.exit(1)
 
-    if not os.access(cmds['basedir'], os.W_OK):
+    if not os.access(cmds['outputdir'], os.W_OK):
         errorprint(_('Directory must be writable.'))
         sys.exit(1)
 
     if cmds['split']:
         oldbase = cmds['basedir']
         cmds['basedir'] = os.path.join(cmds['basedir'], directory)
-    if not checkAndMakeDir(os.path.join(cmds['basedir'], cmds['tempdir'])):
+    if not checkAndMakeDir(os.path.join(cmds['outputdir'], cmds['tempdir'])):
         sys.exit(1)
 
-    if not checkAndMakeDir(os.path.join(cmds['basedir'], cmds['finaldir'])):
+    if not checkAndMakeDir(os.path.join(cmds['outputdir'], cmds['finaldir'])):
         sys.exit(1)
 
-    if os.path.exists(os.path.join(cmds['basedir'], cmds['olddir'])):
+    if os.path.exists(os.path.join(cmds['outputdir'], cmds['olddir'])):
         errorprint(_('Old data directory exists, please remove: %s') % cmds['olddir'])
         sys.exit(1)
 
@@ -523,7 +529,7 @@ def main(args):
     # make sure we can write to where we want to write to:
     for direc in ['tempdir', 'finaldir']:
         for file in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile']:
-            filepath = os.path.join(cmds['basedir'], cmds[direc], cmds[file])
+            filepath = os.path.join(cmds['outputdir'], cmds[direc], cmds[file])
             if os.path.exists(filepath):
                 if not os.access(filepath, os.W_OK):
                     errorprint(_('error in must be able to write to metadata files:\n  -> %s') % filepath)
@@ -538,23 +544,23 @@ def main(args):
         mdgen.doPkgMetadata(directory)
     mdgen.doRepoMetadata()
 
-    if os.path.exists(os.path.join(cmds['basedir'], cmds['finaldir'])):
+    if os.path.exists(os.path.join(cmds['outputdir'], cmds['finaldir'])):
         try:
-            os.rename(os.path.join(cmds['basedir'], cmds['finaldir']),
-                      os.path.join(cmds['basedir'], cmds['olddir']))
+            os.rename(os.path.join(cmds['outputdir'], cmds['finaldir']),
+                      os.path.join(cmds['outputdir'], cmds['olddir']))
         except:
-            errorprint(_('Error moving final %s to old dir %s' % (os.path.join(cmds['basedir'], cmds['finaldir']),
-                                                                  os.path.join(cmds['basedir'], cmds['olddir']))))
+            errorprint(_('Error moving final %s to old dir %s' % (os.path.join(cmds['outputdir'], cmds['finaldir']),
+                                                                  os.path.join(cmds['outputdir'], cmds['olddir']))))
             sys.exit(1)
 
     try:
-        os.rename(os.path.join(cmds['basedir'], cmds['tempdir']),
-                  os.path.join(cmds['basedir'], cmds['finaldir']))
+        os.rename(os.path.join(cmds['outputdir'], cmds['tempdir']),
+                  os.path.join(cmds['outputdir'], cmds['finaldir']))
     except:
         errorprint(_('Error moving final metadata into place'))
         # put the old stuff back
-        os.rename(os.path.join(cmds['basedir'], cmds['olddir']),
-                  os.path.join(cmds['basedir'], cmds['finaldir']))
+        os.rename(os.path.join(cmds['outputdir'], cmds['olddir']),
+                  os.path.join(cmds['outputdir'], cmds['finaldir']))
         sys.exit(1)
 
     for file in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile', 'groupfile']:
@@ -562,7 +568,7 @@ def main(args):
             fn = os.path.basename(cmds[file])
         else:
             continue
-        oldfile = os.path.join(cmds['basedir'], cmds['olddir'], fn)
+        oldfile = os.path.join(cmds['outputdir'], cmds['olddir'], fn)
         if os.path.exists(oldfile):
             try:
                 os.remove(oldfile)
@@ -581,7 +587,7 @@ def main(args):
 
 #XXX: fix to remove tree as we mung basedir
     try:
-        os.rmdir(os.path.join(cmds['basedir'], cmds['olddir']))
+        os.rmdir(os.path.join(cmds['outputdir'], cmds['olddir']))
     except OSError, e:
         errorprint(_('Could not remove old metadata dir: %s') % cmds['olddir'])
         errorprint(_('Error was %s') % e)

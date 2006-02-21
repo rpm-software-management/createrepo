@@ -741,11 +741,11 @@ def repoXML(node, cmds):
     
     
     for (file, ftype) in workfiles:
-        zfo = _gzipOpen(os.path.join(cmds['basedir'], cmds['tempdir'], file))
+        zfo = _gzipOpen(os.path.join(cmds['outputdir'], cmds['tempdir'], file))
         uncsum = getChecksum(sumtype, zfo)
         zfo.close()
-        csum = getChecksum(sumtype, os.path.join(cmds['basedir'], cmds['tempdir'], file))
-        timestamp = os.stat(os.path.join(cmds['basedir'], cmds['tempdir'], file))[8]
+        csum = getChecksum(sumtype, os.path.join(cmds['outputdir'], cmds['tempdir'], file))
+        timestamp = os.stat(os.path.join(cmds['outputdir'], cmds['tempdir'], file))[8]
         data = node.newChild(None, 'data', None)
         data.newProp('type', ftype)
         location = data.newChild(None, 'location', None)
@@ -764,7 +764,7 @@ def repoXML(node, cmds):
         timestamp = os.stat(grpfile)[8]
         sfile = os.path.basename(grpfile)
         fo = open(grpfile, 'r')
-        output = open(os.path.join(cmds['basedir'], cmds['tempdir'], sfile), 'w')
+        output = open(os.path.join(cmds['outputdir'], cmds['tempdir'], sfile), 'w')
         output.write(fo.read())
         output.close()
         fo.seek(0)
