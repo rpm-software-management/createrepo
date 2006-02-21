@@ -14,6 +14,8 @@ createrepo \- Create repomd (xml-rpm-metadata) repository
 .IP "\fB\-u --baseurl\fP <url>"
 Optional base url location for all files. (not used by any clients at this
 time)
+.IP "\fB\-o --outputdir\fP <url>"
+Optional output directory (useful for read only media).
 .IP "\fB\-x --exclude\fP <package>"
 File globs to exclude, can be specified multiple times.
 .IP "\fB\-q --quiet\fP"
@@ -29,6 +31,10 @@ Specify a directory to use as a cachedir. This allows createrepo to create a
 cache of checksums of packages in the repository. In consecutive runs of
 createrepo over the same repository of files that do not have a complete
 change out of all packages this decreases the processing time dramatically.
+.br
+.IP "\fB\--split\fP"
+Run in split media mode. Rather than pass a single directory, take a set of
+directories corresponding to different volumes in a media set.
 .br
 .IP "\fB\-U --update-info-location\fP <url>"
 Query a specified server for package update metadata.

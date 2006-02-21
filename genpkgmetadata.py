@@ -45,7 +45,8 @@ def usage(retval=1):
     createrepo [options] directory-of-packages
 
     Options:
-     -u, --baseurl = optional base url location for all files
+     -u, --baseurl <url> = optional base url location for all files
+     -o, --outputdir <dir> = optional directory to output to
      -x, --exclude = files globs to exclude, can be specified multiple times
      -q, --quiet = run quietly
      -g, --groupfile <filename> to point to for group information (precreated)
@@ -374,7 +375,7 @@ def parseArgs(args):
     cmds['dir-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*']
 
     try:
-        gopts, argsleft = getopt.getopt(args, 'phqVvg:s:x:u:c:U:', ['help', 'exclude=',
+        gopts, argsleft = getopt.getopt(args, 'phqVvg:s:x:u:c:U:o:', ['help', 'exclude=',
                                                                   'quiet', 'verbose', 'cachedir=', 'basedir=',
                                                                   'baseurl=', 'groupfile=', 'checksum=',
                                                                   'version', 'pretty', 'split', 'outputdir=',
@@ -440,7 +441,7 @@ def parseArgs(args):
                 cmds['update-info-location'] = a
             elif arg == '--basedir':
                 cmds['basedir'] = a
-            elif arg == '--outputdir':
+            elif arg in ['-o','--outputdir']:
                 cmds['outputdir'] = a
                     
     except ValueError, e:
