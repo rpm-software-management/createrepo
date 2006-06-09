@@ -225,6 +225,10 @@ class RpmMetaData:
             raise MDError, "Error Stat'ing file %s %s" % (basedir, filename)
         self.options = options
         self.localurl = options['baseurl']
+        if options['noepoch']:
+           self.noepoch = ""
+        else:
+           self.noepoch = 0
         self.relativepath = filename
         fd = returnFD(os.path.join(basedir, filename))
         self.hdr = returnHdr(ts, fd)
@@ -323,7 +327,7 @@ class RpmMetaData:
         if i != -1:
             epoch = strng[:i]
         else:
-            epoch = '0'
+            epoch = self.noepoch
         j = strng.find('-')
         if j != -1:
             if strng[i + 1:j] == '':
@@ -438,7 +442,7 @@ class RpmMetaData:
         
     def epoch(self):
         if self.hdr['epoch'] is None:
-            return 0
+            return self.noepoch
         else:
             return self.tagByName('epoch')
             
@@ -592,7 +596,8 @@ def generateXML(doc, node, formatns, rpmObj, sumtype):
     pkgNode.newChild(None, 'name', rpmObj.tagByName('name'))
     pkgNode.newChild(None, 'arch', rpmObj.arch())
     version = pkgNode.newChild(None, 'version', None)
-    version.newProp('epoch', str(rpmObj.epoch()))
+    if str(rpmObj.epoch()):
+        version.newProp('epoch', str(rpmObj.epoch()))
     version.newProp('ver', str(rpmObj.tagByName('version')))
     version.newProp('rel', str(rpmObj.tagByName('release')))
     csum = pkgNode.newChild(None, 'checksum', rpmObj.pkgid)
@@ -643,7 +648,7 @@ def generateXML(doc, node, formatns, rpmObj, sumtype):
                     if flags == 12: arg = 'GE'
                     entry.newProp('flags', arg)
                     # if we've got a flag we've got a version, I hope :)
-                    if e:
+                    if str(e):
                         entry.newProp('epoch', str(e))
                     if v:
                         entry.newProp('ver', str(v))
@@ -664,7 +669,7 @@ def generateXML(doc, node, formatns, rpmObj, sumtype):
                 if flags == 12: arg = 'GE'
                 entry.newProp('flags', arg)
                 # if we've got a flag we've got a version, I hope :)
-                if e:
+                if str(e):
                     entry.newProp('epoch', str(e))
                 if v:
                     entry.newProp('ver', str(v))
@@ -696,7 +701,8 @@ def fileListXML(doc, node, rpmObj):
     pkg.newProp('name', rpmObj.tagByName('name'))
     pkg.newProp('arch', rpmObj.arch())
     version = pkg.newChild(None, 'version', None)
-    version.newProp('epoch', str(rpmObj.epoch()))
+    if str(rpmObj.epoch()):
+        version.newProp('epoch', str(rpmObj.epoch()))
     version.newProp('ver', str(rpmObj.tagByName('version')))
     version.newProp('rel', str(rpmObj.tagByName('release')))
     for file in rpmObj.filenames:
@@ -721,7 +727,8 @@ def otherXML(doc, node, rpmObj):
     pkg.newProp('name', rpmObj.tagByName('name'))
     pkg.newProp('arch', rpmObj.arch())
     version = pkg.newChild(None, 'version', None)
-    version.newProp('epoch', str(rpmObj.epoch()))
+    if str(rpmObj.epoch()):
+        version.newProp('epoch', str(rpmObj.epoch()))
     version.newProp('ver', str(rpmObj.tagByName('version')))
     version.newProp('rel', str(rpmObj.tagByName('release')))
     clogs = rpmObj.changelogLists()

@@ -49,6 +49,9 @@ def usage(retval=1):
      -o, --outputdir <dir> = optional directory to output to
      -x, --exclude = files globs to exclude, can be specified multiple times
      -q, --quiet = run quietly
+     -n, --noepoch = don't add zero epochs for non-existent epochs
+                    (incompatible with yum and smart but required for
+                     systems with rpm < 4.2.1)
      -g, --groupfile <filename> to point to for group information (precreated)
                     (<filename> relative to directory-of-packages)
      -v, --verbose = run verbosely
@@ -364,6 +367,7 @@ def parseArgs(args):
     cmds['baseurl'] = None
     cmds['groupfile'] = None
     cmds['sumtype'] = 'sha'
+    cmds['noepoch'] = False
     cmds['pretty'] = 0
 #    cmds['updategroupsonly'] = 0
     cmds['cachedir'] = None
@@ -375,11 +379,11 @@ def parseArgs(args):
     cmds['dir-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*']
 
     try:
-        gopts, argsleft = getopt.getopt(args, 'phqVvg:s:x:u:c:U:o:', ['help', 'exclude=',
+        gopts, argsleft = getopt.getopt(args, 'phqVvng:s:x:u:c:U:o:', ['help', 'exclude=',
                                                                   'quiet', 'verbose', 'cachedir=', 'basedir=',
                                                                   'baseurl=', 'groupfile=', 'checksum=',
                                                                   'version', 'pretty', 'split', 'outputdir=',
-                                                                  'update-info-location='])
+                                                                  'update-info-location=', 'noepoch'])
     except getopt.error, e:
         errorprint(_('Options Error: %s.') % e)
         usage()
@@ -443,6 +447,8 @@ def parseArgs(args):
                 cmds['basedir'] = a
             elif arg in ['-o','--outputdir']:
                 cmds['outputdir'] = a
+            elif arg in ['-n', '--noepoch']:
+                cmds['noepoch'] = True
                     
     except ValueError, e:
         errorprint(_('Options Error: %s') % e)
