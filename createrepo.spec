@@ -9,6 +9,7 @@ URL: http://linux.duke.edu/metadata/
 BuildRoot: %{_tmppath}/%{name}-%{version}root
 BuildArchitectures: noarch
 Requires: python >= 2.1, rpm-python, rpm >= 0:4.1.1, libxml2-python
+Requires: python-urlgrabber
 
 %description
 This utility will generate a common metadata repository from a directory of
