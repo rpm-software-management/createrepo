@@ -260,7 +260,7 @@ class RpmMetaData:
         self.genFileLists()
 
     def arch(self):
-        if self.tagByName('sourcepackage') == 1:
+        if self.tagByName('sourcepackage') == 1 or not self.tagByName('sourcerpm'):
             return 'src'
         else:
             return self.tagByName('arch')
