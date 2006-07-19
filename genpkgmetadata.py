@@ -31,7 +31,7 @@ import shutil
 
 import dumpMetadata
 from dumpMetadata import _gzipOpen
-__version__ = '0.4.5'
+__version__ = '0.4.6'
 
 def errorprint(stuff):
     print >> sys.stderr, stuff
@@ -429,16 +429,15 @@ def parseArgs(args):
         usage()
 
     directory = directories[0]
-# Fix paths
+# 
     directory = os.path.normpath(directory)
     if cmds['split']:
         pass
     elif os.path.isabs(directory):
-        cmds['basedir'] = directory
-        directory = '.'
+        cmds['basedir'] = os.path.dirname(directory)
+        directory = os.path.basename(directory)
     else:
-        cmds['basedir'] = os.path.realpath(os.path.join(cmds['basedir'], directory))
-        directory = '.'
+        cmds['basedir'] = os.path.realpath(cmds['basedir'])
     if not cmds['outputdir']:
         cmds['outputdir'] = cmds['basedir']
     if cmds['groupfile']:
@@ -476,13 +475,15 @@ def parseArgs(args):
 def main(args):
     cmds, directories = parseArgs(args)
     directory = directories[0]
+    testdir = os.path.realpath(os.path.join(cmds['basedir'], directory))
     # start the sanity/stupidity checks
-    if not os.path.exists(os.path.join(cmds['basedir'], directory)):
-        errorprint(_('Directory must exist'))
+    if not os.path.exists(testdir):
+        errorprint(_('Directory %s must exist') % (directory,))
         sys.exit(1)
 
-    if not os.path.isdir(os.path.join(cmds['basedir'], directory)):
-        errorprint(_('Directory of packages must be a directory.'))
+    if not os.path.isdir(testdir):
+        errorprint(_('%s - must be a directory') 
+                   % (directory,))
         sys.exit(1)
 
     if not os.access(cmds['outputdir'], os.W_OK):
