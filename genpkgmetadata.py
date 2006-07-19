@@ -27,6 +27,7 @@ import rpm
 import libxml2
 import string
 import fnmatch
+import shutil
 
 import dumpMetadata
 from dumpMetadata import _gzipOpen
@@ -549,6 +550,31 @@ def main(args):
                 os.remove(oldfile)
             except OSError, e:
                 errorprint(_('Could not remove old metadata file: %s') % oldfile)
+                errorprint(_('Error was %s') % e)
+                sys.exit(1)
+
+    # Move everything else back from olddir (eg. repoview files)
+    olddir = os.path.join(cmds['outputdir'], cmds['olddir'])
+    finaldir = os.path.join(cmds['outputdir'], cmds['finaldir'])
+    for file in os.listdir(olddir):
+        oldfile = os.path.join(olddir, file)
+        finalfile = os.path.join(finaldir, file)
+        if os.path.exists(finalfile):
+            # Hmph?  Just leave it alone, then.
+            try:
+                if os.path.isdir(oldfile):
+                    shutil.rmtree(oldfile)
+                else:
+                    os.remove(oldfile)
+            except OSError, e:
+                errorprint(_('Could not remove old non-metadata file: %s') % oldfile)
+                errorprint(_('Error was %s') % e)
+                sys.exit(1)
+        else:
+            try:
+                os.rename(oldfile, finalfile)
+            except OSError, e:
+                errorprint(_('Could not restore old non-metadata file: %s -> %s') % (oldfile, finalfile))
                 errorprint(_('Error was %s') % e)
                 sys.exit(1)
 
