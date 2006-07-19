@@ -1,7 +1,7 @@
 Summary: Creates a common metadata repository
 Name: createrepo
-Version: 0.4.5
-Release: 2
+Version: 0.4.6
+Release: 1
 License: GPL
 Group: System Environment/Base
 Source: %{name}-%{version}.tar.gz
@@ -34,6 +34,9 @@ rpm packages
 %{_mandir}/man8/createrepo.8*
 
 %changelog
+* Wed Jul 19 2006 Paul Nasrat <pnasrat@redhat.com>
+- 0.4.6
+
 * Wed Jul 19 2006 Luke Macken <lmacken@redhat.com>
 - Remove python-urlgrabber dependency
 
