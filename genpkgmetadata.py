@@ -468,6 +468,8 @@ def parseArgs(args):
     cmds['finaldir'] = 'repodata'
     cmds['olddir'] = '.olddata'
 
+    # Fixup first directory
+    directories[0] = directory
     return cmds, directories
 
 def main(args):
