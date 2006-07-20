@@ -271,6 +271,25 @@ class SplitMetaDataGenerator(MetaDataGenerator):
         (scheme, netloc, path, query, fragid) = urlparse.urlsplit(url)
         return urlparse.urlunsplit((scheme, netloc, path, query, str(fragment)))
 
+    def getFileList(self, basepath, directory, ext):
+
+        extlen = len(ext)
+
+        def extension_visitor(arg, dirname, names):
+            for fn in names:
+                if os.path.isdir(fn):
+                    continue
+                elif string.lower(fn[-extlen:]) == '%s' % (ext):
+                    reldir = os.path.basename(dirname)
+                    if reldir == os.path.basename(directory):
+                        reldir = ""
+                    arg.append(os.path.join(reldir,fn))
+
+        rpmlist = []
+        startdir = os.path.join(basepath, directory)
+        os.path.walk(startdir, extension_visitor, rpmlist)
+        return rpmlist
+
     def doPkgMetadata(self, directories):
         """all the heavy lifting for the package metadata"""
         import types
@@ -287,7 +306,9 @@ class SplitMetaDataGenerator(MetaDataGenerator):
         current = 0
         self.cmds['baseurl'] = self._getFragmentUrl(self.cmds['baseurl'], mediano)
         self.openMetadataDocs()
+        original_basedir = self.cmds['basedir']
         for mydir in directories:
+            self.cmds['basedir'] = os.path.join(original_basedir, mydir)
             self.cmds['baseurl'] = self._getFragmentUrl(self.cmds['baseurl'], mediano)
             current = self.writeMetadataDocs(filematrix[mydir], current)
             mediano += 1
