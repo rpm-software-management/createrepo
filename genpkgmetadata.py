@@ -70,31 +70,23 @@ class MetaDataGenerator:
         self.pkgcount = 0
         self.files = []
 
-    def getFileList(self, basepath, path, ext, filelist):
+    def getFileList(self, basepath, directory, ext):
         """Return all files in path matching ext, store them in filelist,
         recurse dirs. Returns a list object"""
 
         extlen = len(ext)
-        totalpath = os.path.normpath(os.path.join(basepath, path))
-        try:
-            dir_list = os.listdir(totalpath)
-        except OSError, e:
-            errorprint(_('Error accessing directory %s, %s') % (totalpath, e))
-            sys.exit(1)
 
-        for d in dir_list:
-            if os.path.isdir(totalpath + '/' + d):
-                filelist = self.getFileList(basepath, os.path.join(path, d), ext, filelist)
-            else:
-                if string.lower(d[-extlen:]) == '%s' % (ext):
-                    if totalpath.find(basepath) == 0:
-                        relativepath = totalpath.replace(basepath, "", 1)
-                        relativepath = relativepath.lstrip("/")
-                        filelist.append(os.path.join(relativepath, d))
-                    else:
-                        raise "basepath '%s' not found in path '%s'" % (basepath, totalpath)
+        def extension_visitor(arg, dirname, names):
+            for fn in names:
+                if os.path.isdir(fn):
+                    continue
+                elif string.lower(fn[-extlen:]) == '%s' % (ext):
+                     arg.append(os.path.join(directory,fn))
 
-        return filelist
+        rpmlist = []
+        startdir = os.path.join(basepath, directory)
+        os.path.walk(startdir, extension_visitor, rpmlist)
+        return rpmlist
 
 
     def trimRpms(self, files):
@@ -114,7 +106,7 @@ class MetaDataGenerator:
         """all the heavy lifting for the package metadata"""
 
         # rpms we're going to be dealing with
-        files = self.getFileList(self.cmds['basedir'], directory, '.rpm', [])
+        files = self.getFileList(self.cmds['basedir'], directory, '.rpm')
         files = self.trimRpms(files)
         self.pkgcount = len(files)
         self.openMetadataDocs()
@@ -270,7 +262,6 @@ class SplitMetaDataGenerator(MetaDataGenerator):
 
     def __init__(self, cmds):
         MetaDataGenerator.__init__(self, cmds)
-        self.initialdir = self.cmds['basedir']
 
     def _getFragmentUrl(self, url, fragment):
         import urlparse
@@ -288,21 +279,18 @@ class SplitMetaDataGenerator(MetaDataGenerator):
             return
         filematrix = {}
         for mydir in directories:
-            filematrix[mydir] = self.getFileList(os.path.join(self.initialdir, mydir), '.', '.rpm', [])
+            filematrix[mydir] = self.getFileList(self.cmds['basedir'], mydir, '.rpm')
             self.trimRpms(filematrix[mydir])
             self.pkgcount += len(filematrix[mydir])
 
         mediano = 1
         current = 0
         self.cmds['baseurl'] = self._getFragmentUrl(self.cmds['baseurl'], mediano)
-        self.cmds['basedir'] = os.path.join(self.initialdir, directories[0])
         self.openMetadataDocs()
         for mydir in directories:
-            self.cmds['basedir'] = os.path.join(self.initialdir, mydir)
             self.cmds['baseurl'] = self._getFragmentUrl(self.cmds['baseurl'], mediano)
             current = self.writeMetadataDocs(filematrix[mydir], current)
             mediano += 1
-        self.cmds['basedir'] = os.path.join(self.initialdir, directories[0])
         self.cmds['baseurl'] = self._getFragmentUrl(self.cmds['baseurl'], 1)
         self.closeMetadataDocs()
 
@@ -487,7 +475,7 @@ def main(args):
         sys.exit(1)
 
     if not os.access(cmds['outputdir'], os.W_OK):
-        errorprint(_('Directory must be writable.'))
+        errorprint(_('Directory %s must be writable.') % (cmds['outputdir'],))
         sys.exit(1)
 
     if cmds['split']:
