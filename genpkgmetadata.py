@@ -427,7 +427,7 @@ def parseArgs(args):
     else:
         cmds['basedir'] = os.path.realpath(cmds['basedir'])
     if not cmds['outputdir']:
-        cmds['outputdir'] = cmds['basedir']
+        cmds['outputdir'] = os.path.join(cmds['basedir'], directory)
     if cmds['groupfile']:
         a = cmds['groupfile']
         if cmds['split']:
