@@ -13,129 +13,100 @@ from genpkgmetadata import SplitMetaDataGenerator
 class SplitMetaDataGeneratorTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.tempdir = tempfile.mkdtemp(prefix="generate")
+        self.basepath = tempfile.mkdtemp(prefix="generate")
+        self.directories = []
+        for i in range(0,3):
+            mydir = tempfile.mkdtemp(prefix="split", suffix=str(i))
+            self.directories.append(mydir)
         self.mdgen = SplitMetaDataGenerator({})
-        self.basepath = os.path.dirname(self.tempdir)
-        self.directory = os.path.basename(self.tempdir)
         self.files = {}
 
     def __addFile(self, dir, ext):
         f = tempfile.NamedTemporaryFile(suffix=ext, dir=dir)
         self.files[f.name] = f
+        return f.name
 
     def tearDown(self):
         self.mdgen = None
         for fname, fobj in self.files.items():
             fobj.close()
             del(self.files[fname])
-        if self.tempdir:
-            shutil.rmtree(self.tempdir)
+        if self.basepath:
+            shutil.rmtree(self.basepath)
 
     def testNoFiles(self):
-        """Test when target directory empty of files"""
-        results = self.mdgen.getFileList(self.basepath, self.directory, ".test")
-        self.assertEquals(results, [], msg="Expected no files")
+        """Test when target directories empty of files"""
+        results = []
+        for splitdir in self.directories:
+            results = self.mdgen.getFileList(self.basepath, self.directories[0], ".test")
+            self.assertEquals(results, [], msg="Expected no files")
 
-    def testMatch(self):
+    def testMatchPrimaryDir(self):
         """Test single file matching extension"""
-        self.__addFile(self.tempdir, ".test")
-        results = self.mdgen.getFileList(self.basepath, self.directory, ".test")
+
+        tempdir = os.path.join(self.basepath, self.directories[0])
+        self.__addFile(tempdir, ".test")
+        results = self.mdgen.getFileList(self.basepath, 
+                                         self.directories[0], ".test")
         self.assertEquals(len(results), 1, msg="Expected one file")
 
-    def testMatches(self):
-        """Test right number of files returned with both matches and non"""
-        self.__addFile(self.tempdir, ".test")
-        self.__addFile(self.tempdir, ".test")
-        self.__addFile(self.tempdir, ".notme")
-        results = self.mdgen.getFileList(self.basepath, self.directory, ".test")
-        self.assertEquals(len(results), 2, msg="Expected one file")
+    def testSplitMatches(self):
+        """Test right number of files returned with matches in all dirs"""
+        for splitdir in self.directories:
+            tempdir = os.path.join(self.basepath, splitdir)
+            os.mkdir(tempdir + "/subdir")
+            self.__addFile(tempdir + "/subdir", ".test")
+        total = 0
+        for splitdir in self.directories:
+            results = self.mdgen.getFileList(self.basepath, splitdir, ".test")
+            total += 1
+            self.assertEquals(len(results), 1, msg="Expected one file per dir")
+        self.assertEquals(total, 3, msg="Expected total of 3 files got %d" %(total,))
 
-    def testNoMatches(self):
-        """Test single file not matching extension"""
-        self.__addFile(self.tempdir, ".notme")
-        results = self.mdgen.getFileList(self.basepath, self.directory, ".test")
-        self.assertEquals(results, [], msg="Expected no matching files")
+    def testPrimaryReturnPath(self):
+        """Test matching file referenced from within primary dir"""
+        tempdir = os.path.join(self.basepath, self.directories[0])
+        fname = self.__addFile(tempdir, ".test")
+        results = self.mdgen.getFileList(self.basepath, 
+                                         self.directories[0], ".test")
+        self.assertEquals(results[0], os.path.basename(fname), 
+                          msg="Returned file %s should be created file %s"
+                          % (results[0],os.path.basename(fname)))
 
-    def testReturnPath(self):
-        """Test matching file referenced by directory passed in"""
-        self.__addFile(self.tempdir, ".test")
-        results = self.mdgen.getFileList(self.basepath, self.directory, ".test")
-        filedir = os.path.dirname(results[0])
-        self.assertEquals(filedir, self.directory, msg="Returned directory "
-                          "should be passed in directory")
+    def testPrimaryReturnPathSubdir(self):
+        """Test matching file referenced from within subdir primary dir"""
+        tempdir = os.path.join(self.basepath, self.directories[0], "subdir")
+        os.mkdir(tempdir)
+        fname = self.__addFile(tempdir, ".test")
 
-    def testCurrentDirectoryNoMatches(self):
-        """Test when target directory child of cwd no matches"""
-        oldwd = os.getcwd()
-        os.chdir(self.basepath)
-        results = self.mdgen.getFileList(".", self.directory, ".test")
-        os.chdir(oldwd)
-        self.assertEquals(results, [], msg="Expected no files")
+        results = self.mdgen.getFileList(self.basepath, 
+                                         self.directories[0], ".test")
+        returned_dir = os.path.dirname(results[0])
+        self.assertEquals(returned_dir, "subdir",
+                          msg="Returned dir %s of file %s should be subdir"
+                          % (returned_dir,results[0]))
 
-    def testCurrentDirectoryMatches(self):
-        """Test when target directory child of cwd matches"""
-        self.__addFile(self.tempdir, ".test")
-        oldwd = os.getcwd()
-        os.chdir(self.basepath)
-        results = self.mdgen.getFileList(".", self.directory, ".test")
-        os.chdir(oldwd)
-        self.assertEquals(len(results), 1, msg="Expected one file")
+    def testNonPrimaryReturnPathSubdir(self):
+        """Test matching file referenced from within subdir primary dir"""
+        tempdir = os.path.join(self.basepath, self.directories[1], "subdir")
+        os.mkdir(tempdir)
+        fname = self.__addFile(tempdir, ".test")
 
-    def testCurrentDirectoryReturnPath(self):
-        self.__addFile(self.tempdir, ".test")
-        oldwd = os.getcwd()
-        os.chdir(self.basepath)
-        results = self.mdgen.getFileList(".", self.directory, ".test")
-        filedir = os.path.dirname(results[0])
-        os.chdir(oldwd)
-        self.assertEquals(filedir, self.directory, msg="Returned directory "
-                          "should be passed in directory")
-
-    def testParallelDirectoryNoMatches(self):
-        """Test when target directory parallel to cwd no matches"""
-        oldwd = os.getcwd()
-        paralleldir = tempfile.mkdtemp(prefix="parallel")
-        os.chdir(paralleldir)
-        results = self.mdgen.getFileList("..", self.directory, ".test")
-        os.chdir(oldwd)
-        self.assertEquals(results, [], msg="Expected no files")
-
-    def testParallelDirectoryMatches(self):
-        """Test when target directory parallel to cwd matches"""
-        self.__addFile(self.tempdir, ".test")
-        oldwd = os.getcwd()
-        paralleldir = tempfile.mkdtemp(prefix="parallel")
-        os.chdir(paralleldir)
-        results = self.mdgen.getFileList("..", self.directory, ".test")
-        os.chdir(oldwd)
-        self.assertEquals(len(results), 1, msg="Expected no files")
-
-    def testParallelDirectoryReturnPath(self):
-        self.__addFile(self.tempdir, ".test")
-        oldwd = os.getcwd()
-        paralleldir = tempfile.mkdtemp(prefix="parallel")
-        os.chdir(paralleldir)
-        results = self.mdgen.getFileList("..", self.directory, ".test")
-        filedir = os.path.dirname(results[0])
-        os.chdir(oldwd)
-        self.assertEquals(filedir, self.directory, msg="Returned directory "
-                          "should be passed in directory")
-
-
+        results = self.mdgen.getFileList(self.basepath, 
+                                         self.directories[1], ".test")
+        returned_dir = os.path.dirname(results[0])
+        self.assertEquals(returned_dir, "subdir",
+                          msg="Returned dir %s of file %s should be subdir"
+                          % (returned_dir,results[0]))
 
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(SplitMetaDataGeneratorTestCase("testNoFiles"))
-    suite.addTest(SplitMetaDataGeneratorTestCase("testMatch"))
-    suite.addTest(SplitMetaDataGeneratorTestCase("testNoMatches"))
-    suite.addTest(SplitMetaDataGeneratorTestCase("testMatches"))
-    suite.addTest(SplitMetaDataGeneratorTestCase("testReturnPath"))
-    suite.addTest(SplitMetaDataGeneratorTestCase("testCurrentDirectoryNoMatches"))
-    suite.addTest(SplitMetaDataGeneratorTestCase("testCurrentDirectoryMatches"))
-    suite.addTest(SplitMetaDataGeneratorTestCase("testCurrentDirectoryReturnPath"))
-    suite.addTest(SplitMetaDataGeneratorTestCase("testParallelDirectoryNoMatches"))
-    suite.addTest(SplitMetaDataGeneratorTestCase("testParallelDirectoryMatches"))
-    suite.addTest(SplitMetaDataGeneratorTestCase("testParallelDirectoryReturnPath"))
+    suite.addTest(SplitMetaDataGeneratorTestCase("testMatchPrimaryDir"))
+    suite.addTest(SplitMetaDataGeneratorTestCase("testSplitMatches"))
+    suite.addTest(SplitMetaDataGeneratorTestCase("testPrimaryReturnPath"))
+    suite.addTest(SplitMetaDataGeneratorTestCase("testPrimaryReturnPathSubdir"))
+    suite.addTest(SplitMetaDataGeneratorTestCase("testNonPrimaryReturnPathSubdir"))
     return suite
 
 if __name__ == "__main__":
