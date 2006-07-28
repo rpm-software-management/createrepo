@@ -76,17 +76,19 @@ class MetaDataGenerator:
 
         extlen = len(ext)
 
-        def extension_visitor(arg, dirname, names):
+        def extension_visitor(filelist, dirname, names):
             for fn in names:
                 if os.path.isdir(fn):
                     continue
-                elif string.lower(fn[-extlen:]) == '%s' % (ext):
-                     arg.append(os.path.join(directory,fn))
+                elif fn[-extlen:].lower() == '%s' % (ext):
+                    relativepath = dirname.replace(startdir, "", 1)
+                    relativepath = relativepath.lstrip("/")
+                    filelist.append(os.path.join(relativepath,fn))
 
-        rpmlist = []
-        startdir = os.path.join(basepath, directory)
-        os.path.walk(startdir, extension_visitor, rpmlist)
-        return rpmlist
+        filelist = []
+        startdir = os.path.join(basepath, directory) + '/'
+        os.path.walk(startdir, extension_visitor, filelist)
+        return filelist
 
 
     def trimRpms(self, files):
@@ -110,7 +112,7 @@ class MetaDataGenerator:
         files = self.trimRpms(files)
         self.pkgcount = len(files)
         self.openMetadataDocs()
-        self.writeMetadataDocs(files)
+        self.writeMetadataDocs(files, directory)
         self.closeMetadataDocs()
 
 
@@ -156,11 +158,12 @@ class MetaDataGenerator:
         self.otherfile.write('<otherdata xmlns="http://linux.duke.edu/metadata/other" packages="%s">\n' %
                        self.pkgcount)
 
-    def writeMetadataDocs(self, files, current=0):
+    def writeMetadataDocs(self, files, directory, current=0):
         for file in files:
             current+=1
             try:
-                mdobj = dumpMetadata.RpmMetaData(self.ts, self.cmds['basedir'], file, self.cmds)
+                rpmdir= os.path.join(self.cmds['basedir'], directory)
+                mdobj = dumpMetadata.RpmMetaData(self.ts, rpmdir, file, self.cmds)
                 if not self.cmds['quiet']:
                     if self.cmds['verbose']:
                         print '%d/%d - %s' % (current, len(files), file)
@@ -308,9 +311,8 @@ class SplitMetaDataGenerator(MetaDataGenerator):
         self.openMetadataDocs()
         original_basedir = self.cmds['basedir']
         for mydir in directories:
-            self.cmds['basedir'] = os.path.join(original_basedir, mydir)
             self.cmds['baseurl'] = self._getFragmentUrl(self.cmds['baseurl'], mediano)
-            current = self.writeMetadataDocs(filematrix[mydir], current)
+            current = self.writeMetadataDocs(filematrix[mydir], mydir, current)
             mediano += 1
         self.cmds['baseurl'] = self._getFragmentUrl(self.cmds['baseurl'], 1)
         self.closeMetadataDocs()
