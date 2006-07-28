@@ -464,7 +464,7 @@ def parseArgs(args):
     if cmds['cachedir']:
         a = cmds ['cachedir']
         if not os.path.isabs(a):
-            a = os.path.join(cmds['basedir'] ,a)
+            a = os.path.join(cmds['outputdir'] ,a)
         if not checkAndMakeDir(a):
             errorprint(_('Error: cannot open/write to cache dir %s' % a))
             usage()
