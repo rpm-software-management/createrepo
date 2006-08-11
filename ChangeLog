@@ -1,34 +1,135 @@
-2006-07-19 14:23  lmacken
+2006-08-11 16:03  pnasrat
 
-	* createrepo.spec: remove python-urlgrabber dependency
+	* createrepo.spec: update date
+
+2006-08-11 16:01  pnasrat
+
+	* genpkgmetadata.py, docs/createrepo.8: Patch from Hans-Peter
+	  Jansen <hpj@urpla.net> -C, --checkts option added to avoid
+	  metadata generation, if ctime filestamps are up to date. It's
+	  currently mutually exclusive with the --split option.
+
+2006-07-28 15:49  pnasrat
+
+	* genpkgmetadata.py: Fix cache output dir to 0.4.5 behaviour
+
+2006-07-28 15:42  pnasrat
+
+	* genpkgmetadata.py: Fix filtering out path from file list and
+	  passing correct path to writeMetaData
+
+2006-07-28 15:35  pnasrat
+
+	* test/: testMetaDataGenerator.py, testSplitMetaDataGenerator.py:
+	  nuke tests for now
+
+2006-07-21 13:16  pnasrat
+
+	* Makefile: Bump
+
+2006-07-20 18:27  pnasrat
+
+	* genpkgmetadata.py: Make splitmetadata handler do it' own
+	  getFileList to correctly manipulate paths.
+
+2006-07-20 18:22  pnasrat
+
+	* test/testSplitMetaDataGenerator.py: Improve tests for split cases
+
+2006-07-20 17:15  pnasrat
+
+	* test/testSplitMetaDataGenerator.py: duplicate for split tests
+
+2006-07-20 17:02  pnasrat
+
+	* test/testMetaDataGenerator.py: More consistent naming Relative
+	  and parallel dir testing
+
+2006-07-20 16:34  pnasrat
+
+	* test/testMetaDataGenerator.py: Refactor tests, add additional
+	  tests
+
+2006-07-20 16:09  pnasrat
+
+	* test/testMetaDataGenerator.py: Start unit testing so we don't
+	  regress behaviour
+
+2006-07-20 13:33  pnasrat
+
+	* genpkgmetadata.py: Set outputdir correctly
+
+2006-07-20 13:20  pnasrat
+
+	* genpkgmetadata.py: Move to split basedir and directory everywhere
+	  to preserve command line paths.  Use os.path.walk rather than our
+	  own implementation Improve error messages
+
+2006-07-19 15:43  pnasrat
+
+	* genpkgmetadata.py: Consistent directory handling and errors
+
+2006-07-19 15:43  pnasrat
+
+	* createrepo.spec: genpkgmetadata.py
+
+2006-07-19 15:25  pnasrat
+
+	* dumpMetadata.py: Patch from hpj@urpla.net to use a more robust
+	  rpm header signature retrieval method for cache files, as
+	  recommended by Jeff Johnson.
+
+2006-07-19 14:26  lmacken
+
+	* ChangeLog, createrepo.spec: 2006-07-19 14:23	lmacken
+
+		 * createrepo.spec: remove python-urlgrabber dependency
+
+2006-07-19 08:29  pnasrat
+
+	* genpkgmetadata.py: Tolerate unknown files in repodata dirs -
+	  Ville Skyttä
+
+2006-07-19 07:44  pnasrat
+
+	* genpkgmetadata.py: fix up relative paths (#199228)
+
+2006-06-30 08:53  pnasrat
+
+	* dumpMetadata.py: Fix srpm detection for rpm-4.4.6 and later
+
+2006-06-26 11:03  skvidal
+
+	* ChangeLog:
+	  overwrite changelog
 
 2006-06-15 11:39  lmacken
 
 	* ChangeLog, genpkgmetadata.py, docs/createrepo.8: 2006-06-15 11:40
-	 lmacken
-	
-	    * genpkgmetadata.py, docs/createrepo.8:
-	      Revert --update-info-location patch, since yum now supports
-	arbitrary
-	      metadata via YumRepository::retrieveMD()
+	   lmacken
+
+	      * genpkgmetadata.py, docs/createrepo.8:
+		Revert --update-info-location patch, since yum now supports
+	  arbitrary
+		metadata via YumRepository::retrieveMD()
 
 2006-06-09 09:49  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	include Panu's patch to support --noepoch for use with old versions
-	of rpm
+	* dumpMetadata.py, genpkgmetadata.py:
+	  include Panu's patch to support --noepoch for use with old
+	  versions of rpm
 
 2006-06-09 09:47  skvidal
 
-	* createrepo.spec: 
-	fix the dep
+	* createrepo.spec:
+	  fix the dep
 
 2006-06-09 09:46  skvidal
 
-	* createrepo.spec, genpkgmetadata.py: 
-	fix versions and bump by one.
-	
-	Thanks to Gareth Armstrong for noticing this.
+	* createrepo.spec, genpkgmetadata.py:
+	  fix versions and bump by one.
+
+	  Thanks to Gareth Armstrong for noticing this.
 
 2006-03-04 01:30  pnasrat
 
@@ -41,49 +142,49 @@
 2006-02-21 18:30  pnasrat
 
 	* Makefile, createrepo.spec, genpkgmetadata.py, docs/createrepo.8:
-	Documentation and version updates
+	  Documentation and version updates
 
 2006-02-21 15:10  pnasrat
 
 	* dumpMetadata.py, genpkgmetadata.py: Enable seperate outputdir
-	(dgregor)
+	  (dgregor)
 
 2006-02-17 21:22  lmacken
 
 	* genpkgmetadata.py, docs/createrepo.8: Add support for -U
-	(--update-info-location) flag to query a specified server for
-	package update metadata.  The metadata will currently be stored in
-	'repodata/update-info' and each package in the primary.xml will
-	have an <update id="FEDORA-XXXX-XX"
-	location="update-info/pkg-ver-rel.xml"/> tag which points to it's
-	corresponding update information.
+	  (--update-info-location) flag to query a specified server for
+	  package update metadata.  The metadata will currently be stored
+	  in 'repodata/update-info' and each package in the primary.xml
+	  will have an <update id="FEDORA-XXXX-XX"
+	  location="update-info/pkg-ver-rel.xml"/> tag which points to it's
+	  corresponding update information.
 
 2006-01-13 01:24  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	apply two patches from dgregor@redhat.com - verifies that the
-	checksum cache file is more recent than the corresponding rpm -
-	move around cmds dict initialization to make it more consistent.
+	* dumpMetadata.py, genpkgmetadata.py:
+	  apply two patches from dgregor@redhat.com - verifies that the
+	  checksum cache file is more recent than the corresponding rpm -
+	  move around cmds dict initialization to make it more consistent.
 
 2005-12-08 14:25  pnasrat
 
 	* genpkgmetadata.py: Fix cachedir/groupfile handling with --basedir
-	and using paths not relative to cwd when run without --basedir.
+	  and using paths not relative to cwd when run without --basedir.
 
 2005-12-08 14:24  pnasrat
 
 	* genpkgmetadata.py: Support --split option to label media with
-	urls across directories.
+	  urls across directories.
 
 2005-12-08 14:22  pnasrat
 
-	* genpkgmetadata.py: Split out processing into smaller methods. 
-	Make ts internal.  Files and base/file/other data attributes.
+	* genpkgmetadata.py: Split out processing into smaller methods.
+	  Make ts internal.  Files and base/file/other data attributes.
 
 2005-12-08 14:21  pnasrat
 
 	* genpkgmetadata.py: Cleanup of generator class to use cmds
-	internally as an attribute.
+	  internally as an attribute.
 
 2005-12-08 14:19  pnasrat
 
@@ -92,210 +193,211 @@
 2005-11-27 18:01  skvidal
 
 	* dumpMetadata.py: speed up by caching file mode lookup by Dennis
-	Gregorovic
+	  Gregorovic
 
 2005-11-11 16:03  pnasrat
 
 	* dumpMetadata.py, genpkgmetadata.py: Enable basedir to be used -
-	dgregor
+	  dgregor
 
 2005-11-02 15:23  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	patch from Christoph Thiel to make it work on suse 9.3 and to allow
-	for non absolute-path cache dirs.
+	* dumpMetadata.py, genpkgmetadata.py:
+	  patch from Christoph Thiel to make it work on suse 9.3 and to
+	  allow for non absolute-path cache dirs.
 
 2005-08-11 17:09  skvidal
 
-	* dumpMetadata.py: 
-	turn off all signature checking when reading in headers
+	* dumpMetadata.py:
+	  turn off all signature checking when reading in headers
 
 2005-07-24 19:54  skvidal
 
-	* genpkgmetadata.py: 
-	document that the -g option is for a file relative to the directory
-	you are creating the repository for.
+	* genpkgmetadata.py:
+	  document that the -g option is for a file relative to the
+	  directory you are creating the repository for.
 
 2005-07-14 02:34  skvidal
 
-	* docs/createrepo.8: 
-	man page for cachedir
+	* docs/createrepo.8:
+	  man page for cachedir
 
 2005-07-14 02:31  skvidal
 
-	* Makefile, createrepo.spec, genpkgmetadata.py: 
-	0.4.3
+	* Makefile, createrepo.spec, genpkgmetadata.py:
+	  0.4.3
 
 2005-07-11 01:45  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	- disable the checksum flag - default and only use sha1sum's - add
-	in -c,--cachedir option to setup a cachedir for the cache files of
-	the checksums of the packages. Uses name-hdrid from the package hdr
-	as filenames. Contents of the file is a single line of the
-	package's checksum.  This dramatically speeds up rebuilding a
-	repository's metadata b/c the checksum of the package file was the
-	item taking the most time.
+	* dumpMetadata.py, genpkgmetadata.py:
+	  - disable the checksum flag - default and only use sha1sum's -
+	  add in -c,--cachedir option to setup a cachedir for the cache
+	  files of the checksums of the packages. Uses name-hdrid from the
+	  package hdr as filenames. Contents of the file is a single line
+	  of the package's checksum.  This dramatically speeds up
+	  rebuilding a repository's metadata b/c the checksum of the
+	  package file was the item taking the most time.
 
 2005-05-28 23:14  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	Apply Arun Bhanu's patch to add in --quiet and --verbose options
-	instead of just -q and -v
+	* dumpMetadata.py, genpkgmetadata.py:
+	  Apply Arun Bhanu's patch to add in --quiet and --verbose options
+	  instead of just -q and -v
 
 2005-03-30 00:32  skvidal
 
-	* docs/Makefile: 
-	fix mandir path for docs
+	* docs/Makefile:
+	  fix mandir path for docs
 
 2005-01-18 02:14  skvidal
 
-	* Makefile, docs/Makefile: 
-	fix the Makefiles, f'real
+	* Makefile, docs/Makefile:
+	  fix the Makefiles, f'real
 
 2005-01-18 01:59  skvidal
 
-	* docs/: Makefile, createrepo.8: 
-	real commit
+	* docs/: Makefile, createrepo.8:
+	  real commit
 
 2005-01-18 01:58  skvidal
 
-	* Makefile, createrepo.spec: 
-	adding man page and upating the Makefiles and specfile accordingly.
-	 Thanks Bob Kashani for the man page.
+	* Makefile, createrepo.spec:
+	  adding man page and upating the Makefiles and specfile
+	  accordingly.	Thanks Bob Kashani for the man page.
 
 2005-01-18 01:24  skvidal
 
-	* dumpMetadata.py: 
-	need to seek to the beginning before doing a new read operation.
+	* dumpMetadata.py:
+	  need to seek to the beginning before doing a new read operation.
 
 2005-01-17 02:52  skvidal
 
-	* Makefile, createrepo.spec: 
-	spec and Makefile to 0.4.2
+	* Makefile, createrepo.spec:
+	  spec and Makefile to 0.4.2
 
 2005-01-17 02:52  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	move around gzipOpen for use in another program relabel 0.4.2
+	* dumpMetadata.py, genpkgmetadata.py:
+	  move around gzipOpen for use in another program relabel 0.4.2
 
 2005-01-07 16:39  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	single open for all file operations. about a 30% time savings.
+	* dumpMetadata.py, genpkgmetadata.py:
+	  single open for all file operations. about a 30% time savings.
 
 2004-11-02 00:55  skvidal
 
-	* genpkgmetadata.py: 
-	small fix for --exclude to work.  -x works, but --exclude didn't,
-	now it is fixed
+	* genpkgmetadata.py:
+	  small fix for --exclude to work.  -x works, but --exclude didn't,
+	  now it is fixed
 
 2004-10-21 03:42  skvidal
 
-	* Makefile, createrepo.spec, genpkgmetadata.py: 
-	update version numbers
+	* Makefile, createrepo.spec, genpkgmetadata.py:
+	  update version numbers
 
 2004-10-21 03:40  skvidal
 
-	* dumpMetadata.py: 
-	problem with ghost entries not showing up in primary.xml even if
-	they matched the regex strings.
+	* dumpMetadata.py:
+	  problem with ghost entries not showing up in primary.xml even if
+	  they matched the regex strings.
 
 2004-10-18 01:41  skvidal
 
-	* bin/createrepo: 
-	whoops! need to quote that var string
+	* bin/createrepo:
+	  whoops! need to quote that var string
 
 2004-10-11 07:43  skvidal
 
-	* Makefile, createrepo.spec, genpkgmetadata.py: 
-	correct problem with handling dirs with a space in the filename
-	update version number
+	* Makefile, createrepo.spec, genpkgmetadata.py:
+	  correct problem with handling dirs with a space in the filename
+	  update version number
 
 2004-10-03 23:43  skvidal
 
-	* genpkgmetadata.py: 
-	clean up argument parsing to handle --version and --help more
-	correctly. Not quite the patch Ville Skyttä submitted.
+	* genpkgmetadata.py:
+	  clean up argument parsing to handle --version and --help more
+	  correctly. Not quite the patch Ville Skyttä submitted.
 
 2004-09-30 01:54  skvidal
 
-	* genpkgmetadata.py: 
-	one more place to tag
+	* genpkgmetadata.py:
+	  one more place to tag
 
 2004-09-30 01:52  skvidal
 
-	* Makefile, createrepo.spec: 
-	update to 0.3.9
+	* Makefile, createrepo.spec:
+	  update to 0.3.9
 
 2004-09-30 01:49  skvidal
 
-	* dumpMetadata.py: 
-	checksum of group file will be wrong if specified - didn't seek(0)
-	after copying it.
+	* dumpMetadata.py:
+	  checksum of group file will be wrong if specified - didn't
+	  seek(0) after copying it.
 
 2004-09-20 01:13  skvidal
 
-	* genpkgmetadata.py: 
-	made 'cannot remove old metadata dir' a non-fatal error.  It just
-	warns.
+	* genpkgmetadata.py:
+	  made 'cannot remove old metadata dir' a non-fatal error.  It just
+	  warns.
 
 2004-09-20 01:06  skvidal
 
-	* genpkgmetadata.py: 
-	updated to default to sha-1 checksums
+	* genpkgmetadata.py:
+	  updated to default to sha-1 checksums
 
 2004-09-11 16:19  skvidal
 
-	* createrepo.spec, genpkgmetadata.py: 
-	update spec file as 0.3.8 fix for bug in command handling of groups
-	location
+	* createrepo.spec, genpkgmetadata.py:
+	  update spec file as 0.3.8 fix for bug in command handling of
+	  groups location
 
 2004-09-11 16:07  skvidal
 
-	* Makefile: 
-	fix for group file path being wrong - Bill Nottingham mark as 0.3.8
+	* Makefile:
+	  fix for group file path being wrong - Bill Nottingham mark as
+	  0.3.8
 
 2004-09-11 16:07  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	fix for error when string is None for utf8 conversion
+	* dumpMetadata.py, genpkgmetadata.py:
+	  fix for error when string is None for utf8 conversion
 
 2004-09-03 02:29  skvidal
 
-	* Makefile: 
-	Makefile update to fix a bug reported by Anvil
+	* Makefile:
+	  Makefile update to fix a bug reported by Anvil
 
 2004-09-01 02:56  skvidal
 
-	* Makefile, createrepo.spec, genpkgmetadata.py: 
-	0.3.7
+	* Makefile, createrepo.spec, genpkgmetadata.py:
+	  0.3.7
 
 2004-08-27 03:03  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	patch from Ville Skytta (this a will be wrong, sorry) to correct
-	decoding/encoding problems.
+	* dumpMetadata.py, genpkgmetadata.py:
+	  patch from Ville Skytta (this a will be wrong, sorry) to correct
+	  decoding/encoding problems.
 
 2004-07-23 16:22  skvidal
 
-	* README: 
-	updated readme with anoncvs location
+	* README:
+	  updated readme with anoncvs location
 
 2004-07-23 15:41  skvidal
 
-	* Makefile, createrepo.spec, genpkgmetadata.py: 
-	ver to 0.3.6
+	* Makefile, createrepo.spec, genpkgmetadata.py:
+	  ver to 0.3.6
 
 2004-07-23 14:45  skvidal
 
-	* dumpMetadata.py: 
-	fix filelists to be complete
+	* dumpMetadata.py:
+	  fix filelists to be complete
 
 2004-07-23 11:56  skvidal
 
-	* dumpMetadata.py: 
-	remove a debug print call
+	* dumpMetadata.py:
+	  remove a debug print call
 
 2004-07-23 11:51  skvidal
 
@@ -303,142 +405,143 @@
 
 2004-07-23 11:50  skvidal
 
-	* dumpMetadata.py: 
-	fix up for broken filelists in packages
+	* dumpMetadata.py:
+	  fix up for broken filelists in packages
 
 2004-07-23 01:23  skvidal
 
-	* genpkgmetadata.py: 
-	silly string fix
+	* genpkgmetadata.py:
+	  silly string fix
 
 2004-07-19 21:24  skvidal
 
-	* Makefile, createrepo.spec, genpkgmetadata.py: 
-	bump number to 0.3.4
+	* Makefile, createrepo.spec, genpkgmetadata.py:
+	  bump number to 0.3.4
 
 2004-07-19 21:23  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	re-enabled group files documented it
+	* dumpMetadata.py, genpkgmetadata.py:
+	  re-enabled group files documented it
 
 2004-06-30 04:23  skvidal
 
-	* dumpMetadata.py: 
-	add pre=1 to requires entries for prereq marking
+	* dumpMetadata.py:
+	  add pre=1 to requires entries for prereq marking
 
 2004-06-30 03:08  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	- include xmlns:rpm in main metadata tag rather than per-format
-	node - fix output for sorta-list, sorta-string rpm header tags
+	* dumpMetadata.py, genpkgmetadata.py:
+	  - include xmlns:rpm in main metadata tag rather than per-format
+	  node - fix output for sorta-list, sorta-string rpm header tags
 
 2004-06-28 11:24  skvidal
 
-	* dumpMetadata.py: 
-	fix for namespace for license, vendor, group, buildhost and
-	sourcerpm was None, should have been formatns (rpm namespace)
+	* dumpMetadata.py:
+	  fix for namespace for license, vendor, group, buildhost and
+	  sourcerpm was None, should have been formatns (rpm namespace)
 
 2004-06-08 23:09  skvidal
 
-	* Makefile, createrepo.spec, genpkgmetadata.py: 
-	mark as 0.3.3
+	* Makefile, createrepo.spec, genpkgmetadata.py:
+	  mark as 0.3.3
 
 2004-06-06 18:38  skvidal
 
-	* genpkgmetadata.py: 
-	included a not-that-terribly accurate package count
+	* genpkgmetadata.py:
+	  included a not-that-terribly accurate package count
 
 2004-06-05 14:38  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	generate uncompressed checksums a much easier way.
+	* dumpMetadata.py, genpkgmetadata.py:
+	  generate uncompressed checksums a much easier way.
 
 2004-06-05 14:31  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	revert some changes
+	* dumpMetadata.py, genpkgmetadata.py:
+	  revert some changes
 
 2004-06-03 02:14  skvidal
 
-	* genpkgmetadata.py: 
-	fix stupid version thing
+	* genpkgmetadata.py:
+	  fix stupid version thing
 
 2004-06-03 02:14  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	keep checksum of uncompressed metadata files in repomd.xml
+	* dumpMetadata.py, genpkgmetadata.py:
+	  keep checksum of uncompressed metadata files in repomd.xml
 
 2004-06-03 01:26  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	move versioned prco from separate string to properties of the entry
+	* dumpMetadata.py, genpkgmetadata.py:
+	  move versioned prco from separate string to properties of the
+	  entry
 
 2004-04-16 01:15  skvidal
 
-	* Makefile: 
-	fix makefile
+	* Makefile:
+	  fix makefile
 
 2004-04-16 01:10  skvidal
 
-	* Makefile, createrepo.spec, genpkgmetadata.py: 
-	update to 0.3.2 added -p or --pretty flag to make it pretty-print
-	the xml output not pretty printing the output makes the import a
-	lot faster and the data smaller
+	* Makefile, createrepo.spec, genpkgmetadata.py:
+	  update to 0.3.2 added -p or --pretty flag to make it pretty-print
+	  the xml output not pretty printing the output makes the import a
+	  lot faster and the data smaller
 
 2004-01-18 16:43  skvidal
 
-	* Makefile, createrepo.spec, dumpMetadata.py, genpkgmetadata.py: 
-	1. make it actually work :) 2. bump to 0.3.1
+	* Makefile, createrepo.spec, dumpMetadata.py, genpkgmetadata.py:
+	  1. make it actually work :) 2. bump to 0.3.1
 
 2004-01-18 12:57  skvidal
 
-	* Makefile, createrepo.spec: 
-	add README for real *boggle*
+	* Makefile, createrepo.spec:
+	  add README for real *boggle*
 
 2004-01-18 12:56  skvidal
 
-	* Makefile, README, createrepo.spec: 
-	tagged Makefile and createrepo as 0.3 Add README to both of the
-	above
+	* Makefile, README, createrepo.spec:
+	  tagged Makefile and createrepo as 0.3 Add README to both of the
+	  above
 
 2004-01-18 11:45  skvidal
 
-	* genpkgmetadata.py: 
-	make metadata files be written to repodata/
+	* genpkgmetadata.py:
+	  make metadata files be written to repodata/
 
 2004-01-17 01:04  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	fix bug where not all files were getting included make the
-	directory detection more reliable
+	* dumpMetadata.py, genpkgmetadata.py:
+	  fix bug where not all files were getting included make the
+	  directory detection more reliable
 
 2004-01-13 22:56  skvidal
 
 	* Makefile, createrepo.spec, dumpMetadata.py, genpkgmetadata.py,
-	bin/Makefile: 
-	fixed memory use problem updated spec for 0.2 fixed makefile
-	dumbness fixed problems with broken symlinks
+	  bin/Makefile:
+	  fixed memory use problem updated spec for 0.2 fixed makefile
+	  dumbness fixed problems with broken symlinks
 
 2004-01-13 16:16  skvidal
 
-	* dumpMetadata.py: 
-	catch some errors on broken symlinks
+	* dumpMetadata.py:
+	  catch some errors on broken symlinks
 
 2004-01-11 17:07  skvidal
 
 	* Makefile, createrepo.spec, dumpMetadata.py, genpkgmetadata.py,
-	bin/Makefile, bin/createrepo: 
-	- translation stubs - makefiles - spec file - bin wrapper
+	  bin/Makefile, bin/createrepo:
+	  - translation stubs - makefiles - spec file - bin wrapper
 
 2004-01-10 03:39  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	silly updates in comments
+	* dumpMetadata.py, genpkgmetadata.py:
+	  silly updates in comments
 
 2004-01-10 03:34  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	CVS Id Tags
+	* dumpMetadata.py, genpkgmetadata.py:
+	  CVS Id Tags
 
 2004-01-10 03:34  skvidal
 
@@ -446,16 +549,21 @@
 
 2004-01-10 03:33  skvidal
 
-	* genpkgmetadata.py: 
-	added --version and __version__ string
+	* genpkgmetadata.py:
+	  added --version and __version__ string
 
 2004-01-10 03:04  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py: 
-	move two functions around to more logically arrange the repomd.xml
-	generating function
+	* dumpMetadata.py, genpkgmetadata.py:
+	  move two functions around to more logically arrange the
+	  repomd.xml generating function
 
 2004-01-09 02:48  skvidal
 
 	* dumpMetadata.py, genpkgmetadata.py: Initial revision
+
+2004-01-09 02:48  skvidal
+
+	* dumpMetadata.py, genpkgmetadata.py: metadata generate first
+	  import
 
