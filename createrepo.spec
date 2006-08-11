@@ -34,7 +34,7 @@ rpm packages
 %{_mandir}/man8/createrepo.8*
 
 %changelog
-* Wed Jul 19 2006 Paul Nasrat <pnasrat@redhat.com>
+* Fri Aug 11 2006 Paul Nasrat <pnasrat@redhat.com>
 - 0.4.6
 
 * Wed Jul 19 2006 Luke Macken <lmacken@redhat.com>
