@@ -32,6 +32,12 @@ cache of checksums of packages in the repository. In consecutive runs of
 createrepo over the same repository of files that do not have a complete
 change out of all packages this decreases the processing time dramatically.
 .br
+.IP "\fB\-C --checkts\fP"
+Don't generate repo metadata, if their timestamps are newer than its rpms.
+This option decreases the processing time drastically again, if you happen
+to run it on an unmodified repo, but it is (currently) mutual exclusive
+with the --split option.
+.br
 .IP "\fB\--split\fP"
 Run in split media mode. Rather than pass a single directory, take a set of
 directories corresponding to different volumes in a media set.

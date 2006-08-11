@@ -56,6 +56,8 @@ def usage(retval=1):
                     (<filename> relative to directory-of-packages)
      -v, --verbose = run verbosely
      -c, --cachedir <dir> = specify which dir to use for the checksum cache
+     -C, --checkts = don't generate repo metadata, if their ctimes are newer
+                     than the rpm ctimes.
      -h, --help = show this help
      -V, --version = output version
      -p, --pretty = output xml files in pretty format.
@@ -90,6 +92,17 @@ class MetaDataGenerator:
         os.path.walk(startdir, extension_visitor, filelist)
         return filelist
 
+    def checkTimeStamps(self, directory):
+        if self.cmds['checkts']:
+            files = self.getFileList(self.cmds['basedir'], directory, '.rpm')
+            files = self.trimRpms(files)
+            for f in files:
+                fn = os.path.join(self.cmds['basedir'], directory, f)
+                if not os.path.exists(fn):
+                    errorprint(_('cannot get to file: %s') % fn)
+                if os.path.getctime(fn) > self.cmds['mdtimestamp']:
+                    return False
+        return True
 
     def trimRpms(self, files):
         badrpms = []
@@ -360,17 +373,19 @@ def parseArgs(args):
     cmds['cachedir'] = None
     cmds['basedir'] = os.getcwd()
     cmds['cache'] = False
+    cmds['checkts'] = False
+    cmds['mdtimestamp'] = 0
     cmds['split'] = False
     cmds['outputdir'] = ""
     cmds['file-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
     cmds['dir-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*']
 
     try:
-        gopts, argsleft = getopt.getopt(args, 'phqVvng:s:x:u:c:o:', ['help', 'exclude=',
+        gopts, argsleft = getopt.getopt(args, 'phqVvng:s:x:u:c:o:C', ['help', 'exclude=',
                                                                   'quiet', 'verbose', 'cachedir=', 'basedir=',
                                                                   'baseurl=', 'groupfile=', 'checksum=',
                                                                   'version', 'pretty', 'split', 'outputdir=',
-                                                                  'noepoch'])
+                                                                  'noepoch', 'checkts'])
     except getopt.error, e:
         errorprint(_('Options Error: %s.') % e)
         usage()
@@ -428,6 +443,8 @@ def parseArgs(args):
             elif arg in ['-c', '--cachedir']:
                 cmds['cache'] = True
                 cmds['cachedir'] = a
+            elif arg in ['-C', '--checkts']:
+                cmds['checkts'] = True
             elif arg == '--basedir':
                 cmds['basedir'] = a
             elif arg in ['-o','--outputdir']:
@@ -438,6 +455,10 @@ def parseArgs(args):
     except ValueError, e:
         errorprint(_('Options Error: %s') % e)
         usage()
+
+    if cmds['split'] and cmds['checkts']:
+        errorprint(_('--split and --checkts options are mutually exclusive'))
+        sys.exit(1)
 
     directory = directories[0]
 # 
@@ -522,13 +543,21 @@ def main(args):
                 if not os.access(filepath, os.W_OK):
                     errorprint(_('error in must be able to write to metadata files:\n  -> %s') % filepath)
                     usage()
-
+                if cmds['checkts']:
+                    ts = os.path.getctime(filepath)
+                    if ts > cmds['mdtimestamp']:
+                        cmds['mdtimestamp'] = ts
+        
     if cmds['split']:
         cmds['basedir'] = oldbase
         mdgen = SplitMetaDataGenerator(cmds)
         mdgen.doPkgMetadata(directories)
     else:
         mdgen = MetaDataGenerator(cmds)
+        if cmds['checkts'] and mdgen.checkTimeStamps(directory):
+            if cmds['verbose']:
+                print _('repo is up to date')
+            sys.exit(0)
         mdgen.doPkgMetadata(directory)
     mdgen.doRepoMetadata()
 
