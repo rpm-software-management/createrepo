@@ -1,7 +1,7 @@
 Summary: Creates a common metadata repository
 Name: createrepo
 Version: 0.4.6
-Release: 1
+Release: 2
 License: GPL
 Group: System Environment/Base
 Source: %{name}-%{version}.tar.gz
@@ -31,9 +31,13 @@ rpm packages
 %doc ChangeLog README
 %{_datadir}/%{name}/*
 %{_bindir}/%{name}
+%{_bindir}/modifyrepo
 %{_mandir}/man8/createrepo.8*
 
 %changelog
+* Sat Oct 14 2006 Luke Macken <lmacken@redhat.com>
+- Add modifyrepo
+
 * Fri Aug 11 2006 Paul Nasrat <pnasrat@redhat.com>
 - 0.4.6
 

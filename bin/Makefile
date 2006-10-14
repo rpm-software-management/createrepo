@@ -41,6 +41,7 @@ all: $(srcdir)/$(PACKAGE)
 
 install: all installdirs
 	$(INSTALL_BIN) $(srcdir)/$(PACKAGE) $(DESTDIR)$(bindir)/$(PACKAGE)
+	$(INSTALL_BIN) $(srcdir)/modifyrepo $(DESTDIR)$(bindir)/modifyrepo
 
 
 uninstall:
@@ -71,6 +72,7 @@ distfiles:
 	cp \
 	$(srcdir)/$(PACKAGE) \
 	$(srcdir)/Makefile \
+	$(srcdir)/modifyrepo \
 	$(top_srcdir)/.disttmp/$$distdir/bin
 
 dailyfiles:
@@ -79,6 +81,7 @@ dailyfiles:
 	cp \
 	$(srcdir)/$(PACKAGE) \
 	$(srcdir)/Makefile \
+	$(srcdir)/modifyrepo \
 	$(top_srcdir)/.disttmp/$$distdir/bin
 
 installdirs:
