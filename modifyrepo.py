@@ -94,7 +94,7 @@ class RepoMetadata:
         root = self.doc.firstChild
         data = self._insert_element(root, 'data', attrs={ 'type' : mdtype })
         self._insert_element(data, 'location',
-                             attrs={ 'href' : 'repodata/' + metadata })
+                             attrs={ 'href' : 'repodata/' + mdname })
         self._insert_element(data, 'checksum', attrs={ 'type' : 'sha' },
                              text=sha.new(newmd).hexdigest())
         self._insert_element(data, 'timestamp',
