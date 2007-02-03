@@ -59,7 +59,7 @@ def _gzipOpen(filename, mode="rb", compresslevel=9):
 def bzipFile(source, dest):
     
     s_fn = open(source, 'rb')
-    destination = bz2.BZ2File(dest, 'w')
+    destination = bz2.BZ2File(dest, 'w', compresslevel=9)
 
     while True:
         data = s_fn.read(1024000)
