@@ -61,6 +61,7 @@ def usage(retval=1):
      -h, --help = show this help
      -V, --version = output version
      -p, --pretty = output xml files in pretty format.
+     -d, --database = generate the sqlite databases.
     """)
 
     sys.exit(retval)
@@ -377,15 +378,16 @@ def parseArgs(args):
     cmds['mdtimestamp'] = 0
     cmds['split'] = False
     cmds['outputdir'] = ""
+    cmds['database'] = False
     cmds['file-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
     cmds['dir-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*']
 
     try:
-        gopts, argsleft = getopt.getopt(args, 'phqVvng:s:x:u:c:o:C', ['help', 'exclude=',
+        gopts, argsleft = getopt.getopt(args, 'phqVvndg:s:x:u:c:o:C', ['help', 'exclude=',
                                                                   'quiet', 'verbose', 'cachedir=', 'basedir=',
                                                                   'baseurl=', 'groupfile=', 'checksum=',
                                                                   'version', 'pretty', 'split', 'outputdir=',
-                                                                  'noepoch', 'checkts'])
+                                                                  'noepoch', 'checkts', 'database'])
     except getopt.error, e:
         errorprint(_('Options Error: %s.') % e)
         usage()
@@ -451,7 +453,9 @@ def parseArgs(args):
                 cmds['outputdir'] = a
             elif arg in ['-n', '--noepoch']:
                 cmds['noepoch'] = True
-                    
+            elif arg in ['-d', '--database']:
+                cmds['database'] = True
+                
     except ValueError, e:
         errorprint(_('Options Error: %s') % e)
         usage()
@@ -461,7 +465,7 @@ def parseArgs(args):
         sys.exit(1)
 
     directory = directories[0]
-# 
+
     directory = os.path.normpath(directory)
     if cmds['split']:
         pass

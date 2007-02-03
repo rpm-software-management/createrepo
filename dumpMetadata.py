@@ -27,6 +27,8 @@ import types
 import struct
 import re
 import stat
+import bz2
+import sqlitecachec
 
 # done to fix gzip randomly changing the checksum
 import gzip
@@ -54,7 +56,20 @@ class GzipFile(gzip.GzipFile):
 def _gzipOpen(filename, mode="rb", compresslevel=9):
     return GzipFile(filename, mode, compresslevel)
     
+def bzipFile(source, dest):
+    
+    s_fn = open(source, 'rb')
+    destination = bz2.BZ2File(dest, 'w')
 
+    while True:
+        data = s_fn.read(1024000)
+        
+        if not data: break
+        destination.write(data)
+
+    destination.close()
+    s_fn.close()
+    
 
 def returnFD(filename):
     try:
@@ -748,14 +763,70 @@ def repoXML(node, cmds):
     workfiles = [(cmds['otherfile'], 'other',),
                  (cmds['filelistsfile'], 'filelists'),
                  (cmds['primaryfile'], 'primary')]
+    repoid='garbageid'
     
+    repopath = os.path.join(cmds['outputdir'], cmds['tempdir'])
     
+    if cmds['database']:
+        rp = sqlitecachec.RepodataParserSqlite(repopath, repoid, None)
+
     for (file, ftype) in workfiles:
-        zfo = _gzipOpen(os.path.join(cmds['outputdir'], cmds['tempdir'], file))
+        complete_path = os.path.join(repopath, file)
+        
+        zfo = _gzipOpen(complete_path)
         uncsum = getChecksum(sumtype, zfo)
         zfo.close()
-        csum = getChecksum(sumtype, os.path.join(cmds['outputdir'], cmds['tempdir'], file))
-        timestamp = os.stat(os.path.join(cmds['outputdir'], cmds['tempdir'], file))[8]
+        csum = getChecksum(sumtype, complete_path)
+        timestamp = os.stat(complete_path)[8]
+        
+        db_csums = {}
+        db_compressed_sums = {}
+        
+        if cmds['database']:
+            if ftype == 'primary':
+                rp.getPrimary(complete_path, csum)
+                resultname = 'primary.xml.gz.sqlite'
+                compressed_name = 'primary.xml.gz.sqlite.bz2'
+                            
+            elif ftype == 'filelists':
+                rp.getFilelists(complete_path, csum)
+                resultname = 'filelists.xml.gz.sqlite'
+                compressed_name = 'filelists.xml.gz.sqlite.bz2'
+                
+            elif ftype == 'other':
+                rp.getOtherdata(complete_path, csum)
+                resultname = 'other.xml.gz.sqlite'
+                compressed_name = 'other.xml.gz.sqlite.bz2'
+                
+            resultpath = os.path.join(repopath, resultname)
+            result_compressed = os.path.join(repopath, compressed_name)
+            db_csums[ftype] = getChecksum(sumtype, resultpath)
+            # compress the files
+            bzipFile(resultpath, result_compressed)
+            # csum the compressed file
+            db_compressed_sums[ftype] = getChecksum(sumtype, result_compressed)
+            # remove the uncompressed file
+            os.unlink(resultpath)
+
+            # timestamp the compressed file
+            db_timestamp = os.stat(result_compressed)[8]
+            
+            # add this data as a section to the repomdxml
+            db_data_type = '%s_db' % ftype
+            data = node.newChild(None, 'data', None)
+            data.newProp('type', db_data_type)
+            location = data.newChild(None, 'location', None)
+            if cmds['baseurl'] is not None:
+                location.newProp('xml:base', cmds['baseurl'])
+            
+            location.newProp('href', os.path.join(cmds['finaldir'], compressed_name))
+            checksum = data.newChild(None, 'checksum', db_compressed_sums[ftype])
+            checksum.newProp('type', sumtype)
+            db_tstamp = data.newChild(None, 'timestamp', str(db_timestamp))
+            unchecksum = data.newChild(None, 'open-checksum', db_csums[ftype])
+            unchecksum.newProp('type', sumtype)
+            
+            
         data = node.newChild(None, 'data', None)
         data.newProp('type', ftype)
         location = data.newChild(None, 'location', None)
@@ -790,3 +861,5 @@ def repoXML(node, cmds):
         checksum = data.newChild(None, 'checksum', csum)
         checksum.newProp('type', sumtype)
         timestamp = data.newChild(None, 'timestamp', str(timestamp))
+    
+        
