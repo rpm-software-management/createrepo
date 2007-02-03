@@ -785,22 +785,25 @@ def repoXML(node, cmds):
         if cmds['database']:
             if ftype == 'primary':
                 rp.getPrimary(complete_path, csum)
-                resultname = 'primary.xml.gz.sqlite'
-                compressed_name = 'primary.xml.gz.sqlite.bz2'
                             
             elif ftype == 'filelists':
                 rp.getFilelists(complete_path, csum)
-                resultname = 'filelists.xml.gz.sqlite'
-                compressed_name = 'filelists.xml.gz.sqlite.bz2'
                 
             elif ftype == 'other':
                 rp.getOtherdata(complete_path, csum)
-                resultname = 'other.xml.gz.sqlite'
-                compressed_name = 'other.xml.gz.sqlite.bz2'
-                
-            resultpath = os.path.join(repopath, resultname)
+            
+
+            tmp_result_name = '%s.xml.gz.sqlite' % ftype
+            tmp_result_path = os.path.join(repopath, tmp_result_name)
+            good_name = '%s.sqlite' % ftype
+            resultpath = os.path.join(repopath, good_name)
+            
+            # rename from silly name to not silly name
+            os.rename(tmp_result_path, resultpath)
+            compressed_name = '%s.bz2' % good_name
             result_compressed = os.path.join(repopath, compressed_name)
             db_csums[ftype] = getChecksum(sumtype, resultpath)
+            
             # compress the files
             bzipFile(resultpath, result_compressed)
             # csum the compressed file
