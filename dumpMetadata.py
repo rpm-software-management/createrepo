@@ -768,7 +768,7 @@ def repoXML(node, cmds):
     repopath = os.path.join(cmds['outputdir'], cmds['tempdir'])
     
     if cmds['database']:
-        dbversion='9'
+        dbversion = '9'
         rp = sqlitecachec.RepodataParserSqlite(repopath, repoid, None)
 
     for (file, ftype) in workfiles:
@@ -829,7 +829,7 @@ def repoXML(node, cmds):
             db_tstamp = data.newChild(None, 'timestamp', str(db_timestamp))
             unchecksum = data.newChild(None, 'open-checksum', db_csums[ftype])
             unchecksum.newProp('type', sumtype)
-            dbversion = data.newChild(None, 'database_version', dbversion)
+            database_version = data.newChild(None, 'database_version', dbversion)
             
             
         data = node.newChild(None, 'data', None)
