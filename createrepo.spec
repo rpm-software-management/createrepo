@@ -1,7 +1,7 @@
 Summary: Creates a common metadata repository
 Name: createrepo
-Version: 0.4.6
-Release: 2
+Version: 0.4.7
+Release: 1
 License: GPL
 Group: System Environment/Base
 Source: %{name}-%{version}.tar.gz
@@ -9,6 +9,7 @@ URL: http://linux.duke.edu/metadata/
 BuildRoot: %{_tmppath}/%{name}-%{version}root
 BuildArchitectures: noarch
 Requires: python >= 2.1, rpm-python, rpm >= 0:4.1.1, libxml2-python
+Requires: yum-metadata-parser
 
 %description
 This utility will generate a common metadata repository from a directory of
@@ -35,6 +36,9 @@ rpm packages
 %{_mandir}/man8/createrepo.8*
 
 %changelog
+* Tue Feb  6 2007 Seth Vidal <skvidal at linux.duke.edu>
+- 0.4.7 and yum-metadata-parser dependency
+
 * Sat Oct 14 2006 Luke Macken <lmacken@redhat.com>
 - Add modifyrepo
 
