@@ -339,11 +339,12 @@ class RpmMetaData:
     
     def _stringToVersion(self, strng):
         i = strng.find(':')
-        if i != -1:
+        if i != -1 and strng[:i].isdigit():
             epoch = strng[:i]
         else:
+            i = -1
             epoch = self.noepoch
-        j = strng.find('-')
+        j = strng.rfind('-')
         if j != -1:
             if strng[i + 1:j] == '':
                 version = None
