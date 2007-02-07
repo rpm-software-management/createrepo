@@ -481,7 +481,7 @@ def parseArgs(args):
         if cmds['split']:
             a = os.path.join(cmds['basedir'], directory, cmds['groupfile'])
         elif not os.path.isabs(a):
-            a = os.path.join(cmds['basedir'], cmds['groupfile'])
+            a = os.path.join(cmds['basedir'], directory, cmds['groupfile'])
         if not os.path.exists(a):
             errorprint(_('Error: groupfile %s cannot be found.' % a))
             usage()
