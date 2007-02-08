@@ -29,7 +29,7 @@ rpm packages
 %files
 %defattr(-, root, root)
 %dir %{_datadir}/%{name}
-%doc ChangeLog README
+%doc ChangeLog README COPYING
 %{_datadir}/%{name}/*
 %{_bindir}/%{name}
 %{_bindir}/modifyrepo
