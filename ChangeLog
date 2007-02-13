@@ -1,3 +1,12 @@
+2007-02-12 23:40  skvidal
+
+	* Makefile: 
+	add copying and copying.lib to makefile for 'make archive'
+
+2007-02-12 23:37  skvidal
+
+	* ChangeLog: check in changelog
+
 2007-02-12 23:37  skvidal
 
 	* Makefile: and makefile ver
