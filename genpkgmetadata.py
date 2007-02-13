@@ -31,7 +31,7 @@ import shutil
 
 import dumpMetadata
 from dumpMetadata import _gzipOpen
-__version__ = '0.4.7'
+__version__ = '0.4.8'
 
 def errorprint(stuff):
     print >> sys.stderr, stuff
