@@ -135,6 +135,8 @@ dailyfiles:
 	$(srcdir)/*.py \
 	$(srcdir)/Makefile \
 	$(srcdir)/ChangeLog \
+	$(srcdir)/COPYING \	
+	$(srcdir)/COPYING.lib \		
 	$(srcdir)/README \
 	$(srcdir)/$(PACKAGE).spec \
 	$(top_srcdir)/.disttmp/$$distdir
@@ -148,6 +150,8 @@ distfiles:
 	$(srcdir)/*.py \
 	$(srcdir)/Makefile \
 	$(srcdir)/ChangeLog \
+	$(srcdir)/COPYING \
+	$(srcdir)/COPYING.lib \
 	$(srcdir)/README \
 	$(srcdir)/$(PACKAGE).spec \
 	$(top_srcdir)/.disttmp/$$distdir
