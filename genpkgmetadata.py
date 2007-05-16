@@ -83,6 +83,8 @@ class MetaDataGenerator:
             for fn in names:
                 if os.path.isdir(fn):
                     continue
+                if self.cmds['skip-symlinks'] and os.path.islink(fn):
+                    continue
                 elif fn[-extlen:].lower() == '%s' % (ext):
                     relativepath = dirname.replace(startdir, "", 1)
                     relativepath = relativepath.lstrip("/")
@@ -381,13 +383,15 @@ def parseArgs(args):
     cmds['database'] = False
     cmds['file-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
     cmds['dir-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*']
+    cmds['skip-symlinks'] = False
 
     try:
-        gopts, argsleft = getopt.getopt(args, 'phqVvndg:s:x:u:c:o:C', ['help', 'exclude=',
+        gopts, argsleft = getopt.getopt(args, 'phqVvndg:s:x:u:c:o:CS', ['help', 'exclude=',
                                                                   'quiet', 'verbose', 'cachedir=', 'basedir=',
                                                                   'baseurl=', 'groupfile=', 'checksum=',
                                                                   'version', 'pretty', 'split', 'outputdir=',
-                                                                  'noepoch', 'checkts', 'database'])
+                                                                  'noepoch', 'checkts', 'database', 
+                                                                  'skip-symlinks'])
     except getopt.error, e:
         errorprint(_('Options Error: %s.') % e)
         usage()
@@ -455,6 +459,8 @@ def parseArgs(args):
                 cmds['noepoch'] = True
             elif arg in ['-d', '--database']:
                 cmds['database'] = True
+            elif arg in ['-S', '--skip-symlinks']:
+                cmds['skip-symlinks'] = True
                 
     except ValueError, e:
         errorprint(_('Options Error: %s') % e)
