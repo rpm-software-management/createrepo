@@ -586,9 +586,13 @@ class RpmMetaData:
         if not self.options['cache']:
             return getChecksum(self.options['sumtype'], fo)
 
-        key = "".join([hex(ord(x))[2:].zfill(2)
-                       for x in tuple(self.hdr[rpm.RPMTAG_SIGMD5])])
+        t = []
+        t.append("".join(self.hdr[rpm.RPMTAG_SIGGPG]))   
+        t.append("".join(self.hdr[rpm.RPMTAG_SIGPGP]))
+        t.append("".join(self.hdr[rpm.RPMTAG_HDRID]))
 
+        key = md5.new("".join(t)).hexdigest()
+                                        
         csumtag = '%s-%s' % (self.hdr['name'] , key)
         csumfile = '%s/%s' % (self.options['cachedir'], csumtag)
         if os.path.exists(csumfile) and self.mtime <= os.stat(csumfile)[8]:
