@@ -773,7 +773,10 @@ def repoXML(node, cmds):
     repopath = os.path.join(cmds['outputdir'], cmds['tempdir'])
     
     if cmds['database']:
-        dbversion = '9'
+        try:
+            dbversion = str(sqlitecachec.DBVERSION)
+        except AttributeError:
+            dbversion = '9'
         rp = sqlitecachec.RepodataParserSqlite(repopath, repoid, None)
 
     for (file, ftype) in workfiles:
