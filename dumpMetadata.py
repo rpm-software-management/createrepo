@@ -587,9 +587,12 @@ class RpmMetaData:
             return getChecksum(self.options['sumtype'], fo)
 
         t = []
-        t.append("".join(self.hdr[rpm.RPMTAG_SIGGPG]))   
-        t.append("".join(self.hdr[rpm.RPMTAG_SIGPGP]))
-        t.append("".join(self.hdr[rpm.RPMTAG_HDRID]))
+        if type(self.hdr[rpm.RPMTAG_SIGGPG]) is not types.NoneType:
+            t.append("".join(self.hdr[rpm.RPMTAG_SIGGPG]))   
+        if type(self.hdr[rpm.RPMTAG_SIGPGP]) is not types.NoneType:
+            t.append("".join(self.hdr[rpm.RPMTAG_SIGPGP]))
+        if type(self.hdr[rpm.RPMTAG_HDRID]) is not types.NoneType:
+            t.append("".join(self.hdr[rpm.RPMTAG_HDRID]))
 
         key = md5.new("".join(t)).hexdigest()
                                         
