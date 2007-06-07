@@ -1,3 +1,20 @@
+2007-06-07 09:17  pnasrat
+
+	* Makefile, genpkgmetadata.py, readMetadata.py, docs/createrepo.8:
+	  This patch adds a --update option to createrepo.
+	  https://lists.dulug.duke.edu/pipermail/rpm-metadata/2007-March/000756.html
+	  Patch from Mike Bonnet <mikeb@redhat.com>
+
+2007-05-18 16:01  pnasrat
+
+	* dumpMetadata.py: Fix for older rpm versions Christoph Thiel
+	  <cthiel@suse.de>
+
+2007-05-16 09:05  pnasrat
+
+	* ChangeLog, Makefile, createrepo.spec, genpkgmetadata.py: Update
+	  ChangeLog Bump version to 0.4.9
+
 2007-05-16 09:02  pnasrat
 
 	* dumpMetadata.py: Figure out appropriate dbversion Jeremy Katz

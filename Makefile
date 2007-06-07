@@ -1,5 +1,5 @@
 PACKAGE = createrepo
-VERSION = 0.4.9
+VERSION = 0.4.10
 SHELL = /bin/sh
 top_srcdir = .
 srcdir = .
