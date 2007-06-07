@@ -41,6 +41,7 @@ SUBDIRS = bin docs
 
 MODULES = $(srcdir)/genpkgmetadata.py \
 		  $(srcdir)/dumpMetadata.py \
+		  $(srcdir)/readMetadata.py \
 		  $(srcdir)/modifyrepo.py
 
 .SUFFIXES: .py .pyc

@@ -32,6 +32,13 @@ cache of checksums of packages in the repository. In consecutive runs of
 createrepo over the same repository of files that do not have a complete
 change out of all packages this decreases the processing time dramatically.
 .br
+.IP "\fB\--update\fP"
+If metadata already exists in the outputdir and an rpm is unchanged
+(based on file size and mtime) since the metadata was generated, reuse
+the existing metadata rather than recalculating it. In the case of a
+large repository with only a few new or modified rpms this can
+significantly reduce I/O and processing time.
+.br
 .IP "\fB\-C --checkts\fP"
 Don't generate repo metadata, if their timestamps are newer than its rpms.
 This option decreases the processing time drastically again, if you happen

@@ -30,6 +30,7 @@ import fnmatch
 import shutil
 
 import dumpMetadata
+import readMetadata
 from dumpMetadata import _gzipOpen
 __version__ = '0.4.9'
 
@@ -61,6 +62,7 @@ def usage(retval=1):
      -h, --help = show this help
      -V, --version = output version
      -p, --pretty = output xml files in pretty format.
+     --update = update existing metadata (if present)
      -d, --database = generate the sqlite databases.
     """)
 
@@ -124,6 +126,18 @@ class MetaDataGenerator:
         """all the heavy lifting for the package metadata"""
 
         # rpms we're going to be dealing with
+        if self.cmds['update']:
+            #build the paths
+            basefile = os.path.join(self.cmds['outputdir'], self.cmds['finaldir'], self.cmds['primaryfile'])
+            flfile = os.path.join(self.cmds['outputdir'], self.cmds['finaldir'], self.cmds['filelistsfile'])
+            otherfile = os.path.join(self.cmds['outputdir'], self.cmds['finaldir'], self.cmds['otherfile'])
+            opts = {
+                'verbose' : self.cmds['verbose'],
+                'pkgdir' : os.path.normpath(os.path.join(self.cmds['basedir'], directory))
+            }
+            #and scan the old repo
+            self.oldData = readMetadata.MetadataIndex(self.cmds['outputdir'],
+                                                      basefile, flfile, otherfile, opts)
         files = self.getFileList(self.cmds['basedir'], directory, '.rpm')
         files = self.trimRpms(files)
         self.pkgcount = len(files)
@@ -174,61 +188,76 @@ class MetaDataGenerator:
         self.otherfile.write('<otherdata xmlns="http://linux.duke.edu/metadata/other" packages="%s">\n' %
                        self.pkgcount)
 
+    def _getNodes(self, file, directory, current):
+        basenode = None
+        filesnode = None
+        othernode = None
+        try:
+            rpmdir= os.path.join(self.cmds['basedir'], directory)
+            mdobj = dumpMetadata.RpmMetaData(self.ts, rpmdir, file, self.cmds)
+        except dumpMetadata.MDError, e:
+            errorprint('\n%s - %s' % (e, file))
+            return None
+        try:
+            basenode = dumpMetadata.generateXML(self.basedoc, self.baseroot, self.formatns, mdobj, self.cmds['sumtype'])
+        except dumpMetadata.MDError, e:
+            errorprint(_('\nAn error occurred creating primary metadata: %s') % e)
+            return None
+        try:
+            filesnode = dumpMetadata.fileListXML(self.filesdoc, self.filesroot, mdobj)
+        except dumpMetadata.MDError, e:
+            errorprint(_('\nAn error occurred creating filelists: %s') % e)
+            return None
+        try:
+            othernode = dumpMetadata.otherXML(self.otherdoc, self.otherroot, mdobj)
+        except dumpMetadata.MDError, e:
+            errorprint(_('\nAn error occurred: %s') % e)
+            return None
+        return basenode,filesnode,othernode
+
     def writeMetadataDocs(self, files, directory, current=0):
         for file in files:
             current+=1
-            try:
-                rpmdir= os.path.join(self.cmds['basedir'], directory)
-                mdobj = dumpMetadata.RpmMetaData(self.ts, rpmdir, file, self.cmds)
-                if not self.cmds['quiet']:
-                    if self.cmds['verbose']:
-                        print '%d/%d - %s' % (current, len(files), file)
-                    else:
-                        sys.stdout.write('\r' + ' ' * 80)
-                        sys.stdout.write("\r%d/%d - %s" % (current, self.pkgcount, file))
-                        sys.stdout.flush()
-            except dumpMetadata.MDError, e:
-                errorprint('\n%s - %s' % (e, file))
+            recycled = False
+            sep = '-'
+            if self.cmds['update']:
+                #see if we can pull the nodes from the old repo
+                nodes = self.oldData.getNodes(file)
+                if nodes is not None:
+                    recycled = True
+                    sep = '*'
+            if not recycled:
+                #scan rpm files
+                nodes = self._getNodes(file, directory, current)
+            if nodes is None:
+                return
+            basenode, filenode, othernode = nodes
+            del nodes
+            if not self.cmds['quiet']:
+                if self.cmds['verbose']:
+                    print '%d/%d %s %s' % (current, self.pkgcount, sep, file)
+                else:
+                    sys.stdout.write('\r' + ' ' * 80)
+                    sys.stdout.write("\r%d/%d %s %s" % (current, self.pkgcount, sep, file))
+                    sys.stdout.flush()
+            if basenode is None:
                 continue
-            else:
-                try:
-                    node = dumpMetadata.generateXML(self.basedoc, self.baseroot, self.formatns, mdobj, self.cmds['sumtype'])
-                except dumpMetadata.MDError, e:
-                    errorprint(_('\nAn error occurred creating primary metadata: %s') % e)
-                    continue
-                else:
-                    output = node.serialize('UTF-8', self.cmds['pretty'])
-                    self.basefile.write(output)
-                    self.basefile.write('\n')
-                    node.unlinkNode()
-                    node.freeNode()
-                    del node
 
-                try:
-                    node = dumpMetadata.fileListXML(self.filesdoc, self.filesroot, mdobj)
-                except dumpMetadata.MDError, e:
-                    errorprint(_('\nAn error occurred creating filelists: %s') % e)
-                    continue
-                else:
-                    output = node.serialize('UTF-8', self.cmds['pretty'])
-                    self.flfile.write(output)
-                    self.flfile.write('\n')
+            for node, outfile in ((basenode,self.basefile),
+                                  (filenode,self.flfile),
+                                  (othernode,self.otherfile)):
+                if node is None:
+                    break
+                output = node.serialize('UTF-8', self.cmds['pretty'])
+                outfile.write(output)
+                outfile.write('\n')
+                if not recycled:
+                    #recycled nodes can be multiply referenced
                     node.unlinkNode()
                     node.freeNode()
-                    del node
+            if recycled:
+                self.oldData.freeNodes(file)
 
-                try:
-                    node = dumpMetadata.otherXML(self.otherdoc, self.otherroot, mdobj)
-                except dumpMetadata.MDError, e:
-                    errorprint(_('\nAn error occurred: %s') % e)
-                    continue
-                else:
-                    output = node.serialize('UTF-8', self.cmds['pretty'])
-                    self.otherfile.write(output)
-                    self.otherfile.write('\n')
-                    node.unlinkNode()
-                    node.freeNode()
-                    del node
         return current
 
 
@@ -379,6 +408,7 @@ def parseArgs(args):
     cmds['checkts'] = False
     cmds['mdtimestamp'] = 0
     cmds['split'] = False
+    cmds['update'] = False
     cmds['outputdir'] = ""
     cmds['database'] = False
     cmds['file-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
@@ -390,7 +420,7 @@ def parseArgs(args):
                                                                   'quiet', 'verbose', 'cachedir=', 'basedir=',
                                                                   'baseurl=', 'groupfile=', 'checksum=',
                                                                   'version', 'pretty', 'split', 'outputdir=',
-                                                                  'noepoch', 'checkts', 'database', 
+                                                                  'noepoch', 'checkts', 'database', 'update',
                                                                   'skip-symlinks'])
     except getopt.error, e:
         errorprint(_('Options Error: %s.') % e)
@@ -449,6 +479,8 @@ def parseArgs(args):
             elif arg in ['-c', '--cachedir']:
                 cmds['cache'] = True
                 cmds['cachedir'] = a
+            elif arg == '--update':
+                cmds['update'] = True
             elif arg in ['-C', '--checkts']:
                 cmds['checkts'] = True
             elif arg == '--basedir':
