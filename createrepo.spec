@@ -1,6 +1,6 @@
 Summary: Creates a common metadata repository
 Name: createrepo
-Version: 0.4.9
+Version: 0.4.10
 Release: 1
 License: GPL
 Group: System Environment/Base
@@ -36,6 +36,9 @@ rpm packages
 %{_mandir}/man8/createrepo.8*
 
 %changelog
+* Thu Jun 07 2007 Paul Nasrat <pnasrat at redhat.com>
+- 0.4.10
+
 * Wed May 16 2007 Paul Nasrat <pnasrat at redhat.com>
 - 0.4.9 
 
