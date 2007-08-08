@@ -1,13 +1,13 @@
-This program generates an metadata-compliant dir and xml files for a 
-repository of rpms.
+This program generates a repodata dir and xml files for a repository of 
+rpm packages. This repository is compatible with apt/yum/smart/yast and many
+other package-repository-related tools.
 
 run createrepo -h for usage syntax
 
-http://linux.duke.edu/metadata/
+http://linux.duke.edu/createrepo/
 
-anoncvs:
-   :pserver:anonymous@devel.linux.duke.edu:/cvsroot/metadata/cvs-root
 
-module name is 'generate'
+
+
 
 
