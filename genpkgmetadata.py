@@ -59,6 +59,7 @@ def usage(retval=1):
      -c, --cachedir <dir> = specify which dir to use for the checksum cache
      -C, --checkts = don't generate repo metadata, if their ctimes are newer
                      than the rpm ctimes.
+     -i, --pkglist = use only these files from the directory specified
      -h, --help = show this help
      -V, --version = output version
      -p, --pretty = output xml files in pretty format.
@@ -138,7 +139,11 @@ class MetaDataGenerator:
             #and scan the old repo
             self.oldData = readMetadata.MetadataIndex(self.cmds['outputdir'],
                                                       basefile, flfile, otherfile, opts)
-        files = self.getFileList(self.cmds['basedir'], directory, '.rpm')
+        if self.cmds['pkglist']:
+            files = self.cmds['pkglist']
+        else:
+            files = self.getFileList(self.cmds['basedir'], directory, '.rpm')
+            
         files = self.trimRpms(files)
         self.pkgcount = len(files)
         self.openMetadataDocs()
@@ -414,14 +419,15 @@ def parseArgs(args):
     cmds['file-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
     cmds['dir-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*']
     cmds['skip-symlinks'] = False
+    cmds['pkglist'] = []
 
     try:
-        gopts, argsleft = getopt.getopt(args, 'phqVvndg:s:x:u:c:o:CS', ['help', 'exclude=',
+        gopts, argsleft = getopt.getopt(args, 'phqVvndg:s:x:u:c:o:CSi:', ['help', 'exclude=',
                                                                   'quiet', 'verbose', 'cachedir=', 'basedir=',
                                                                   'baseurl=', 'groupfile=', 'checksum=',
                                                                   'version', 'pretty', 'split', 'outputdir=',
                                                                   'noepoch', 'checkts', 'database', 'update',
-                                                                  'skip-symlinks'])
+                                                                  'skip-symlinks', 'pkglist='])
     except getopt.error, e:
         errorprint(_('Options Error: %s.') % e)
         usage()
@@ -493,7 +499,9 @@ def parseArgs(args):
                 cmds['database'] = True
             elif arg in ['-S', '--skip-symlinks']:
                 cmds['skip-symlinks'] = True
-                
+            elif arg in ['-i', '--pkglist']:
+                cmds['pkglist'] = a
+                                
     except ValueError, e:
         errorprint(_('Options Error: %s') % e)
         usage()
@@ -533,6 +541,16 @@ def parseArgs(args):
             usage()
         cmds['cachedir'] = a
 
+    if cmds['pkglist']:
+        lst = []
+        pfo = open(cmds['pkglist'], 'r')
+        for line in pfo.readlines():
+            line = line.replace('\n', '')
+            lst.append(line)
+        pfo.close()
+            
+        cmds['pkglist'] = lst
+        
     #setup some defaults
     cmds['primaryfile'] = 'primary.xml.gz'
     cmds['filelistsfile'] = 'filelists.xml.gz'
