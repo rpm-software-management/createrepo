@@ -41,7 +41,9 @@ all:
 
 install: all installdirs
 	mkdir -p $(DESTDIR)$(mandir)/man8
+	mkdir -p $(DESTDIR)$(mandir)/man1
 	$(INSTALL_DATA) createrepo.8 $(DESTDIR)$(mandir)/man8/createrepo.8
+	$(INSTALL_DATA) modifyrepo.1 $(DESTDIR)$(mandir)/man1/modifyrepo.1
 
 
 uninstall:
@@ -71,6 +73,7 @@ distfiles:
 	mkdir $(top_srcdir)/.disttmp/$$distdir/docs;\
 	cp \
 	$(srcdir)/createrepo.8 \
+	$(srcdir)/modifyrepo.1 \
 	$(srcdir)/Makefile \
 	$(top_srcdir)/.disttmp/$$distdir/docs
 
@@ -79,6 +82,7 @@ dailyfiles:
 	mkdir $(top_srcdir)/.disttmp/$$distdir/docs;\
 	cp \
 	$(srcdir)/createrepo.8 \
+	$(srcdir)/modifyrepo.1 \
 	$(srcdir)/Makefile \
 	$(top_srcdir)/.disttmp/$$distdir/docs
 

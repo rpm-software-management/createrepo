@@ -34,8 +34,12 @@ rpm packages
 %{_bindir}/%{name}
 %{_bindir}/modifyrepo
 %{_mandir}/man8/createrepo.8*
+%{_mandir}/man1/modifyrepo.1*
 
 %changelog
+* Mon Dec  3 2007 Luke Macken <lmacken@redhat.com>
+- Add man page for modifyrepo
+
 * Thu Jun 07 2007 Paul Nasrat <pnasrat at redhat.com>
 - 0.4.10
 
