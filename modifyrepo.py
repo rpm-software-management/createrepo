@@ -74,7 +74,7 @@ class RepoMetadata:
         mdtype = mdname.split('.')[0]
         destmd = os.path.join(self.repodir, mdname)
         newmd = gzip.GzipFile(destmd, 'wb')
-        newmd.write(md)
+        newmd.write(md.encode('utf-8'))
         newmd.close()
         print "Wrote:", destmd
 
@@ -104,7 +104,7 @@ class RepoMetadata:
         print "       location =", 'repodata/' + mdname
         print "       checksum =", sha.new(newmd).hexdigest()
         print "      timestamp =", str(os.stat(destmd).st_mtime)
-        print "  open-checksum =", sha.new(md).hexdigest()
+        print "  open-checksum =", sha.new(md.encode('utf-8')).hexdigest()
 
         ## Write the updated repomd.xml
         outmd = file(self.repomdxml, 'w')
