@@ -76,6 +76,21 @@ class MetaDataGenerator:
         self.pkgcount = 0
         self.files = []
 
+    def _os_path_walk(self, top, func, arg):
+        """Directory tree walk with callback function.
+         copy of os.path.walk, fixes the link/stating problem
+         """
+
+        try:
+            names = os.listdir(top)
+        except os.error:
+            return
+        func(arg, top, names)
+        for name in names:
+            name = os.path.join(top, name)
+            if os.path.isdir(name):
+                self._os_path_walk(name, func, arg)
+
     def getFileList(self, basepath, directory, ext):
         """Return all files in path matching ext, store them in filelist,
         recurse dirs. Returns a list object"""
@@ -95,7 +110,7 @@ class MetaDataGenerator:
 
         filelist = []
         startdir = os.path.join(basepath, directory) + '/'
-        os.path.walk(startdir, extension_visitor, filelist)
+        self._os_path_walk(startdir, extension_visitor, filelist)
         return filelist
 
     def checkTimeStamps(self, directory):
@@ -235,7 +250,7 @@ class MetaDataGenerator:
                 #scan rpm files
                 nodes = self._getNodes(file, directory, current)
             if nodes is None:
-                return
+                continue
             basenode, filenode, othernode = nodes
             del nodes
             if not self.cmds['quiet']:

@@ -92,15 +92,24 @@ class RepoMetadata:
 
         ## Build the metadata
         root = self.doc.firstChild
+        root.appendChild(self.doc.createTextNode("  "))
         data = self._insert_element(root, 'data', attrs={ 'type' : mdtype })
+        data.appendChild(self.doc.createTextNode("\n    "))
+
         self._insert_element(data, 'location',
                              attrs={ 'href' : 'repodata/' + mdname })
+        data.appendChild(self.doc.createTextNode("\n    "))
         self._insert_element(data, 'checksum', attrs={ 'type' : 'sha' },
                              text=sha.new(newmd).hexdigest())
+        data.appendChild(self.doc.createTextNode("\n    "))
         self._insert_element(data, 'timestamp',
                              text=str(os.stat(destmd).st_mtime))
+        data.appendChild(self.doc.createTextNode("\n    "))
         self._insert_element(data, 'open-checksum', attrs={ 'type' : 'sha' },
                              text=sha.new(md).hexdigest())
+
+        data.appendChild(self.doc.createTextNode("\n  "))
+        root.appendChild(self.doc.createTextNode("\n"))
 
         print "           type =", mdtype 
         print "       location =", 'repodata/' + mdname
@@ -111,6 +120,7 @@ class RepoMetadata:
         ## Write the updated repomd.xml
         outmd = file(self.repomdxml, 'w')
         self.doc.writexml(outmd)
+        outmd.write("\n")
         outmd.close()
         print "Wrote:", self.repomdxml
 

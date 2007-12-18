@@ -28,7 +28,10 @@ import struct
 import re
 import stat
 import bz2
-import sqlitecachec
+try:
+    import sqlitecachec
+except ImportError:
+    pass
 
 # done to fix gzip randomly changing the checksum
 import gzip
@@ -217,9 +220,12 @@ def byteranges(file):
     
 
 class MDError(exceptions.Exception):
-    def __init__(self, args=None):
+    def __init__(self, value=None):
         exceptions.Exception.__init__(self)
-        self.args = args
+        self.value = value
+    
+    def __str__(self):
+        return self.value
 
 
 
@@ -400,7 +406,9 @@ class RpmMetaData:
         except TypeError:
             del u  # move on to the next method
         else:
-            return u.keys()
+            ret = u.keys()
+            ret.sort()
+            return ret
     
         # We can't hash all the elements.  Second fastest is to sort,
         # which brings the equal elements together; then duplicates are
@@ -497,7 +505,7 @@ class RpmMetaData:
             for glob in self.filerc:
                 if glob.match(item):
                     returns[item] = 1
-        return returns
+        return returns.keys()
                     
     def usefulGhosts(self):
         """search for useful ghost file names"""
@@ -508,7 +516,7 @@ class RpmMetaData:
             for glob in self.filerc:
                 if glob.match(item):
                     returns[item] = 1
-        return returns
+        return returns.keys()
 
 
     def usefulDirs(self):
@@ -596,7 +604,9 @@ class RpmMetaData:
 
         key = md5.new("".join(t)).hexdigest()
                                         
-        csumtag = '%s-%s' % (self.hdr['name'] , key)
+        csumtag = '%s-%s-%s-%s' % (os.path.basename(self.relativepath), 
+                                   self.hdr[rpm.RPMTAG_SHA1HEADER], 
+                                   self.size, self.mtime)
         csumfile = '%s/%s' % (self.options['cachedir'], csumtag)
         if os.path.exists(csumfile) and self.mtime <= os.stat(csumfile)[8]:
             csumo = open(csumfile, 'r')
@@ -704,16 +714,22 @@ def generateXML(doc, node, formatns, rpmObj, sumtype):
             if prereq == 1:
                 entry.newProp('pre', str(prereq))
         
-    for file in rpmObj.usefulFiles():
+    ff = rpmObj.usefulFiles()
+    ff.sort()
+    for file in ff:
         files = format.newChild(None, 'file', None)
         file = utf8String(file)
         files.addContent(file)
-    for directory in rpmObj.usefulDirs():
+    ff = rpmObj.usefulDirs()
+    ff.sort()
+    for directory in ff:
         files = format.newChild(None, 'file', None)
         directory = utf8String(directory)
         files.addContent(directory)
         files.newProp('type', 'dir')
-    for directory in rpmObj.usefulGhosts():
+    ff = rpmObj.usefulGhosts()
+    ff.sort()
+    for directory in ff:
         files = format.newChild(None, 'file', None)
         directory = utf8String(directory)
         files.addContent(directory)
