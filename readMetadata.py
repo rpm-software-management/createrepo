@@ -18,7 +18,6 @@
 import os
 import sys
 import libxml2
-import pprint
 import stat
 
 def errorprint(stuff):

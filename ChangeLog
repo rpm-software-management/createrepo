@@ -1,3 +1,13 @@
+2007-12-06 10:44  lmacken
+
+	* modifyrepo.py: Better unicode handling
+	* readMetadata.py, dumpMetadata.py: Remove unnecessary imports
+
+2007-12-03 04:33  lmacken
+
+	* docs/modifyrepo.8, createrepo.spec, docs/Makefile:
+	Add a man page for modifyrepo
+
 2007-06-07 09:17  pnasrat
 
 	* Makefile, genpkgmetadata.py, readMetadata.py, docs/createrepo.8:

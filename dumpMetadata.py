@@ -35,7 +35,6 @@ except ImportError:
 
 # done to fix gzip randomly changing the checksum
 import gzip
-from zlib import error as zlibError
 from gzip import write32u, FNAME
 
 __all__ = ["GzipFile","open"]
