@@ -1,6 +1,8 @@
+%{!?python_sitelib: %define python_sitelib %(python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
+
 Summary: Creates a common metadata repository
 Name: createrepo
-Version: 0.4.10
+Version: 0.9
 Release: 1
 License: GPL
 Group: System Environment/Base
@@ -9,7 +11,7 @@ URL: http://linux.duke.edu/metadata/
 BuildRoot: %{_tmppath}/%{name}-%{version}root
 BuildArchitectures: noarch
 Requires: python >= 2.1, rpm-python, rpm >= 0:4.1.1, libxml2-python
-Requires: yum-metadata-parser
+Requires: yum-metadata-parser, yum >= 3.2.7
 
 %description
 This utility will generate a common metadata repository from a directory of
@@ -35,8 +37,12 @@ rpm packages
 %{_bindir}/modifyrepo
 %{_mandir}/man8/createrepo.8*
 %{_mandir}/man1/modifyrepo.1*
+%{python_sitelib}/createrepo
 
 %changelog
+* Thu Dec 20 2007 Seth Vidal <skvidal at fedoraproject.org>
+- beginning of the new version
+
 * Mon Dec  3 2007 Luke Macken <lmacken@redhat.com>
 - Add man page for modifyrepo
 

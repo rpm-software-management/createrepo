@@ -18,9 +18,9 @@ includedir = ${prefix}/include
 oldincludedir = /usr/include
 mandir = ${datadir}/man
 
-pkgdatadir = $(datadir)/$(PACKAGE)
-pkglibdir = $(libdir)/$(PACKAGE)
-pkgincludedir = $(includedir)/$(PACKAGE)
+pkgdatadir = $(datadir)/$(PKGNAME)
+pkglibdir = $(libdir)/$(PKGNAME)
+pkgincludedir = $(includedir)/$(PKGNAME)
 top_builddir = ../
 
 # all dirs
@@ -47,7 +47,7 @@ install: all installdirs
 
 
 uninstall:
-	$(RM) $(bindir)/$(PACKAGE)
+	$(RM) $(bindir)/$(PKGNAME)
 
 
 
@@ -69,7 +69,7 @@ maintainer-clean:
 
 
 distfiles:
-	distdir=$(PACKAGE)-$(VERSION); \
+	distdir=$(PKGNAME)-$(VERSION); \
 	mkdir $(top_srcdir)/.disttmp/$$distdir/docs;\
 	cp \
 	$(srcdir)/createrepo.8 \
@@ -78,7 +78,7 @@ distfiles:
 	$(top_srcdir)/.disttmp/$$distdir/docs
 
 dailyfiles:
-	distdir=$(PACKAGE); \
+	distdir=$(PKGNAME); \
 	mkdir $(top_srcdir)/.disttmp/$$distdir/docs;\
 	cp \
 	$(srcdir)/createrepo.8 \

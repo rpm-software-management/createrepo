@@ -17,30 +17,27 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # Copyright 2004 Duke University
 
-# $Id$
-
 
 import os
 import sys
 import getopt
-import rpm
 import libxml2
 import string
 import fnmatch
 import shutil
+import rpm
 
-import dumpMetadata
-import readMetadata
-from dumpMetadata import _gzipOpen
-__version__ = '0.4.9'
+# for now, for later, we move all this around
+import createrepo
+from createrepo import MDError
+import createrepo.yumbased
+import createrepo.utils
 
-def errorprint(stuff):
-    print >> sys.stderr, stuff
+from createrepo.utils import _gzipOpen, errorprint, _
 
-def _(args):
-    """Stub function for translation"""
-    return args
+__version__ = '0.9'
 
+# cli
 def usage(retval=1):
     print _("""
     createrepo [options] directory-of-packages
@@ -69,6 +66,7 @@ def usage(retval=1):
 
     sys.exit(retval)
 
+# module
 class MetaDataGenerator:
     def __init__(self, cmds):
         self.cmds = cmds
@@ -76,6 +74,7 @@ class MetaDataGenerator:
         self.pkgcount = 0
         self.files = []
 
+    # module
     def _os_path_walk(self, top, func, arg):
         """Directory tree walk with callback function.
          copy of os.path.walk, fixes the link/stating problem
@@ -90,7 +89,7 @@ class MetaDataGenerator:
             name = os.path.join(top, name)
             if os.path.isdir(name):
                 self._os_path_walk(name, func, arg)
-
+    # module
     def getFileList(self, basepath, directory, ext):
         """Return all files in path matching ext, store them in filelist,
         recurse dirs. Returns a list object"""
@@ -112,7 +111,7 @@ class MetaDataGenerator:
         startdir = os.path.join(basepath, directory) + '/'
         self._os_path_walk(startdir, extension_visitor, filelist)
         return filelist
-
+    #module
     def checkTimeStamps(self, directory):
         if self.cmds['checkts']:
             files = self.getFileList(self.cmds['basedir'], directory, '.rpm')
@@ -124,7 +123,7 @@ class MetaDataGenerator:
                 if os.path.getctime(fn) > self.cmds['mdtimestamp']:
                     return False
         return True
-
+    #module
     def trimRpms(self, files):
         badrpms = []
         for file in files:
@@ -144,7 +143,7 @@ class MetaDataGenerator:
         # rpms we're going to be dealing with
         if self.cmds['update']:
             #build the paths
-            basefile = os.path.join(self.cmds['outputdir'], self.cmds['finaldir'], self.cmds['primaryfile'])
+            primaryfile = os.path.join(self.cmds['outputdir'], self.cmds['finaldir'], self.cmds['primaryfile'])
             flfile = os.path.join(self.cmds['outputdir'], self.cmds['finaldir'], self.cmds['filelistsfile'])
             otherfile = os.path.join(self.cmds['outputdir'], self.cmds['finaldir'], self.cmds['otherfile'])
             opts = {
@@ -152,71 +151,62 @@ class MetaDataGenerator:
                 'pkgdir' : os.path.normpath(os.path.join(self.cmds['basedir'], directory))
             }
             #and scan the old repo
-            self.oldData = readMetadata.MetadataIndex(self.cmds['outputdir'],
-                                                      basefile, flfile, otherfile, opts)
+            self.oldData = createrepo.readMetadata.MetadataIndex(self.cmds['outputdir'],
+                                                      primaryfile, flfile, otherfile, opts)
         if self.cmds['pkglist']:
-            files = self.cmds['pkglist']
+            packages = self.cmds['pkglist']
         else:
-            files = self.getFileList(self.cmds['basedir'], directory, '.rpm')
+            packages = self.getFileList(self.cmds['basedir'], directory, '.rpm')
             
-        files = self.trimRpms(files)
-        self.pkgcount = len(files)
+        packages = self.trimRpms(packages)
+        self.pkgcount = len(packages)
         self.openMetadataDocs()
-        self.writeMetadataDocs(files, directory)
+        self.writeMetadataDocs(packages, directory)
         self.closeMetadataDocs()
 
-
+    # module
     def openMetadataDocs(self):
-        self._setupBase()
-        self._setupFilelists()
-        self._setupOther()
+        self.primaryfile = self._setupPrimary()
+        self.flfile = self._setupFilelists()
+        self.otherfile = self._setupOther()
 
-    def _setupBase(self):
-        # setup the base metadata doc
-        self.basedoc = libxml2.newDoc("1.0")
-        self.baseroot =  self.basedoc.newChild(None, "metadata", None)
-        basens = self.baseroot.newNs('http://linux.duke.edu/metadata/common', None)
-        self.formatns = self.baseroot.newNs('http://linux.duke.edu/metadata/rpm', 'rpm')
-        self.baseroot.setNs(basens)
-        basefilepath = os.path.join(self.cmds['outputdir'], self.cmds['tempdir'], self.cmds['primaryfile'])
-        self.basefile = _gzipOpen(basefilepath, 'w')
-        self.basefile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        self.basefile.write('<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="%s">\n' %
+    def _setupPrimary(self):
+        # setup the primary metadata file
+        primaryfilepath = os.path.join(self.cmds['outputdir'], self.cmds['tempdir'], self.cmds['primaryfile'])
+        fo = _gzipOpen(primaryfilepath, 'w')
+        fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+        fo.write('<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="%s">\n' %
                        self.pkgcount)
+        return fo
 
     def _setupFilelists(self):
-        # setup the file list doc
-        self.filesdoc = libxml2.newDoc("1.0")
-        self.filesroot = self.filesdoc.newChild(None, "filelists", None)
-        filesns = self.filesroot.newNs('http://linux.duke.edu/metadata/filelists', None)
-        self.filesroot.setNs(filesns)
+        # setup the filelist file
         filelistpath = os.path.join(self.cmds['outputdir'], self.cmds['tempdir'], self.cmds['filelistsfile'])
-        self.flfile = _gzipOpen(filelistpath, 'w')
-        self.flfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        self.flfile.write('<filelists xmlns="http://linux.duke.edu/metadata/filelists" packages="%s">\n' %
+        fo = _gzipOpen(filelistpath, 'w')
+        fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+        fo.write('<filelists xmlns="http://linux.duke.edu/metadata/filelists" packages="%s">\n' %
                        self.pkgcount)
-
+        return fo
+        
     def _setupOther(self):
-        # setup the other doc
-        self.otherdoc = libxml2.newDoc("1.0")
-        self.otherroot = self.otherdoc.newChild(None, "otherdata", None)
-        otherns = self.otherroot.newNs('http://linux.duke.edu/metadata/other', None)
-        self.otherroot.setNs(otherns)
+        # setup the other file
         otherfilepath = os.path.join(self.cmds['outputdir'], self.cmds['tempdir'], self.cmds['otherfile'])
-        self.otherfile = _gzipOpen(otherfilepath, 'w')
-        self.otherfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        self.otherfile.write('<otherdata xmlns="http://linux.duke.edu/metadata/other" packages="%s">\n' %
+        fo = _gzipOpen(otherfilepath, 'w')
+        fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+        fo.write('<otherdata xmlns="http://linux.duke.edu/metadata/other" packages="%s">\n' %
                        self.pkgcount)
-
-    def _getNodes(self, file, directory, current):
+        return fo
+        
+    def _getNodes(self, pkg, directory, current):
+        # delete function since it seems to nothing anymore
         basenode = None
         filesnode = None
         othernode = None
         try:
             rpmdir= os.path.join(self.cmds['basedir'], directory)
-            mdobj = dumpMetadata.RpmMetaData(self.ts, rpmdir, file, self.cmds)
+            mdobj = dumpMetadata.RpmMetaData(self.ts, rpmdir, pkg, self.cmds)
         except dumpMetadata.MDError, e:
-            errorprint('\n%s - %s' % (e, file))
+            errorprint('\n%s - %s' % (e, pkg))
             return None
         try:
             basenode = dumpMetadata.generateXML(self.basedoc, self.baseroot, self.formatns, mdobj, self.cmds['sumtype'])
@@ -235,48 +225,60 @@ class MetaDataGenerator:
             return None
         return basenode,filesnode,othernode
 
-    def writeMetadataDocs(self, files, directory, current=0):
-        for file in files:
+    def read_in_package(self, directory, rpmfile):
+        # XXX fixme try/excepts here
+        # directory is stupid - just make it part of the class
+        rpmfile = '%s/%s/%s' % (self.cmds['basedir'], directory, rpmfile)
+        po = createrepo.yumbased.CreateRepoPackage(self.ts, rpmfile)
+        return po
+
+    def writeMetadataDocs(self, pkglist, directory, current=0):
+        # FIXME
+        # directory is unused, kill it, pkglist should come from self
+        # I don't see why current needs to be this way at all
+        for pkg in pkglist:
             current+=1
             recycled = False
             sep = '-'
+            
+            # look to see if we can get the data from the old repodata
+            # if so write this one out that way
             if self.cmds['update']:
                 #see if we can pull the nodes from the old repo
-                nodes = self.oldData.getNodes(file)
+                nodes = self.oldData.getNodes(pkg)
                 if nodes is not None:
                     recycled = True
-                    sep = '*'
+
+            
+            # otherwise do it individually
             if not recycled:
                 #scan rpm files
-                nodes = self._getNodes(file, directory, current)
-            if nodes is None:
-                continue
-            basenode, filenode, othernode = nodes
-            del nodes
+                po = self.read_in_package(directory, pkg)
+                self.primaryfile.write(po.do_primary_xml_dump())
+                self.flfile.write(po.do_filelists_xml_dump())
+                self.otherfile.write(po.do_other_xml_dump())
+            else:
+                sep = '*'
+                primarynode, filenode, othernode = nodes    
+
+                for node, outfile in ((primarynode,self.primaryfile),
+                                      (filenode,self.flfile),
+                                      (othernode,self.otherfile)):
+                    if node is None:
+                        break
+                    output = node.serialize('UTF-8', self.cmds['pretty'])
+                    outfile.write(output)
+                    outfile.write('\n')
+  
+                    self.oldData.freeNodes(pkg)
+
             if not self.cmds['quiet']:
                 if self.cmds['verbose']:
-                    print '%d/%d %s %s' % (current, self.pkgcount, sep, file)
+                    print '%d/%d %s %s' % (current, self.pkgcount, sep, pkg)
                 else:
                     sys.stdout.write('\r' + ' ' * 80)
-                    sys.stdout.write("\r%d/%d %s %s" % (current, self.pkgcount, sep, file))
+                    sys.stdout.write("\r%d/%d %s %s" % (current, self.pkgcount, sep, pkg))
                     sys.stdout.flush()
-            if basenode is None:
-                continue
-
-            for node, outfile in ((basenode,self.basefile),
-                                  (filenode,self.flfile),
-                                  (othernode,self.otherfile)):
-                if node is None:
-                    break
-                output = node.serialize('UTF-8', self.cmds['pretty'])
-                outfile.write(output)
-                outfile.write('\n')
-                if not recycled:
-                    #recycled nodes can be multiply referenced
-                    node.unlinkNode()
-                    node.freeNode()
-            if recycled:
-                self.oldData.freeNodes(file)
 
         return current
 
@@ -288,21 +290,18 @@ class MetaDataGenerator:
         # save them up to the tmp locations:
         if not self.cmds['quiet']:
             print _('Saving Primary metadata')
-        self.basefile.write('\n</metadata>')
-        self.basefile.close()
-        self.basedoc.freeDoc()
+        self.primaryfile.write('\n</metadata>')
+        self.primaryfile.close()
 
         if not self.cmds['quiet']:
             print _('Saving file lists metadata')
         self.flfile.write('\n</filelists>')
         self.flfile.close()
-        self.filesdoc.freeDoc()
 
         if not self.cmds['quiet']:
             print _('Saving other metadata')
         self.otherfile.write('\n</otherdata>')
         self.otherfile.close()
-        self.otherdoc.freeDoc()
 
     def doRepoMetadata(self):
         """wrapper to generate the repomd.xml file that stores the info on the other files"""
@@ -313,8 +312,8 @@ class MetaDataGenerator:
         repofilepath = os.path.join(self.cmds['outputdir'], self.cmds['tempdir'], self.cmds['repomdfile'])
 
         try:
-            dumpMetadata.repoXML(reporoot, self.cmds)
-        except dumpMetadata.MDError, e:
+            createrepo.repoXML(reporoot, self.cmds)
+        except MDError, e:
             errorprint(_('Error generating repo xml file: %s') % e)
             sys.exit(1)
 

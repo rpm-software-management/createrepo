@@ -18,9 +18,9 @@ includedir = ${prefix}/include
 oldincludedir = /usr/include
 mandir = ${prefix}/man
 
-pkgdatadir = $(datadir)/$(PACKAGE)
-pkglibdir = $(libdir)/$(PACKAGE)
-pkgincludedir = $(includedir)/$(PACKAGE)
+pkgdatadir = $(datadir)/$(PKGNAME)
+pkglibdir = $(libdir)/$(PKGNAME)
+pkgincludedir = $(includedir)/$(PKGNAME)
 top_builddir = ../
 
 # all dirs
@@ -36,16 +36,16 @@ INSTALL_MODULES = $(INSTALL) -m 755 -D
 RM 		= rm -f
 
 
-all: $(srcdir)/$(PACKAGE)
+all: $(srcdir)/$(PKGNAME)
 
 
 install: all installdirs
-	$(INSTALL_BIN) $(srcdir)/$(PACKAGE) $(DESTDIR)$(bindir)/$(PACKAGE)
+	$(INSTALL_BIN) $(srcdir)/$(PKGNAME) $(DESTDIR)$(bindir)/$(PKGNAME)
 	$(INSTALL_BIN) $(srcdir)/modifyrepo $(DESTDIR)$(bindir)/modifyrepo
 
 
 uninstall:
-	$(RM) $(bindir)/$(PACKAGE)
+	$(RM) $(bindir)/$(PKGNAME)
 
 
 
@@ -67,19 +67,19 @@ maintainer-clean:
 
 
 distfiles:
-	distdir=$(PACKAGE)-$(VERSION); \
+	distdir=$(PKGNAME)-$(VERSION); \
 	mkdir $(top_srcdir)/.disttmp/$$distdir/bin;\
 	cp \
-	$(srcdir)/$(PACKAGE) \
+	$(srcdir)/$(PKGNAME) \
 	$(srcdir)/Makefile \
 	$(srcdir)/modifyrepo \
 	$(top_srcdir)/.disttmp/$$distdir/bin
 
 dailyfiles:
-	distdir=$(PACKAGE); \
+	distdir=$(PKGNAME); \
 	mkdir $(top_srcdir)/.disttmp/$$distdir/bin;\
 	cp \
-	$(srcdir)/$(PACKAGE) \
+	$(srcdir)/$(PKGNAME) \
 	$(srcdir)/Makefile \
 	$(srcdir)/modifyrepo \
 	$(top_srcdir)/.disttmp/$$distdir/bin

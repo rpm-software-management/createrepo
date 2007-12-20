@@ -1,5 +1,12 @@
-PACKAGE = createrepo
-VERSION = 0.4.10
+PKGNAME = createrepo
+VERSION=$(shell awk '/Version:/ { print $$2 }' ${PKGNAME}.spec)
+RELEASE=$(shell awk '/Release:/ { print $$2 }' ${PKGNAME}.spec)
+CVSTAG=createrepo-$(subst .,_,$(VERSION)-$(RELEASE))
+PYTHON=python
+SUBDIRS = $(PKGNAME) bin docs
+PYFILES = $(wildcard *.py)
+
+
 SHELL = /bin/sh
 top_srcdir = .
 srcdir = .
@@ -20,9 +27,9 @@ includedir = ${prefix}/include
 oldincludedir = /usr/include
 mandir = ${prefix}/share/man
 
-pkgdatadir = $(datadir)/$(PACKAGE)
-pkglibdir = $(libdir)/$(PACKAGE)
-pkgincludedir = $(includedir)/$(PACKAGE)
+pkgdatadir = $(datadir)/$(PKGNAME)
+pkglibdir = $(libdir)/$(PKGNAME)
+pkgincludedir = $(includedir)/$(PKGNAME)
 top_builddir = 
 
 # all dirs
@@ -37,12 +44,8 @@ INSTALL_DATA    = $(INSTALL) -m 644
 INSTALL_MODULES = $(INSTALL) -m 755 -D 
 RM              = rm -f
 
-SUBDIRS = bin docs
-
 MODULES = $(srcdir)/genpkgmetadata.py \
-		  $(srcdir)/dumpMetadata.py \
-		  $(srcdir)/readMetadata.py \
-		  $(srcdir)/modifyrepo.py
+	$(srcdir)/modifyrepo.py
 
 .SUFFIXES: .py .pyc
 .py.pyc: 
@@ -51,7 +54,7 @@ MODULES = $(srcdir)/genpkgmetadata.py \
 
 all: $(MODULES)
 	for subdir in $(SUBDIRS) ; do \
-	  $(MAKE) -C $$subdir VERSION=$(VERSION) PACKAGE=$(PACKAGE) DESTDIR=$(DESTDIR); \
+	  $(MAKE) -C $$subdir VERSION=$(VERSION) PKGNAME=$(PKGNAME) DESTDIR=$(DESTDIR); \
 	done
 
 check: 
@@ -60,7 +63,7 @@ check:
 install: all installdirs
 	$(INSTALL_MODULES) $(srcdir)/$(MODULES) $(DESTDIR)$(pkgdatadir)
 	for subdir in $(SUBDIRS) ; do \
-	  $(MAKE) -C $$subdir install VERSION=$(VERSION) PACKAGE=$(PACKAGE); \
+	  $(MAKE) -C $$subdir install VERSION=$(VERSION) PKGNAME=$(PKGNAME); \
 	done
 
 installdirs:
@@ -74,13 +77,13 @@ uninstall:
 	  $(RM) $(pkgdatadir)/$$module ; \
 	done
 	for subdir in $(SUBDIRS) ; do \
-	  $(MAKE) -C $$subdir uninstall VERSION=$(VERSION) PACKAGE=$(PACKAGE); \
+	  $(MAKE) -C $$subdir uninstall VERSION=$(VERSION) PKGNAME=$(PKGNAME); \
 	done
 
 clean:
 	$(RM)  *.pyc *.pyo
 	for subdir in $(SUBDIRS) ; do \
-	  $(MAKE) -C $$subdir clean VERSION=$(VERSION) PACKAGE=$(PACKAGE); \
+	  $(MAKE) -C $$subdir clean VERSION=$(VERSION) PKGNAME=$(PKGNAME); \
 	done
 
 distclean: clean
@@ -88,7 +91,7 @@ distclean: clean
 	$(RM) core
 	$(RM) *~
 	for subdir in $(SUBDIRS) ; do \
-	  $(MAKE) -C $$subdir distclean VERSION=$(VERSION) PACKAGE=$(PACKAGE); \
+	  $(MAKE) -C $$subdir distclean VERSION=$(VERSION) PKGNAME=$(PKGNAME); \
 	done
 
 mostlyclean:
@@ -102,12 +105,12 @@ maintainer-clean:
 
 dist:
 	olddir=`pwd`; \
-	distdir=$(PACKAGE)-$(VERSION); \
+	distdir=$(PKGNAME)-$(VERSION); \
 	$(RM) -r .disttmp; \
 	$(INSTALL_DIR) .disttmp; \
 	$(INSTALL_DIR) .disttmp/$$distdir; \
 	$(MAKE) distfiles
-	distdir=$(PACKAGE)-$(VERSION); \
+	distdir=$(PKGNAME)-$(VERSION); \
 	cd .disttmp; \
 	tar -cvz > ../$$distdir.tar.gz $$distdir; \
 	cd $$olddir
@@ -115,23 +118,23 @@ dist:
 
 daily:
 	olddir=`pwd`; \
-	distdir=$(PACKAGE); \
+	distdir=$(PKGNAME); \
 	$(RM) -r .disttmp; \
 	$(INSTALL_DIR) .disttmp; \
 	$(INSTALL_DIR) .disttmp/$$distdir; \
 	$(MAKE) dailyfiles
 	day=`/bin/date +%Y%m%d`; \
-	distdir=$(PACKAGE); \
+	distdir=$(PKGNAME); \
 	tarname=$$distdir-$$day ;\
 	cd .disttmp; \
-	perl -pi -e "s/\#DATE\#/$$day/g" $$distdir/$(PACKAGE)-daily.spec; \
+	perl -pi -e "s/\#DATE\#/$$day/g" $$distdir/$(PKGNAME)-daily.spec; \
 	echo $$day; \
 	tar -cvz > ../$$tarname.tar.gz $$distdir; \
 	cd $$olddir
 	$(RM) -rf .disttmp
 
 dailyfiles:
-	distdir=$(PACKAGE); \
+	distdir=$(PKGNAME); \
 	cp \
 	$(srcdir)/*.py \
 	$(srcdir)/Makefile \
@@ -139,14 +142,14 @@ dailyfiles:
 	$(srcdir)/COPYING \	
 	$(srcdir)/COPYING.lib \		
 	$(srcdir)/README \
-	$(srcdir)/$(PACKAGE).spec \
+	$(srcdir)/$(PKGNAME).spec \
 	$(top_srcdir)/.disttmp/$$distdir
 	for subdir in $(SUBDIRS) ; do \
-	  $(MAKE) -C $$subdir dailyfiles VERSION=$(VERSION) PACKAGE=$(PACKAGE); \
+	  $(MAKE) -C $$subdir dailyfiles VERSION=$(VERSION) PKGNAME=$(PKGNAME); \
 	done
 
 distfiles:
-	distdir=$(PACKAGE)-$(VERSION); \
+	distdir=$(PKGNAME)-$(VERSION); \
 	cp \
 	$(srcdir)/*.py \
 	$(srcdir)/Makefile \
@@ -154,10 +157,10 @@ distfiles:
 	$(srcdir)/COPYING \
 	$(srcdir)/COPYING.lib \
 	$(srcdir)/README \
-	$(srcdir)/$(PACKAGE).spec \
+	$(srcdir)/$(PKGNAME).spec \
 	$(top_srcdir)/.disttmp/$$distdir
 	for subdir in $(SUBDIRS) ; do \
-	  $(MAKE) -C $$subdir distfiles VERSION=$(VERSION) PACKAGE=$(PACKAGE); \
+	  $(MAKE) -C $$subdir distfiles VERSION=$(VERSION) PKGNAME=$(PKGNAME); \
 	done
 
 archive: dist
