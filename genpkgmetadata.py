@@ -20,7 +20,7 @@
 
 import os
 import sys
-import getopt
+from optparse import OptionParser
 import shutil
 
 
@@ -30,319 +30,207 @@ from createrepo import MDError
 import createrepo.yumbased
 import createrepo.utils
 
-from createrepo.utils import _gzipOpen, errorprint, _
+from createrepo.utils import _gzipOpen, errorprint, _, checkAndMakeDir
 
 __version__ = '0.9'
 
-# cli
-def usage(retval=1):
-    print _("""
-    createrepo [options] directory-of-packages
-
-    Options:
-     -u, --baseurl <url> = optional base url location for all files
-     -o, --outputdir <dir> = optional directory to output to
-     -x, --exclude = files globs to exclude, can be specified multiple times
-     -q, --quiet = run quietly
-     -n, --noepoch = don't add zero epochs for non-existent epochs
-                    (incompatible with yum and smart but required for
-                     systems with rpm < 4.2.1)
-     -g, --groupfile <filename> to point to for group information (precreated)
-                    (<filename> relative to directory-of-packages)
-     -v, --verbose = run verbosely
-     -c, --cachedir <dir> = specify which dir to use for the checksum cache
-     -C, --checkts = don't generate repo metadata, if their ctimes are newer
-                     than the rpm ctimes.
-     -i, --pkglist = use only these files from the directory specified
-     -h, --help = show this help
-     -V, --version = output version
-     -p, --pretty = output xml files in pretty format.
-     --update = update existing metadata (if present)
-     -d, --database = generate the sqlite databases.
-    """)
-
-    sys.exit(retval)
-
-# module
-
-def checkAndMakeDir(dir):
+def parseArgs(args, conf):
     """
-     check out the dir and make it, if possible, return 1 if done, else return 0
-    """
-    if os.path.exists(dir):
-        if not os.path.isdir(dir):
-            errorprint(_('%s is not a dir') % dir)
-            result = False
-        else:
-            if not os.access(dir, os.W_OK):
-                errorprint(_('%s is not writable') % dir)
-                result = False
-            else:
-                result = True
-    else:
-        try:
-            os.mkdir(dir)
-        except OSError, e:
-            errorprint(_('Error creating dir %s: %s') % (dir, e))
-            result = False
-        else:
-            result = True
-    return result
-
-def parseArgs(args):
-    """
-       Parse the command line args return a commands dict and directory.
+       Parse the command line args. return a config object.
        Sanity check all the things being passed in.
     """
-    cmds = {}
-    cmds['quiet'] = 0
-    cmds['verbose'] = 0
-    cmds['excludes'] = []
-    cmds['baseurl'] = None
-    cmds['groupfile'] = None
-    cmds['sumtype'] = 'sha'
-    cmds['noepoch'] = False
-    cmds['pretty'] = 0
-#    cmds['updategroupsonly'] = 0
-    cmds['cachedir'] = None
-    cmds['basedir'] = os.getcwd()
-    cmds['cache'] = False
-    cmds['checkts'] = False
-    cmds['mdtimestamp'] = 0
-    cmds['split'] = False
-    cmds['update'] = False
-    cmds['outputdir'] = ""
-    cmds['database'] = False
-    cmds['file-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
-    cmds['dir-pattern-match'] = ['.*bin\/.*', '^\/etc\/.*']
-    cmds['skip-symlinks'] = False
-    cmds['pkglist'] = []
+    
+    parser = OptionParser(version = "createrepo %s" % __version__)
+    # query options
+    parser.add_option("-q", "--quiet", default=False, action="store_true",
+                      help="output nothing except for serious errors")
+    parser.add_option("-v", "--verbose", default=False, action="store_true",
+                      help="output more debugging info.")
+    parser.add_option("-x", "--excludes", default=[], action="append",
+                      help="files to exclude")
+    parser.add_option("-u", "--baseurl", default=None)
+    parser.add_option("-g", "--groupfile", default=None)
+    parser.add_option("-s", "--checksum", default="sha", dest='sumtype')
+    parser.add_option("-n", "--noepoch", default=False, action="store_true")
+    parser.add_option("-p", "--pretty", default=False, action="store_true")
+    parser.add_option("-c", "--cachedir", default=None)
+    parser.add_option("--basedir", default=os.getcwd())
+    parser.add_option("-C", "--checkts", default=False, action="store_true")
+    parser.add_option("-d", "--database", default=False, action="store_true")
+    parser.add_option("--update", default=False, action="store_true")
+    parser.add_option("--split", default=False, action="store_true")
+    parser.add_option("-i", "--pkglist", default=False, action="store_true")
+    parser.add_option("-o", "--outputdir", default="")
+    parser.add_option("-S", "--skip-symlinks", dest="skip_symlinks",
+                      default=False, action="store_true")
 
-    try:
-        gopts, argsleft = getopt.getopt(args, 'phqVvndg:s:x:u:c:o:CSi:', ['help', 'exclude=',
-                                                                  'quiet', 'verbose', 'cachedir=', 'basedir=',
-                                                                  'baseurl=', 'groupfile=', 'checksum=',
-                                                                  'version', 'pretty', 'split', 'outputdir=',
-                                                                  'noepoch', 'checkts', 'database', 'update',
-                                                                  'skip-symlinks', 'pkglist='])
-    except getopt.error, e:
-        errorprint(_('Options Error: %s.') % e)
-        usage()
-
-    try:
-        for arg,a in gopts:
-            if arg in ['-h','--help']:
-                usage(retval=0)
-            elif arg in ['-V', '--version']:
-                print '%s' % __version__
-                sys.exit(0)
-            elif arg == '--split':
-                cmds['split'] = True
-    except ValueError, e:
-        errorprint(_('Options Error: %s') % e)
-        usage()
-
-
-    # make sure our dir makes sense before we continue
-    if len(argsleft) > 1 and not cmds['split']:
+    (opts, argsleft) = parser.parse_args()
+    if len(argsleft) > 1 and not opts.split:
         errorprint(_('Error: Only one directory allowed per run.'))
-        usage()
+        parser.print_usage()
+        sys.exit(1)
+        
     elif len(argsleft) == 0:
         errorprint(_('Error: Must specify a directory to index.'))
-        usage()
+        parser.print_usage()
+        sys.exit(1)
+        
     else:
         directories = argsleft
-
-    try:
-        for arg,a in gopts:
-            if arg in ['-v', '--verbose']:
-                cmds['verbose'] = 1
-            elif arg in ["-q", '--quiet']:
-                cmds['quiet'] = 1
-            elif arg in ['-u', '--baseurl']:
-                if cmds['baseurl'] is not None:
-                    errorprint(_('Error: Only one baseurl allowed.'))
-                    usage()
-                else:
-                    cmds['baseurl'] = a
-            elif arg in ['-g', '--groupfile']:
-                if cmds['groupfile'] is not None:
-                    errorprint(_('Error: Only one groupfile allowed.'))
-                    usage()
-                else:
-                    cmds['groupfile'] = a
-            elif arg in ['-x', '--exclude']:
-                cmds['excludes'].append(a)
-            elif arg in ['-p', '--pretty']:
-                cmds['pretty'] = 1
-#            elif arg in ['--update-groups-only']:
-#                cmds['updategroupsonly'] = 1
-            elif arg in ['-s', '--checksum']:
-                errorprint(_('This option is deprecated'))
-            elif arg in ['-c', '--cachedir']:
-                cmds['cache'] = True
-                cmds['cachedir'] = a
-            elif arg == '--update':
-                cmds['update'] = True
-            elif arg in ['-C', '--checkts']:
-                cmds['checkts'] = True
-            elif arg == '--basedir':
-                cmds['basedir'] = a
-            elif arg in ['-o','--outputdir']:
-                cmds['outputdir'] = a
-            elif arg in ['-n', '--noepoch']:
-                cmds['noepoch'] = True
-            elif arg in ['-d', '--database']:
-                cmds['database'] = True
-            elif arg in ['-S', '--skip-symlinks']:
-                cmds['skip-symlinks'] = True
-            elif arg in ['-i', '--pkglist']:
-                cmds['pkglist'] = a
-                                
-    except ValueError, e:
-        errorprint(_('Options Error: %s') % e)
-        usage()
-
-    if cmds['split'] and cmds['checkts']:
+    
+    if opts.split and opts.checkts:
         errorprint(_('--split and --checkts options are mutually exclusive'))
         sys.exit(1)
 
-    directory = directories[0]
 
+    # let's switch over to using the conf object - put all the opts options into it
+    for opt in parser.option_list:
+        if opt.dest is None: # this is fairly silly
+            continue
+        setattr(conf, opt.dest, getattr(opts, opt.dest))
+    
+    directory = directories[0]
+    print directory
     directory = os.path.normpath(directory)
-    if cmds['split']:
+    print directory
+    if conf.split:
         pass
     elif os.path.isabs(directory):
-        cmds['basedir'] = os.path.dirname(directory)
+        conf.basedir = os.path.dirname(directory)
         directory = os.path.basename(directory)
     else:
-        cmds['basedir'] = os.path.realpath(cmds['basedir'])
-    if not cmds['outputdir']:
-        cmds['outputdir'] = os.path.join(cmds['basedir'], directory)
-    if cmds['groupfile']:
-        a = cmds['groupfile']
-        if cmds['split']:
-            a = os.path.join(cmds['basedir'], directory, cmds['groupfile'])
+        conf.basedir = os.path.realpath(conf.basedir)
+
+    print directory
+    print conf.basedir    
+    
+    if not opts.outputdir:
+        conf.outputdir = os.path.join(conf.basedir, directory)
+    if conf.groupfile:
+        a = conf.groupfile
+        if conf.split:
+            a = os.path.join(conf.basedir, directory, conf.groupfile)
         elif not os.path.isabs(a):
-            a = os.path.join(cmds['basedir'], directory, cmds['groupfile'])
+            a = os.path.join(conf.basedir, directory, conf.groupfile)
         if not os.path.exists(a):
             errorprint(_('Error: groupfile %s cannot be found.' % a))
             usage()
-        cmds['groupfile'] = a
-    if cmds['cachedir']:
-        a = cmds ['cachedir']
+        conf.groupfile = a
+    if conf.cachedir:
+        conf.cache = True
+        a = conf.cachedir
         if not os.path.isabs(a):
-            a = os.path.join(cmds['outputdir'] ,a)
+            a = os.path.join(conf.outputdir ,a)
         if not checkAndMakeDir(a):
             errorprint(_('Error: cannot open/write to cache dir %s' % a))
-            usage()
-        cmds['cachedir'] = a
+            parser.print_usage()
+        conf.cachedir = a
 
-    if cmds['pkglist']:
+    if conf.pkglist:
         lst = []
-        pfo = open(cmds['pkglist'], 'r')
+        pfo = open(conf.pkglist, 'r')
         for line in pfo.readlines():
             line = line.replace('\n', '')
             lst.append(line)
         pfo.close()
             
-        cmds['pkglist'] = lst
+        conf.pkglist = lst
         
     #setup some defaults
-    cmds['primaryfile'] = 'primary.xml.gz'
-    cmds['filelistsfile'] = 'filelists.xml.gz'
-    cmds['otherfile'] = 'other.xml.gz'
-    cmds['repomdfile'] = 'repomd.xml'
-    cmds['tempdir'] = '.repodata'
-    cmds['finaldir'] = 'repodata'
-    cmds['olddir'] = '.olddata'
 
     # Fixup first directory
     directories[0] = directory
-    return cmds, directories
+    conf.directory = directory
+    conf.directories = directories
+
+    return conf
 
 def main(args):
-    cmds, directories = parseArgs(args)
-    directory = directories[0]
-    testdir = os.path.realpath(os.path.join(cmds['basedir'], directory))
+    conf = createrepo.MetaDataConfig()
+    conf = parseArgs(args, conf)
+        
+    testdir = os.path.realpath(os.path.join(conf.basedir, conf.directory))
     # start the sanity/stupidity checks
     if not os.path.exists(testdir):
-        errorprint(_('Directory %s must exist') % (directory,))
+        errorprint(_('Directory %s must exist') % (conf.directory,))
         sys.exit(1)
 
     if not os.path.isdir(testdir):
         errorprint(_('%s - must be a directory') 
-                   % (directory,))
+                   % (conf.directory,))
         sys.exit(1)
 
-    if not os.access(cmds['outputdir'], os.W_OK):
-        errorprint(_('Directory %s must be writable.') % (cmds['outputdir'],))
+    if not os.access(conf.outputdir, os.W_OK):
+        errorprint(_('Directory %s must be writable.') % (conf.outputdir,))
         sys.exit(1)
 
-    if cmds['split']:
-        oldbase = cmds['basedir']
-        cmds['basedir'] = os.path.join(cmds['basedir'], directory)
-    if not checkAndMakeDir(os.path.join(cmds['outputdir'], cmds['tempdir'])):
+    if conf.split:
+        oldbase = conf.basedir
+        conf.basedir = os.path.join(conf.basedir, conf.directory)
+    if not checkAndMakeDir(os.path.join(conf.outputdir, conf.tempdir)):
         sys.exit(1)
 
-    if not checkAndMakeDir(os.path.join(cmds['outputdir'], cmds['finaldir'])):
+    if not checkAndMakeDir(os.path.join(conf.outputdir, conf.finaldir)):
         sys.exit(1)
 
-    if os.path.exists(os.path.join(cmds['outputdir'], cmds['olddir'])):
-        errorprint(_('Old data directory exists, please remove: %s') % cmds['olddir'])
+    if os.path.exists(os.path.join(conf.outputdir, conf.olddir)):
+        errorprint(_('Old data directory exists, please remove: %s') % conf.olddir)
         sys.exit(1)
 
     # make sure we can write to where we want to write to:
     for direc in ['tempdir', 'finaldir']:
         for f in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile']:
-            filepath = os.path.join(cmds['outputdir'], cmds[direc], cmds[f])
+            filepath = os.path.join(conf.outputdir, direc, f)
             if os.path.exists(filepath):
                 if not os.access(filepath, os.W_OK):
                     errorprint(_('error in must be able to write to metadata files:\n  -> %s') % filepath)
                     usage()
-                if cmds['checkts']:
-                    ts = os.path.getctime(filepath)
-                    if ts > cmds['mdtimestamp']:
-                        cmds['mdtimestamp'] = ts
+                if conf.checkts:
+                    timestamp = os.path.getctime(filepath)
+                    if timestamp > conf.mdtimestamp:
+                        conf.mdtimestamp = timestamp
         
-    if cmds['split']:
-        cmds['basedir'] = oldbase
-        mdgen = createrepo.SplitMetaDataGenerator(cmds)
+    if conf.split:
+        conf.basedir = oldbase
+        mdgen = createrepo.SplitMetaDataGenerator(config_obj=conf)
         mdgen.doPkgMetadata(directories)
     else:
-        mdgen = createrepo.MetaDataGenerator(cmds)
-        if cmds['checkts'] and mdgen.checkTimeStamps(directory):
-            if cmds['verbose']:
+        mdgen = createrepo.MetaDataGenerator(config_obj=conf)
+        if mdgen.checkTimeStamps():
+            if mdgen.conf.verbose:
                 print _('repo is up to date')
             sys.exit(0)
-        mdgen.doPkgMetadata(directory)
+        mdgen.doPkgMetadata()
     mdgen.doRepoMetadata()
 
-    if os.path.exists(os.path.join(cmds['outputdir'], cmds['finaldir'])):
+    output_final_dir = os.path.join(mdgen.conf.outputdir, mdgen.conf.finaldir) 
+    output_old_dir = os.path.join(mdgen.conf.outputdir, mdgen.conf.olddir)
+    
+    if os.path.exists(output_final_dir):
         try:
-            os.rename(os.path.join(cmds['outputdir'], cmds['finaldir']),
-                      os.path.join(cmds['outputdir'], cmds['olddir']))
+            os.rename(output_final_dir, output_old_dir)
         except:
-            errorprint(_('Error moving final %s to old dir %s' % (os.path.join(cmds['outputdir'], cmds['finaldir']),
-                                                                  os.path.join(cmds['outputdir'], cmds['olddir']))))
+            errorprint(_('Error moving final %s to old dir %s' % (output_final_dir,
+                                                                 output_old_dir)))
             sys.exit(1)
 
+    output_temp_dir =os.path.join(mdgen.conf.outputdir, mdgen.conf.tempdir)
+
     try:
-        os.rename(os.path.join(cmds['outputdir'], cmds['tempdir']),
-                  os.path.join(cmds['outputdir'], cmds['finaldir']))
+        os.rename(output_temp_dir, output_final_dir)
     except:
         errorprint(_('Error moving final metadata into place'))
         # put the old stuff back
-        os.rename(os.path.join(cmds['outputdir'], cmds['olddir']),
-                  os.path.join(cmds['outputdir'], cmds['finaldir']))
+        os.rename(output_old_dir, output_final_dir)
         sys.exit(1)
 
     for f in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile', 'groupfile']:
-        if cmds[f]:
-            fn = os.path.basename(cmds[f])
+        if getattr(mdgen.conf, f):
+            fn = os.path.basename(getattr(mdgen.conf, f))
         else:
             continue
-        oldfile = os.path.join(cmds['outputdir'], cmds['olddir'], fn)
+        oldfile = os.path.join(output_old_dir, fn)
+
         if os.path.exists(oldfile):
             try:
                 os.remove(oldfile)
@@ -352,11 +240,9 @@ def main(args):
                 sys.exit(1)
 
     # Move everything else back from olddir (eg. repoview files)
-    olddir = os.path.join(cmds['outputdir'], cmds['olddir'])
-    finaldir = os.path.join(cmds['outputdir'], cmds['finaldir'])
-    for f in os.listdir(olddir):
-        oldfile = os.path.join(olddir, f)
-        finalfile = os.path.join(finaldir, f)
+    for f in os.listdir(output_old_dir):
+        oldfile = os.path.join(output_old_dir, f)
+        finalfile = os.path.join(output_final_dir, f)
         if os.path.exists(finalfile):
             # Hmph?  Just leave it alone, then.
             try:
@@ -378,9 +264,9 @@ def main(args):
 
 #XXX: fix to remove tree as we mung basedir
     try:
-        os.rmdir(os.path.join(cmds['outputdir'], cmds['olddir']))
+        os.rmdir(output_old_dir)
     except OSError, e:
-        errorprint(_('Could not remove old metadata dir: %s') % cmds['olddir'])
+        errorprint(_('Could not remove old metadata dir: %s') % mdgen.conf.olddir)
         errorprint(_('Error was %s') % e)
         errorprint(_('Please clean up this directory manually.'))
 

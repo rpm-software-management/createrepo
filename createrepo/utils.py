@@ -98,4 +98,27 @@ def utf8String(string):
             newstring = newstring + char
     return newstring
 
+def checkAndMakeDir(dir):
+    """
+     check out the dir and make it, if possible, return 1 if done, else return 0
+    """
+    if os.path.exists(dir):
+        if not os.path.isdir(dir):
+            errorprint(_('%s is not a dir') % dir)
+            result = False
+        else:
+            if not os.access(dir, os.W_OK):
+                errorprint(_('%s is not writable') % dir)
+                result = False
+            else:
+                result = True
+    else:
+        try:
+            os.mkdir(dir)
+        except OSError, e:
+            errorprint(_('Error creating dir %s: %s') % (dir, e))
+            result = False
+        else:
+            result = True
+    return result
 

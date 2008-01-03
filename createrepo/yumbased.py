@@ -14,6 +14,7 @@ from yum import misc
 from rpmUtils.transaction import initReadOnlyTransaction
 from rpmUtils.miscutils import flagToString, stringToVersion
 
+#FIXME - merge into class with config stuff
 fileglobs = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
 file_re = []
 for glob in fileglobs:
@@ -96,7 +97,19 @@ class CreateRepoPackage(YumLocalPackage):
     hdrend = property(fget=lambda self: self._get_header_byte_range()[1])
     hdrstart = property(fget=lambda self: self._get_header_byte_range()[0])
     
-    def _dump_base_items(self):
+    def _dump_base_items(self, basedir, baseurl=None):
+        """Takes an optional baseurl and required basedir.
+           basedir is the relative path to remove from the location
+           baseurl is whether or not this package already has a
+           baseurl rather than just '.'"""
+        
+        # if we start seeing fullpaths in the location tag - this is the culprit
+        if self.localpath.startswith(basedir):
+            relpath = self.localpath.replace(basedir, '')
+            if relpath[0] == '/': relpath = relpath[1:]
+        else:
+            relpath = self.localpath
+                    
         msg = """
   <name>%s</name>
   <arch>%s</arch>
@@ -108,12 +121,16 @@ class CreateRepoPackage(YumLocalPackage):
   <url>%s</url>
   <time file="%s" build="%s"/>
   <size package="%s" installed="%s" archive="%s"/>
-  <location href="%s"/>
+
   """ % (self.name, self.arch, self.epoch, self.ver, self.rel, self.checksum, 
          self._xml(self.summary), self._xml(self.description), 
          self._xml(self.packager), self._xml(self.url), self.filetime,
-         self.buildtime, self.packagesize, self.size, self.archivesize, 
-         self.localpath )
+         self.buildtime, self.packagesize, self.size, self.archivesize)
+        if baseurl:
+            msg += """<location xml:base="%s" href="%s"/>\n""" % (self._xml(baseurl), relpath)
+        else:
+            msg += """<location href="%s"/>\n""" % relpath
+            
         return msg
 
     def _dump_format_items(self):
@@ -262,9 +279,9 @@ class CreateRepoPackage(YumLocalPackage):
                          (self._xml(author), ts, self._xml(content))
         return msg                                                 
 
-    def do_primary_xml_dump(self):
+    def do_primary_xml_dump(self, basedir, baseurl=None):
         msg = """\n<package type="rpm">"""
-        msg += self._dump_base_items()
+        msg += self._dump_base_items(basedir, baseurl)
         msg += self._dump_format_items()
         msg += """\n</package>\n"""
         return msg
@@ -285,28 +302,6 @@ class CreateRepoPackage(YumLocalPackage):
         msg += "\n</package>\n"
         return msg
        
-class CreateRepoConfig(object):
-    def __init__(self):
-        self.quiet = False
-        self.verbose = False
-        self.excludes = []
-        self.baseurl = None
-        self.groupfile = None
-        self.sumtype = 'sha'
-        self.noepoch = False #???
-        self.pretty = False
-        self.cachedir = None
-        self.basedir = os.getcwd()
-        self.use_cache = False
-        self.checkts = False
-        self.split = False        
-        self.update = False
-        self.make_database = False
-        self.outputdir = None
-        self.file_pattern_match = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
-        self.dir_pattern_match = ['.*bin\/.*', '^\/etc\/.*']
-        self.skip_symlinks = False
-        self.pkglist = []
         
            
 class YumCreateRepo(object):
