@@ -32,7 +32,6 @@ import createrepo.utils
 
 from createrepo.utils import _gzipOpen, errorprint, _, checkAndMakeDir
 
-__version__ = '0.9'
 
 def parseArgs(args, conf):
     """
@@ -40,7 +39,7 @@ def parseArgs(args, conf):
        Sanity check all the things being passed in.
     """
     
-    parser = OptionParser(version = "createrepo %s" % __version__)
+    parser = OptionParser(version = "createrepo %s" % createrepo.__version__)
     # query options
     parser.add_option("-q", "--quiet", default=False, action="store_true",
                       help="output nothing except for serious errors")
