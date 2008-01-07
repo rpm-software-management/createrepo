@@ -16,7 +16,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # Copyright 2004 Duke University
-
+# Portions Copyright 2007  Red Hat, Inc - written by seth vidal skvidal at fedoraproject.org
 
 import os
 import sys
@@ -148,7 +148,7 @@ def parseArgs(args, conf):
 def main(args):
     conf = createrepo.MetaDataConfig()
     conf = parseArgs(args, conf)
-        
+    # FIXME - some of these should be moved into the module and out of the cli routines        
     testdir = os.path.realpath(os.path.join(conf.basedir, conf.directory))
     # start the sanity/stupidity checks
     if not os.path.exists(testdir):
