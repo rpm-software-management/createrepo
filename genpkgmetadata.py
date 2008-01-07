@@ -89,9 +89,7 @@ def parseArgs(args, conf):
         setattr(conf, opt.dest, getattr(opts, opt.dest))
     
     directory = directories[0]
-    print directory
     directory = os.path.normpath(directory)
-    print directory
     if conf.split:
         pass
     elif os.path.isabs(directory):
@@ -100,9 +98,7 @@ def parseArgs(args, conf):
     else:
         conf.basedir = os.path.realpath(conf.basedir)
 
-    print directory
-    print conf.basedir    
-    
+   
     if not opts.outputdir:
         conf.outputdir = os.path.join(conf.basedir, directory)
     if conf.groupfile:
