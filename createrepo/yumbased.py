@@ -41,6 +41,7 @@ class CreateRepoPackage(YumLocalPackage):
                 
         
     def _xml(self, item):
+        item = utils.utf8String(item)
         return xml.sax.saxutils.escape(item)
         
     def _do_checksum(self):
