@@ -13,6 +13,8 @@ from yum.Errors import *
 from yum import misc
 from rpmUtils.transaction import initReadOnlyTransaction
 from rpmUtils.miscutils import flagToString, stringToVersion
+import libxml2
+import utils
 
 #FIXME - merge into class with config stuff
 fileglobs = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
@@ -35,6 +37,8 @@ class CreateRepoPackage(YumLocalPackage):
         self.packagesize = str(self._stat[6])
         self._hdrstart = None
         self._hdrend = None
+        self.xml_node = libxml2.newDoc("1.0")
+                
         
     def _xml(self, item):
         return xml.sax.saxutils.escape(item)
@@ -109,6 +113,13 @@ class CreateRepoPackage(YumLocalPackage):
             if relpath[0] == '/': relpath = relpath[1:]
         else:
             relpath = self.localpath
+
+        packager = url = ''
+        if self.packager:
+            packager = self._xml(self.packager)
+        
+        if self.url:
+            url = self._xml(self.url)
                     
         msg = """
   <name>%s</name>
@@ -117,19 +128,16 @@ class CreateRepoPackage(YumLocalPackage):
   <checksum type="sha" pkgid="YES">%s</checksum>
   <summary>%s</summary>
   <description>%s</description>
+  <packager>%s</packager>
+  <url>%s</url>
   <time file="%s" build="%s"/>
   <size package="%s" installed="%s" archive="%s"/>
 
   """ % (self.name, self.arch, self.epoch, self.ver, self.rel, self.checksum, 
-         self._xml(self.summary), self._xml(self.description), 
-         self.filetime, self.buildtime, self.packagesize, self.size, 
+         self._xml(self.summary), self._xml(self.description), packager, 
+         url, self.filetime, self.buildtime, self.packagesize, self.size, 
          self.archivesize)
          
-        if self.packager:
-            msg += """  <packager>%s</packager>""" % (self._xml(self.packager))
-        
-        if self.url:
-            msg += """  <url>%s</url>""" % (self._xml(self.url))
 
         if baseurl:
             msg += """<location xml:base="%s" href="%s"/>\n""" % (self._xml(baseurl), relpath)
@@ -279,9 +287,13 @@ class CreateRepoPackage(YumLocalPackage):
         if not self.changelog:
             return ""
         msg = "\n"
-        for (ts, author, content) in self.changelog:
-            msg += """<changelog author="%s" date="%s">%s</changelog>\n""" % \
-                         (self._xml(author), ts, self._xml(content))
+        for (ts, author, content) in self.changelog:            
+            c = self.xml_node.newChild(None, "changelog", None)
+            c.addContent(utils.utf8String(content))
+            c.newProp('author', utils.utf8String(author))
+            c.newProp('date', str(ts))
+            msg += c.serialize()
+            del c            
         return msg                                                 
 
     def do_primary_xml_dump(self, basedir, baseurl=None):
@@ -299,7 +311,7 @@ class CreateRepoPackage(YumLocalPackage):
         msg += "\n</package>\n"
         return msg
 
-    def do_other_xml_dump(self):
+    def do_other_xml_dump(self):   
         msg = """\n<package pkgid="%s" name="%s" arch="%s">
     <version epoch="%s" ver="%s" rel="%s"/>\n""" % (self.checksum, self.name, 
                                      self.arch, self.epoch, self.ver, self.rel)
