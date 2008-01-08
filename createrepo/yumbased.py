@@ -37,6 +37,8 @@ class CreateRepoPackage(YumLocalPackage):
         self._hdrend = None
         
     def _xml(self, item):
+        print item
+        print type(item)
         return xml.sax.saxutils.escape(item)
         
     def _do_checksum(self):
@@ -117,15 +119,20 @@ class CreateRepoPackage(YumLocalPackage):
   <checksum type="sha" pkgid="YES">%s</checksum>
   <summary>%s</summary>
   <description>%s</description>
-  <packager>%s</packager>
-  <url>%s</url>
   <time file="%s" build="%s"/>
   <size package="%s" installed="%s" archive="%s"/>
 
   """ % (self.name, self.arch, self.epoch, self.ver, self.rel, self.checksum, 
          self._xml(self.summary), self._xml(self.description), 
-         self._xml(self.packager), self._xml(self.url), self.filetime,
-         self.buildtime, self.packagesize, self.size, self.archivesize)
+         self.filetime, self.buildtime, self.packagesize, self.size, 
+         self.archivesize)
+         
+        if self.packager:
+            msg += """  <packager>%s</packager>""" % (self._xml(self.packager))
+        
+        if self.url:
+            msg += """  <url>%s</url>""" % (self._xml(self.url))
+
         if baseurl:
             msg += """<location xml:base="%s" href="%s"/>\n""" % (self._xml(baseurl), relpath)
         else:
