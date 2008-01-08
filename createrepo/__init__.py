@@ -24,7 +24,7 @@ except ImportError:
 from utils import _gzipOpen, bzipFile
 
 
-__version__ = '0.9'
+__version__ = '0.9.1'
 
 
 class MDError(exceptions.Exception):
