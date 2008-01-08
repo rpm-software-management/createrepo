@@ -210,10 +210,12 @@ class MetaDataGenerator:
         
 
     def read_in_package(self, directory, rpmfile):
-        # XXX fixme try/excepts here
         # directory is stupid - just make it part of the class
         rpmfile = '%s/%s/%s' % (self.conf.basedir, directory, rpmfile)
-        po = yumbased.CreateRepoPackage(self.ts, rpmfile)
+        try:
+            po = yumbased.CreateRepoPackage(self.ts, rpmfile)
+        except yum.Errors.MiscError, e:
+            raise MDError, "Unable to open package: %s" % e
         return po
 
     def writeMetadataDocs(self, pkglist, directory, current=0):
