@@ -115,7 +115,10 @@ class MetaDataGenerator:
         self._os_path_walk(startdir, extension_visitor, filelist)
         return filelist
 
-
+    def errorlog(self, thing):
+        """subclass this if you want something different...."""
+        print >> sys.stderr, thing
+        
     def checkTimeStamps(self):
         """check the timestamp of our target dir. If it is not newer than the repodata
            return False, else True"""
@@ -240,7 +243,12 @@ class MetaDataGenerator:
             # otherwise do it individually
             if not recycled:
                 #scan rpm files
-                po = self.read_in_package(directory, pkg)
+                try:
+                    po = self.read_in_package(directory, pkg)
+                except MDError, e:
+                    # need to say something here
+                    self.errorlog("\nError %s: %s\n" % (pkg, e))
+                    continue
                 reldir = os.path.join(self.conf.basedir, directory)
                 self.primaryfile.write(po.do_primary_xml_dump(reldir, baseurl=self.conf.baseurl))
                 self.flfile.write(po.do_filelists_xml_dump())
