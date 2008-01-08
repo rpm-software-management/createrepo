@@ -37,8 +37,6 @@ class CreateRepoPackage(YumLocalPackage):
         self._hdrend = None
         
     def _xml(self, item):
-        print item
-        print type(item)
         return xml.sax.saxutils.escape(item)
         
     def _do_checksum(self):
