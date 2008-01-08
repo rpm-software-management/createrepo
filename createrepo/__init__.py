@@ -10,7 +10,8 @@ import yumbased
 from optparse import OptionContainer
 
 
-from yum import misc
+from yum import misc, Errors
+import rpmUtils.transaction
 from utils import _, errorprint
 import readMetadata
 
@@ -72,7 +73,7 @@ class MetaDataGenerator:
         if config_obj == None:
             self.conf = MetaDataConfig()
             
-        self.ts = rpm.TransactionSet()
+        self.ts = rpmUtils.transaction.initReadOnlyTransaction()
         self.pkgcount = 0
         self.files = []
 
@@ -214,7 +215,7 @@ class MetaDataGenerator:
         rpmfile = '%s/%s/%s' % (self.conf.basedir, directory, rpmfile)
         try:
             po = yumbased.CreateRepoPackage(self.ts, rpmfile)
-        except yum.Errors.MiscError, e:
+        except Errors.MiscError, e:
             raise MDError, "Unable to open package: %s" % e
         return po
 
