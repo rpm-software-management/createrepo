@@ -230,7 +230,7 @@ class MetaDataGenerator:
             current+=1
             recycled = False
             sep = '-'
-            print pkg
+
             # look to see if we can get the data from the old repodata
             # if so write this one out that way
             if self.conf.update:
