@@ -293,7 +293,9 @@ class CreateRepoPackage(YumLocalPackage):
             c.newProp('author', utils.utf8String(author))
             c.newProp('date', str(ts))
             msg += c.serialize()
-            del c            
+            c.unlinkNode()
+            c.freeNode()  
+            del c
         return msg                                                 
 
     def do_primary_xml_dump(self, basedir, baseurl=None):
