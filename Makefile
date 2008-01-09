@@ -102,7 +102,9 @@ maintainer-clean:
 	$(MAKE) distclean
 	$(RM) $(srcdir)/configure
 
-
+changelog:
+	git log --pretty --numstat --summary | git2cl  > ChangeLog
+	
 dist:
 	olddir=`pwd`; \
 	distdir=$(PKGNAME)-$(VERSION); \

@@ -1,700 +1,804 @@
-2007-12-06 10:44  lmacken
+2008-01-09  Seth Vidal <skvidal@fedoraproject.org>
 
-	* modifyrepo.py: Better unicode handling
-	* readMetadata.py, dumpMetadata.py: Remove unnecessary imports
+	* genpkgmetadata.py: clean up old comments and cruft
 
-2007-12-03 04:33  lmacken
+2008-01-09  Seth Vidal <skvidal@fedoraproject.org>
 
-	* docs/modifyrepo.8, createrepo.spec, docs/Makefile:
-	Add a man page for modifyrepo
+	* createrepo/__init__.py, createrepo/readMetadata.py,
+	genpkgmetadata.py: - clean up interface a lot - add callback interface for progress
+	output - more proper catching of exceptions - remove improper
+	sys.exit() calls from the base class
 
-2007-06-07 09:17  pnasrat
+2008-01-09  Seth Vidal <skvidal@fedoraproject.org>
 
-	* Makefile, genpkgmetadata.py, readMetadata.py, docs/createrepo.8:
-	  This patch adds a --update option to createrepo.
-	  https://lists.dulug.duke.edu/pipermail/rpm-metadata/2007-March/000756.html
-	  Patch from Mike Bonnet <mikeb@redhat.com>
+	* createrepo/yumbased.py: make --update work correctly - by getting
+	the right item from os.stat() for mtime
 
-2007-05-18 16:01  pnasrat
+2008-01-09  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/yumbased.py: free up memory in the changelog output
+	used by generating the xml node
+
+2008-01-08  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: clean up a debug output
+
+2008-01-08  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/readMetadata.py,
+	createrepo/yumbased.py: fix up a lot of xml creation errors and make
+	--update work again
+
+2008-01-08  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo.spec, createrepo/__init__.py: bump to 0.9.1
+
+2008-01-08  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/yumbased.py: and a little more utf8'ing - just for
+	completeness and insanity
+
+2008-01-08  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/yumbased.py: utf8 files, too :(
+
+2008-01-08  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/yumbased.py: all of the xml tools suck, this is
+	evidence of them fall back to the generating the xml via libxml2 for
+	the changelog hopefully this won't make memory explode
+
+2008-01-08  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: politely bounce over damaged rpms - output
+	an error report new errorlog() method - can  be easily replaced in
+	subclass
+
+2008-01-08  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/yumbased.py: remove debug prints :)
+
+2008-01-08  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/yumbased.py: make sure that we check for  nonexistent
+	items in the hdr
+
+2008-01-08  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: make it a more proper ts
+
+2008-01-08  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: try except on package opening
+
+2008-01-07  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/yumbased.py, genpkgmetadata.py: - clean out old classes from yumbased.py - clean out debug prints
+	from genpkgmetadata.py
+
+2008-01-07  Seth Vidal <skvidal@fedoraproject.org>
+
+	* genpkgmetadata.py: make the version stuff make sense
+
+2008-01-07  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo.spec, genpkgmetadata.py: - make rpmbuild work - mark a fixme
+
+2008-01-03  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/utils.py,
+	createrepo/yumbased.py, genpkgmetadata.py: - port to optionparser from getopt - redo config class to make use
+	outside of cli more do-able - handle repomd.xml creation in class,
+	too  - still have a lot of changes to complete
+
+2007-12-20  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, genpkgmetadata.py: a little more
+	class-full
+
+2007-12-20  Seth Vidal <skvidal@fedoraproject.org>
+
+	* Makefile, bin/Makefile, createrepo.spec, createrepo/Makefile,
+	createrepo/__init__.py, createrepo/readMetadata.py,
+	createrepo/utils.py, createrepo/yumbased.py, docs/Makefile,
+	dumpMetadata.py, genpkgmetadata.py, readMetadata.py: Whew: this is
+	the beginning of a big conversion of createrepo to use the yum
+	modules, behave more like a modular program and have a proper class
+	structure. It's not done, but it's a start.
+
+2007-12-18  Seth Vidal <skvidal@fedoraproject.org>
+
+	Merge branch 'master' of
+	ssh://login.linux.duke.edu/home/groups/createrepo/git/createrepo  *
+	'master' of
+	ssh://login.linux.duke.edu/home/groups/createrepo/git/createrepo:
+	Update ChangeLog   Remove some unnecessary imports   Better unicode
+	handling in modifyrepo   Add a man page for modifyrepo
+
+2007-12-18  Seth Vidal <skvidal@fedoraproject.org>
+
+	* docs/createrepo.8, dumpMetadata.py, genpkgmetadata.py,
+	modifyrepo.py: merge maintenance changes up to head before we nuke
+	it from orbit
+
+2007-12-06  Luke Macken <lmacken@redhat.com>
+
+	* ChangeLog: Update ChangeLog
+
+2007-12-06  Luke Macken <lmacken@redhat.com>
+
+	* dumpMetadata.py, readMetadata.py: Remove some unnecessary imports
+
+
+2007-12-06  Luke Macken <lmacken@redhat.com>
+
+	* modifyrepo.py: Better unicode handling in modifyrepo
+
+2007-12-03  Luke Macken <lmacken@redhat.com>
+
+	* ChangeLog, createrepo.spec, docs/Makefile, docs/modifyrepo.1,
+	modifyrepo.py: Add a man page for modifyrepo
+
+2007-11-14  Seth Vidal <skvidal@fedoraproject.org>
+
+	* genpkgmetadata.py: merge pkglist option to HEAD
+
+2007-08-08  Seth Vidal <skvidal@fedoraproject.org>
+
+	* README: update readme, point to better url, clean up explanation
+
+2007-07-01  James Bowes <jbowes@redhat.com>
+
+	* dmd.py: Add delta metadata diff and patch script
+
+2007-06-07  Paul Nasrat <pnasrat@redhat.com>
+
+	* createrepo.spec: Bump version
+
+2007-06-07  Paul Nasrat <pnasrat@redhat.com>
+
+	* ChangeLog, Makefile: Prepare for release
+
+2007-06-07  Paul Nasrat <pnasrat@redhat.com>
+
+	* Makefile, docs/createrepo.8, genpkgmetadata.py, readMetadata.py: 
+	This patch adds a --update option to createrepo.
+
+	https://lists.dulug.duke.edu/pipermail/rpm-metadata/2007-March/000756.html Patch from Mike Bonnet <mikeb@redhat.com>
+
+2007-05-18  Paul Nasrat <pnasrat@redhat.com>
 
 	* dumpMetadata.py: Fix for older rpm versions Christoph Thiel
-	  <cthiel@suse.de>
+	<cthiel@suse.de>
 
-2007-05-16 09:05  pnasrat
+2007-05-16  Paul Nasrat <pnasrat@redhat.com>
 
 	* ChangeLog, Makefile, createrepo.spec, genpkgmetadata.py: Update
-	  ChangeLog Bump version to 0.4.9
+	ChangeLog Bump version to 0.4.9
 
-2007-05-16 09:02  pnasrat
+2007-05-16  Paul Nasrat <pnasrat@redhat.com>
 
 	* dumpMetadata.py: Figure out appropriate dbversion Jeremy Katz
-	  <katzj@redhat.com>
+	<katzj@redhat.com>
 
-2007-05-16 08:59  pnasrat
+2007-05-16  Paul Nasrat <pnasrat@redhat.com>
 
-	* dumpMetadata.py:   createrepo-0.4.8-cachefix.patch
-	    * changes the way the hashkey for the cache is generated. (The
-	  original
-	      version just used rpm.RPMTAG_SIGMD5, which was the same for
-	  the same
-	      signed and unsigned package. However, this lead to a wrong
-	  checksum
-	      ending up in the metadata.)
-	  Christoph Thiel <cthiel@suse.de>
+	* dumpMetadata.py:   createrepo-0.4.8-cachefix.patch   * changes the way the hashkey
+	  for the cache is generated. (The original     version just used
+	  rpm.RPMTAG_SIGMD5, which was the same for the same     signed and
+	  unsigned package. However, this lead to a wrong checksum
+	  ending up in the metadata.) Christoph Thiel <cthiel@suse.de>
 
-2007-05-16 08:58  pnasrat
+2007-05-16  Paul Nasrat <pnasrat@redhat.com>
 
-	* genpkgmetadata.py:  createrepo-0.4.8-skip-symlinks.patch
-	    * adds an option to skip symlinks (-S, --skip-symlinks)
-	  Christoph Thiel <cthiel@suse.de>
+	* genpkgmetadata.py:  createrepo-0.4.8-skip-symlinks.patch   * adds an option to skip
+	 symlinks (-S, --skip-symlinks) Christoph Thiel <cthiel@suse.de>
 
-2007-02-13 04:43  skvidal
+2007-02-13  Seth Vidal <skvidal@linux.duke.edu>
 
-	* ChangeLog:
-	  update changelog, again
+	* ChangeLog: update changelog, again
 
-2007-02-13 04:40  skvidal
+2007-02-13  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile:
-	  add copying and copying.lib to makefile for 'make archive'
+	* Makefile: add copying and copying.lib to makefile for 'make
+	archive'
 
-2007-02-13 04:37  skvidal
+2007-02-13  Seth Vidal <skvidal@linux.duke.edu>
 
 	* ChangeLog: check in changelog
 
-2007-02-13 04:37  skvidal
+2007-02-13  Seth Vidal <skvidal@linux.duke.edu>
 
 	* Makefile: and makefile ver
 
-2007-02-13 04:37  skvidal
+2007-02-13  Seth Vidal <skvidal@linux.duke.edu>
 
 	* createrepo.spec, genpkgmetadata.py: mark as 0.4.8
 
-2007-02-08 10:02  pnasrat
+2007-02-08  Paul Nasrat <pnasrat@redhat.com>
 
 	* COPYING.lib, createrepo.spec: Add LGPL file
 
-2007-02-08 10:00  pnasrat
+2007-02-08  Paul Nasrat <pnasrat@redhat.com>
 
 	* COPYING, createrepo.spec: Add COPYING
 
-2007-02-07 20:35  skvidal
+2007-02-07  Seth Vidal <skvidal@linux.duke.edu>
 
 	* dumpMetadata.py: merge in Christoph Thiel's patch to fix string
-	  conversion for odd EVR's
+	conversion for odd EVR's
 
-2007-02-07 20:34  skvidal
+2007-02-07  Seth Vidal <skvidal@linux.duke.edu>
 
-	* genpkgmetadata.py:
-	  merge Jesse Keatings' patch to find groups file properly
+	* genpkgmetadata.py: merge Jesse Keatings' patch to find groups file
+	properly
 
-2007-02-07 06:16  skvidal
+2007-02-07  Seth Vidal <skvidal@linux.duke.edu>
 
 	* Makefile: ver number in Makefile
 
-2007-02-06 06:12  skvidal
+2007-02-06  Seth Vidal <skvidal@linux.duke.edu>
 
-	* createrepo.spec:
-	  yum-metadata-parser dep and new version number
+	* createrepo.spec: yum-metadata-parser dep and new version number
 
-2007-02-06 06:12  skvidal
+2007-02-06  Seth Vidal <skvidal@linux.duke.edu>
 
-	* docs/createrepo.8:
-	  update docs for -d
+	* docs/createrepo.8: update docs for -d
 
-2007-02-06 06:10  skvidal
+2007-02-06  Seth Vidal <skvidal@linux.duke.edu>
 
-	* genpkgmetadata.py:
-	  0.4.7 version number
+	* genpkgmetadata.py: 0.4.7 version number
 
-2007-02-04 20:50  skvidal
+2007-02-04  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py:
-	  make database version listed in repomd
+	* dumpMetadata.py: make database version listed in repomd
 
-2007-02-04 18:48  skvidal
+2007-02-04  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py:
-	  add dbversion to sqlite metadata in repomd.
+	* dumpMetadata.py: add dbversion to sqlite metadata in repomd.
 
-2007-02-03 22:07  skvidal
+2007-02-03  Seth Vidal <skvidal@linux.duke.edu>
 
 	* dumpMetadata.py: default to max compression
 
-2007-02-03 20:40  skvidal
+2007-02-03  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py:
-	  make the sqlite file names not look stupid
+	* dumpMetadata.py: make the sqlite file names not look stupid
 
-2007-02-03 19:06  skvidal
+2007-02-03  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  allow optionally creating compressed sqlite databases
+	* dumpMetadata.py, genpkgmetadata.py: allow optionally creating
+	compressed sqlite databases
 
-2006-10-22 04:00  lmacken
+2006-10-22  Luke Macken <lmacken@redhat.com>
 
 	* ChangeLog, modifyrepo.py: use the mdname for the 'href' element,
-	  so it doesn't explode when dealing with xml.dom.minidom.Document
-	  objects.
+	so it doesn't explode when dealing with xml.dom.minidom.Document
+	objects.
 
-2006-10-14 18:26  lmacken
+2006-10-14  Luke Macken <lmacken@redhat.com>
 
-	* ChangeLog, Makefile, createrepo.spec, bin/Makefile: 2006-10-14
-	  01:30  lmacken
+	* ChangeLog, Makefile, bin/Makefile, createrepo.spec: 2006-10-14
+	01:30  lmacken         * Makefile, bin/Makefile, createrepo.spec:
+	Makefile changes for        modifyrepo, and added it to the spec as
+	well.
 
-		 * Makefile, bin/Makefile, createrepo.spec: Makefile
-	  changes for
-		 modifyrepo, and added it to the spec as well.
+2006-08-23  Luke Macken <lmacken@redhat.com>
 
-2006-08-23 20:42  lmacken
+	* ChangeLog, bin/modifyrepo, modifyrepo.py: 2006-08-23 15:40
+	lmacken         * modifyrepo.py, bin/modifyrepo: Initial import
 
-	* ChangeLog, modifyrepo.py, bin/modifyrepo: 2006-08-23 15:40
-	  lmacken
-
-		 * modifyrepo.py, bin/modifyrepo: Initial import
-
-2006-08-11 21:16  pnasrat
+2006-08-11  Paul Nasrat <pnasrat@redhat.com>
 
 	* ChangeLog: Update changelog with cvs2cl
 
-2006-08-11 21:03  pnasrat
+2006-08-11  Paul Nasrat <pnasrat@redhat.com>
 
 	* createrepo.spec: update date
 
-2006-08-11 21:01  pnasrat
+2006-08-11  Paul Nasrat <pnasrat@redhat.com>
 
-	* genpkgmetadata.py, docs/createrepo.8: Patch from Hans-Peter
-	  Jansen <hpj@urpla.net> -C, --checkts option added to avoid
-	  metadata generation, if ctime filestamps are up to date. It's
-	  currently mutually exclusive with the --split option.
+	* docs/createrepo.8, genpkgmetadata.py: Patch from Hans-Peter Jansen
+	<hpj@urpla.net> -C, --checkts option added to avoid metadata
+	generation, if ctime filestamps are up to date. It's currently
+	mutually exclusive with the --split option.
 
-2006-07-28 20:49  pnasrat
+2006-07-28  Paul Nasrat <pnasrat@redhat.com>
 
 	* genpkgmetadata.py: Fix cache output dir to 0.4.5 behaviour
 
-2006-07-28 20:42  pnasrat
+2006-07-28  Paul Nasrat <pnasrat@redhat.com>
 
 	* genpkgmetadata.py: Fix filtering out path from file list and
-	  passing correct path to writeMetaData
+	passing correct path to writeMetaData
 
-2006-07-21 18:16  pnasrat
+2006-07-28  Paul Nasrat <pnasrat@redhat.com>
+
+	* test/testMetaDataGenerator.py, test/testSplitMetaDataGenerator.py: 
+	nuke tests for now
+
+2006-07-21  Paul Nasrat <pnasrat@redhat.com>
 
 	* Makefile: Bump
 
-2006-07-20 23:27  pnasrat
+2006-07-20  Paul Nasrat <pnasrat@redhat.com>
 
 	* genpkgmetadata.py: Make splitmetadata handler do it' own
-	  getFileList to correctly manipulate paths.
+	getFileList to correctly manipulate paths.
 
-2006-07-20 18:33  pnasrat
+2006-07-20  Paul Nasrat <pnasrat@redhat.com>
+
+	* test/testSplitMetaDataGenerator.py: Improve tests for split cases
+
+
+2006-07-20  Paul Nasrat <pnasrat@redhat.com>
+
+	* test/testSplitMetaDataGenerator.py: duplicate for split tests
+
+2006-07-20  Paul Nasrat <pnasrat@redhat.com>
+
+	* test/testMetaDataGenerator.py: More consistent naming Relative and
+	parallel dir testing
+
+2006-07-20  Paul Nasrat <pnasrat@redhat.com>
+
+	* test/testMetaDataGenerator.py: Refactor tests, add additional
+	tests
+
+2006-07-20  Paul Nasrat <pnasrat@redhat.com>
+
+	* test/testMetaDataGenerator.py: Start unit testing so we don't
+	regress behaviour
+
+2006-07-20  Paul Nasrat <pnasrat@redhat.com>
 
 	* genpkgmetadata.py: Set outputdir correctly
 
-2006-07-20 18:20  pnasrat
+2006-07-20  Paul Nasrat <pnasrat@redhat.com>
 
 	* genpkgmetadata.py: Move to split basedir and directory everywhere
-	  to preserve command line paths.  Use os.path.walk rather than our
-	  own implementation Improve error messages
+	to preserve command line paths. Use os.path.walk rather than our own
+	implementation Improve error messages
 
-2006-07-19 20:43  pnasrat
-
-	* genpkgmetadata.py: Consistent directory handling and errors
-
-2006-07-19 20:43  pnasrat
+2006-07-19  Paul Nasrat <pnasrat@redhat.com>
 
 	* createrepo.spec: genpkgmetadata.py
 
-2006-07-19 20:25  pnasrat
+2006-07-19  Paul Nasrat <pnasrat@redhat.com>
 
-	* dumpMetadata.py: Patch from hpj@urpla.net to use a more robust
-	  rpm header signature retrieval method for cache files, as
-	  recommended by Jeff Johnson.
+	* genpkgmetadata.py: Consistent directory handling and errors
 
-2006-07-19 19:26  lmacken
+2006-07-19  Paul Nasrat <pnasrat@redhat.com>
 
-	* ChangeLog, createrepo.spec: 2006-07-19 14:23	lmacken
+	* dumpMetadata.py: Patch from hpj@urpla.net to use a more robust rpm
+	header signature retrieval method for cache files, as recommended by
+	Jeff Johnson.
 
-		 * createrepo.spec: remove python-urlgrabber dependency
+2006-07-19  Luke Macken <lmacken@redhat.com>
 
-2006-07-19 13:29  pnasrat
+	* ChangeLog, createrepo.spec: 2006-07-19 14:23  lmacken         *
+	createrepo.spec: remove python-urlgrabber dependency
 
-	* genpkgmetadata.py: Tolerate unknown files in repodata dirs -
-	  Ville Skyttä
+2006-07-19  Paul Nasrat <pnasrat@redhat.com>
 
-2006-07-19 12:44  pnasrat
+	* genpkgmetadata.py: Tolerate unknown files in repodata dirs - Ville
+	Skyttä
+
+2006-07-19  Paul Nasrat <pnasrat@redhat.com>
 
 	* genpkgmetadata.py: fix up relative paths (#199228)
 
-2006-06-30 13:53  pnasrat
+2006-06-30  Paul Nasrat <pnasrat@redhat.com>
 
 	* dumpMetadata.py: Fix srpm detection for rpm-4.4.6 and later
 
-2006-06-26 16:03  skvidal
+2006-06-26  Seth Vidal <skvidal@linux.duke.edu>
 
-	* ChangeLog:
-	  overwrite changelog
+	* ChangeLog: overwrite changelog
 
-2006-06-15 16:39  lmacken
+2006-06-15  Luke Macken <lmacken@redhat.com>
 
-	* ChangeLog, genpkgmetadata.py, docs/createrepo.8: 2006-06-15 11:40
-	   lmacken
+	* ChangeLog, docs/createrepo.8, genpkgmetadata.py: 2006-06-15 11:40
+	lmacken      * genpkgmetadata.py, docs/createrepo.8:       Revert
+	--update-info-location patch, since yum now supports arbitrary
+	metadata via YumRepository::retrieveMD()
 
-	      * genpkgmetadata.py, docs/createrepo.8:
-		Revert --update-info-location patch, since yum now supports
-	  arbitrary
-		metadata via YumRepository::retrieveMD()
+2006-06-09  Seth Vidal <skvidal@linux.duke.edu>
 
-2006-06-09 14:49  skvidal
+	* dumpMetadata.py, genpkgmetadata.py: include Panu's patch to
+	support --noepoch for use with old versions of rpm
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  include Panu's patch to support --noepoch for use with old
-	  versions of rpm
+2006-06-09  Seth Vidal <skvidal@linux.duke.edu>
 
-2006-06-09 14:47  skvidal
+	* createrepo.spec: fix the dep
 
-	* createrepo.spec:
-	  fix the dep
+2006-06-09  Seth Vidal <skvidal@linux.duke.edu>
 
-2006-06-09 14:46  skvidal
+	* createrepo.spec, genpkgmetadata.py: fix versions and bump by one.
+	Thanks to Gareth Armstrong for noticing this.
 
-	* createrepo.spec, genpkgmetadata.py:
-	  fix versions and bump by one.
-
-	  Thanks to Gareth Armstrong for noticing this.
-
-2006-03-04 06:30  pnasrat
+2006-03-04  Paul Nasrat <pnasrat@redhat.com>
 
 	* ChangeLog: add changelog
 
-2006-03-04 06:28  pnasrat
+2006-03-04  Paul Nasrat <pnasrat@redhat.com>
 
 	* createrepo.spec: release
 
-2006-02-21 23:30  pnasrat
+2006-02-21  Paul Nasrat <pnasrat@redhat.com>
 
-	* Makefile, createrepo.spec, genpkgmetadata.py, docs/createrepo.8:
-	  Documentation and version updates
+	* Makefile, createrepo.spec, docs/createrepo.8, genpkgmetadata.py: 
+	Documentation and version updates
 
-2006-02-21 20:10  pnasrat
+2006-02-21  Paul Nasrat <pnasrat@redhat.com>
 
 	* dumpMetadata.py, genpkgmetadata.py: Enable seperate outputdir
-	  (dgregor)
+	(dgregor)
 
-2006-02-18 02:22  lmacken
+2006-02-18  Luke Macken <lmacken@redhat.com>
 
-	* genpkgmetadata.py, docs/createrepo.8: Add support for -U
-	  (--update-info-location) flag to query a specified server for
-	  package update metadata.  The metadata will currently be stored
-	  in 'repodata/update-info' and each package in the primary.xml
-	  will have an <update id="FEDORA-XXXX-XX"
-	  location="update-info/pkg-ver-rel.xml"/> tag which points to it's
-	  corresponding update information.
+	* docs/createrepo.8, genpkgmetadata.py: Add support for -U
+	(--update-info-location) flag to query a specified server for
+	package update metadata.  The metadata will currently be stored in
+	'repodata/update-info' and each package in the primary.xml will have
+	an <update id="FEDORA-XXXX-XX"
+	location="update-info/pkg-ver-rel.xml"/> tag which points to it's
+	corresponding update information.
 
-2006-01-13 06:24  skvidal
+2006-01-13  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  apply two patches from dgregor@redhat.com - verifies that the
-	  checksum cache file is more recent than the corresponding rpm -
-	  move around cmds dict initialization to make it more consistent.
+	* dumpMetadata.py, genpkgmetadata.py: apply two patches from
+	dgregor@redhat.com - verifies that the checksum cache file is more
+	recent than the corresponding rpm - move around cmds dict
+	initialization to make it more consistent.
 
-2005-12-08 19:25  pnasrat
+2005-12-08  Paul Nasrat <pnasrat@redhat.com>
 
 	* genpkgmetadata.py: Fix cachedir/groupfile handling with --basedir
-	  and using paths not relative to cwd when run without --basedir.
+	and using paths not relative to cwd when run without --basedir.
 
-2005-12-08 19:24  pnasrat
+2005-12-08  Paul Nasrat <pnasrat@redhat.com>
 
-	* genpkgmetadata.py: Support --split option to label media with
-	  urls across directories.
+	* genpkgmetadata.py: Support --split option to label media with urls
+	across directories.
 
-2005-12-08 19:22  pnasrat
+2005-12-08  Paul Nasrat <pnasrat@redhat.com>
 
 	* genpkgmetadata.py: Split out processing into smaller methods.
-	  Make ts internal.  Files and base/file/other data attributes.
+	Make ts internal.  Files and base/file/other data attributes.
 
-2005-12-08 19:21  pnasrat
+2005-12-08  Paul Nasrat <pnasrat@redhat.com>
 
 	* genpkgmetadata.py: Cleanup of generator class to use cmds
-	  internally as an attribute.
+	internally as an attribute.
 
-2005-12-08 19:19  pnasrat
+2005-12-08  Paul Nasrat <pnasrat@redhat.com>
 
 	* genpkgmetadata.py: Initial work to form metadata generator class.
 
-2005-11-27 23:01  skvidal
+
+2005-11-27  Seth Vidal <skvidal@linux.duke.edu>
 
 	* dumpMetadata.py: speed up by caching file mode lookup by Dennis
-	  Gregorovic
+	Gregorovic
 
-2005-11-11 21:03  pnasrat
+2005-11-11  Paul Nasrat <pnasrat@redhat.com>
 
 	* dumpMetadata.py, genpkgmetadata.py: Enable basedir to be used -
-	  dgregor
+	dgregor
 
-2005-11-02 20:23  skvidal
+2005-11-02  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  patch from Christoph Thiel to make it work on suse 9.3 and to
-	  allow for non absolute-path cache dirs.
+	* dumpMetadata.py, genpkgmetadata.py: patch from Christoph Thiel to
+	make it work on suse 9.3 and to allow for non absolute-path cache
+	dirs.
 
-2005-08-11 22:09  skvidal
+2005-08-11  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py:
-	  turn off all signature checking when reading in headers
+	* dumpMetadata.py: turn off all signature checking when reading in
+	headers
 
-2005-07-25 00:54  skvidal
+2005-07-24  Seth Vidal <skvidal@linux.duke.edu>
 
-	* genpkgmetadata.py:
-	  document that the -g option is for a file relative to the
-	  directory you are creating the repository for.
+	* genpkgmetadata.py: document that the -g option is for a file
+	relative to the directory you are creating the repository for.
 
-2005-07-14 07:34  skvidal
+2005-07-14  Seth Vidal <skvidal@linux.duke.edu>
 
-	* docs/createrepo.8:
-	  man page for cachedir
+	* docs/createrepo.8: man page for cachedir
 
-2005-07-14 07:31  skvidal
+2005-07-14  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile, createrepo.spec, genpkgmetadata.py:
-	  0.4.3
+	* Makefile, createrepo.spec, genpkgmetadata.py: 0.4.3
 
-2005-07-11 06:45  skvidal
+2005-07-11  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  - disable the checksum flag - default and only use sha1sum's -
-	  add in -c,--cachedir option to setup a cachedir for the cache
-	  files of the checksums of the packages. Uses name-hdrid from the
-	  package hdr as filenames. Contents of the file is a single line
-	  of the package's checksum.  This dramatically speeds up
-	  rebuilding a repository's metadata b/c the checksum of the
-	  package file was the item taking the most time.
+	* dumpMetadata.py, genpkgmetadata.py: - disable the checksum flag - default and only use sha1sum's - add
+	in -c,--cachedir option to setup a cachedir for the cache files of
+	the checksums of the packages. Uses name-hdrid from the package hdr
+	as filenames. Contents of the file is a single line of the package's
+	checksum. This dramatically speeds up rebuilding a repository's
+	metadata b/c the checksum of the package file was the item taking
+	the most time.
 
-2005-05-29 04:14  skvidal
+2005-05-29  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  Apply Arun Bhanu's patch to add in --quiet and --verbose options
-	  instead of just -q and -v
+	* dumpMetadata.py, genpkgmetadata.py: Apply Arun Bhanu's patch to
+	add in --quiet and --verbose options instead of just -q and -v
 
-2005-03-30 06:32  skvidal
+2005-03-30  Seth Vidal <skvidal@linux.duke.edu>
 
-	* docs/Makefile:
-	  fix mandir path for docs
+	* docs/Makefile: fix mandir path for docs
 
-2005-01-18 07:14  skvidal
+2005-01-18  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile, docs/Makefile:
-	  fix the Makefiles, f'real
+	* Makefile, docs/Makefile: fix the Makefiles, f'real
 
-2005-01-18 06:59  skvidal
+2005-01-18  Seth Vidal <skvidal@linux.duke.edu>
 
-	* docs/: Makefile, createrepo.8:
-	  real commit
+	* docs/Makefile, docs/createrepo.8: real commit
 
-2005-01-18 06:58  skvidal
+2005-01-18  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile, createrepo.spec:
-	  adding man page and upating the Makefiles and specfile
-	  accordingly.	Thanks Bob Kashani for the man page.
+	* Makefile, createrepo.spec: adding man page and upating the
+	Makefiles and specfile accordingly. Thanks Bob Kashani for the man
+	page.
 
-2005-01-18 06:24  skvidal
+2005-01-18  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py:
-	  need to seek to the beginning before doing a new read operation.
+	* dumpMetadata.py: need to seek to the beginning before doing a new
+	read operation.
 
-2005-01-17 07:52  skvidal
+2005-01-17  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile, createrepo.spec:
-	  spec and Makefile to 0.4.2
+	* Makefile, createrepo.spec: spec and Makefile to 0.4.2
 
-2005-01-17 07:52  skvidal
+2005-01-17  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  move around gzipOpen for use in another program relabel 0.4.2
+	* dumpMetadata.py, genpkgmetadata.py: move around gzipOpen for use
+	in another program relabel 0.4.2
 
-2005-01-07 21:39  skvidal
+2005-01-07  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  single open for all file operations. about a 30% time savings.
+	* dumpMetadata.py, genpkgmetadata.py: single open for all file
+	operations. about a 30% time savings.
 
-2004-11-02 05:55  skvidal
+2004-11-02  Seth Vidal <skvidal@linux.duke.edu>
 
-	* genpkgmetadata.py:
-	  small fix for --exclude to work.  -x works, but --exclude didn't,
-	  now it is fixed
+	* genpkgmetadata.py: small fix for --exclude to work. -x works, but
+	--exclude didn't, now it is fixed
 
-2004-10-21 08:42  skvidal
+2004-10-21  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile, createrepo.spec, genpkgmetadata.py:
-	  update version numbers
+	* Makefile, createrepo.spec, genpkgmetadata.py: update version
+	numbers
 
-2004-10-21 08:40  skvidal
+2004-10-21  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py:
-	  problem with ghost entries not showing up in primary.xml even if
-	  they matched the regex strings.
+	* dumpMetadata.py: problem with ghost entries not showing up in
+	primary.xml even if they matched the regex strings.
 
-2004-10-18 06:41  skvidal
+2004-10-18  Seth Vidal <skvidal@linux.duke.edu>
 
-	* bin/createrepo:
-	  whoops! need to quote that var string
+	* bin/createrepo: whoops! need to quote that var string
 
-2004-10-11 12:43  skvidal
+2004-10-11  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile, createrepo.spec, genpkgmetadata.py:
-	  correct problem with handling dirs with a space in the filename
-	  update version number
+	* Makefile, createrepo.spec, genpkgmetadata.py: correct problem with
+	handling dirs with a space in the filename update version number
 
-2004-10-04 04:43  skvidal
+2004-10-04  Seth Vidal <skvidal@linux.duke.edu>
 
-	* genpkgmetadata.py:
-	  clean up argument parsing to handle --version and --help more
-	  correctly. Not quite the patch Ville Skyttä submitted.
+	* genpkgmetadata.py: clean up argument parsing to handle --version
+	and --help more correctly. Not quite the patch Ville Skyttä
+	submitted.
 
-2004-09-30 06:54  skvidal
+2004-09-30  Seth Vidal <skvidal@linux.duke.edu>
 
-	* genpkgmetadata.py:
-	  one more place to tag
+	* genpkgmetadata.py: one more place to tag
 
-2004-09-30 06:52  skvidal
+2004-09-30  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile, createrepo.spec:
-	  update to 0.3.9
+	* Makefile, createrepo.spec: update to 0.3.9
 
-2004-09-30 06:49  skvidal
+2004-09-30  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py:
-	  checksum of group file will be wrong if specified - didn't
-	  seek(0) after copying it.
+	* dumpMetadata.py: checksum of group file will be wrong if specified
+	- didn't seek(0) after copying it.
 
-2004-09-20 06:13  skvidal
+2004-09-20  Seth Vidal <skvidal@linux.duke.edu>
 
-	* genpkgmetadata.py:
-	  made 'cannot remove old metadata dir' a non-fatal error.  It just
-	  warns.
+	* genpkgmetadata.py: made 'cannot remove old metadata dir' a
+	non-fatal error. It just warns.
 
-2004-09-20 06:06  skvidal
+2004-09-20  Seth Vidal <skvidal@linux.duke.edu>
 
-	* genpkgmetadata.py:
-	  updated to default to sha-1 checksums
+	* genpkgmetadata.py: updated to default to sha-1 checksums
 
-2004-09-11 21:19  skvidal
+2004-09-11  Seth Vidal <skvidal@linux.duke.edu>
 
-	* createrepo.spec, genpkgmetadata.py:
-	  update spec file as 0.3.8 fix for bug in command handling of
-	  groups location
+	* createrepo.spec, genpkgmetadata.py: update spec file as 0.3.8 fix
+	for bug in command handling of groups location
 
-2004-09-11 21:07  skvidal
+2004-09-11  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile:
-	  fix for group file path being wrong - Bill Nottingham mark as
-	  0.3.8
+	* Makefile: fix for group file path being wrong - Bill Nottingham
+	mark as 0.3.8
 
-2004-09-11 21:07  skvidal
+2004-09-11  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  fix for error when string is None for utf8 conversion
+	* dumpMetadata.py, genpkgmetadata.py: fix for error when string is
+	None for utf8 conversion
 
-2004-09-03 07:29  skvidal
+2004-09-03  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile:
-	  Makefile update to fix a bug reported by Anvil
+	* Makefile: Makefile update to fix a bug reported by Anvil
 
-2004-09-01 07:56  skvidal
+2004-09-01  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile, createrepo.spec, genpkgmetadata.py:
-	  0.3.7
+	* Makefile, createrepo.spec, genpkgmetadata.py: 0.3.7
 
-2004-08-27 08:03  skvidal
+2004-08-27  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  patch from Ville Skytta (this a will be wrong, sorry) to correct
-	  decoding/encoding problems.
+	* dumpMetadata.py, genpkgmetadata.py: patch from Ville Skytta (this
+	a will be wrong, sorry) to correct decoding/encoding problems.
 
-2004-07-23 21:22  skvidal
+2004-07-23  Seth Vidal <skvidal@linux.duke.edu>
 
-	* README:
-	  updated readme with anoncvs location
+	* README: updated readme with anoncvs location
 
-2004-07-23 20:41  skvidal
+2004-07-23  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile, createrepo.spec, genpkgmetadata.py:
-	  ver to 0.3.6
+	* Makefile, createrepo.spec, genpkgmetadata.py: ver to 0.3.6
 
-2004-07-23 19:45  skvidal
+2004-07-23  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py:
-	  fix filelists to be complete
+	* dumpMetadata.py: fix filelists to be complete
 
-2004-07-23 16:56  skvidal
+2004-07-23  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py:
-	  remove a debug print call
+	* dumpMetadata.py: remove a debug print call
 
-2004-07-23 16:51  skvidal
+2004-07-23  Seth Vidal <skvidal@linux.duke.edu>
 
 	* Makefile, createrepo.spec: mark as 0.3.5
 
-2004-07-23 16:50  skvidal
+2004-07-23  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py:
-	  fix up for broken filelists in packages
+	* dumpMetadata.py: fix up for broken filelists in packages
 
-2004-07-23 06:23  skvidal
+2004-07-23  Seth Vidal <skvidal@linux.duke.edu>
 
-	* genpkgmetadata.py:
-	  silly string fix
+	* genpkgmetadata.py: silly string fix
 
-2004-07-20 02:24  skvidal
+2004-07-20  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile, createrepo.spec, genpkgmetadata.py:
-	  bump number to 0.3.4
+	* Makefile, createrepo.spec, genpkgmetadata.py: bump number to 0.3.4
 
-2004-07-20 02:23  skvidal
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  re-enabled group files documented it
+2004-07-20  Seth Vidal <skvidal@linux.duke.edu>
 
-2004-06-30 09:23  skvidal
+	* dumpMetadata.py, genpkgmetadata.py: re-enabled group files
+	documented it
 
-	* dumpMetadata.py:
-	  add pre=1 to requires entries for prereq marking
+2004-06-30  Seth Vidal <skvidal@linux.duke.edu>
 
-2004-06-30 08:08  skvidal
+	* dumpMetadata.py: add pre=1 to requires entries for prereq marking
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  - include xmlns:rpm in main metadata tag rather than per-format
-	  node - fix output for sorta-list, sorta-string rpm header tags
 
-2004-06-28 16:24  skvidal
+2004-06-30  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py:
-	  fix for namespace for license, vendor, group, buildhost and
-	  sourcerpm was None, should have been formatns (rpm namespace)
+	* dumpMetadata.py, genpkgmetadata.py: - include xmlns:rpm in main metadata tag rather than per-format node
+	- fix output for sorta-list, sorta-string rpm header tags
 
-2004-06-09 04:09  skvidal
+2004-06-28  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile, createrepo.spec, genpkgmetadata.py:
-	  mark as 0.3.3
+	* dumpMetadata.py: fix for namespace for license, vendor, group,
+	buildhost and sourcerpm was None, should have been formatns (rpm
+	namespace)
 
-2004-06-06 23:38  skvidal
+2004-06-09  Seth Vidal <skvidal@linux.duke.edu>
 
-	* genpkgmetadata.py:
-	  included a not-that-terribly accurate package count
+	* Makefile, createrepo.spec, genpkgmetadata.py: mark as 0.3.3
 
-2004-06-05 19:38  skvidal
+2004-06-06  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  generate uncompressed checksums a much easier way.
+	* genpkgmetadata.py: included a not-that-terribly accurate package
+	count
 
-2004-06-05 19:31  skvidal
+2004-06-05  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  revert some changes
+	* dumpMetadata.py, genpkgmetadata.py: generate uncompressed
+	checksums a much easier way.
 
-2004-06-03 07:14  skvidal
+2004-06-05  Seth Vidal <skvidal@linux.duke.edu>
 
-	* genpkgmetadata.py:
-	  fix stupid version thing
+	* dumpMetadata.py, genpkgmetadata.py: revert some changes
 
-2004-06-03 07:14  skvidal
+2004-06-03  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  keep checksum of uncompressed metadata files in repomd.xml
+	* genpkgmetadata.py: fix stupid version thing
 
-2004-06-03 06:26  skvidal
+2004-06-03  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  move versioned prco from separate string to properties of the
-	  entry
+	* dumpMetadata.py, genpkgmetadata.py: keep checksum of uncompressed
+	metadata files in repomd.xml
 
-2004-04-16 06:15  skvidal
+2004-06-03  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile:
-	  fix makefile
+	* dumpMetadata.py, genpkgmetadata.py: move versioned prco from
+	separate string to properties of the entry
 
-2004-04-16 06:10  skvidal
+2004-04-16  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile, createrepo.spec, genpkgmetadata.py:
-	  update to 0.3.2 added -p or --pretty flag to make it pretty-print
-	  the xml output not pretty printing the output makes the import a
-	  lot faster and the data smaller
+	* Makefile: fix makefile
 
-2004-01-18 21:43  skvidal
+2004-04-16  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile, createrepo.spec, dumpMetadata.py, genpkgmetadata.py:
-	  1. make it actually work :) 2. bump to 0.3.1
+	* Makefile, createrepo.spec, genpkgmetadata.py: update to 0.3.2
+	added -p or --pretty flag to make it pretty-print the xml output not
+	pretty printing the output makes the import a lot faster and the
+	data smaller
 
-2004-01-18 17:57  skvidal
+2004-01-18  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile, createrepo.spec:
-	  add README for real *boggle*
+	* Makefile, createrepo.spec, dumpMetadata.py, genpkgmetadata.py: 1. make it actually work :) 2. bump to 0.3.1
 
-2004-01-18 17:56  skvidal
+2004-01-18  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile, README, createrepo.spec:
-	  tagged Makefile and createrepo as 0.3 Add README to both of the
-	  above
+	* Makefile, createrepo.spec: add README for real *boggle*
 
-2004-01-18 16:45  skvidal
+2004-01-18  Seth Vidal <skvidal@linux.duke.edu>
 
-	* genpkgmetadata.py:
-	  make metadata files be written to repodata/
+	* Makefile, README, createrepo.spec: tagged Makefile and createrepo
+	as 0.3 Add README to both of the above
 
-2004-01-17 06:04  skvidal
+2004-01-18  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  fix bug where not all files were getting included make the
-	  directory detection more reliable
+	* genpkgmetadata.py: make metadata files be written to repodata/
 
-2004-01-14 03:56  skvidal
+2004-01-17  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile, createrepo.spec, dumpMetadata.py, genpkgmetadata.py,
-	  bin/Makefile:
-	  fixed memory use problem updated spec for 0.2 fixed makefile
-	  dumbness fixed problems with broken symlinks
+	* dumpMetadata.py, genpkgmetadata.py: fix bug where not all files
+	were getting included make the directory detection more reliable
 
-2004-01-13 21:16  skvidal
+2004-01-14  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py:
-	  catch some errors on broken symlinks
+	* Makefile, bin/Makefile, createrepo.spec, dumpMetadata.py,
+	genpkgmetadata.py: fixed memory use problem updated spec for 0.2
+	fixed makefile dumbness fixed problems with broken symlinks
 
-2004-01-11 22:07  skvidal
+2004-01-13  Seth Vidal <skvidal@linux.duke.edu>
 
-	* Makefile, createrepo.spec, dumpMetadata.py, genpkgmetadata.py,
-	  bin/Makefile, bin/createrepo:
-	  - translation stubs - makefiles - spec file - bin wrapper
+	* dumpMetadata.py: catch some errors on broken symlinks
 
-2004-01-10 08:39  skvidal
+2004-01-11  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  silly updates in comments
+	* Makefile, bin/Makefile, bin/createrepo, createrepo.spec,
+	dumpMetadata.py, genpkgmetadata.py: - translation stubs - makefiles - spec file - bin wrapper
 
-2004-01-10 08:34  skvidal
+2004-01-10  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  CVS Id Tags
+	* dumpMetadata.py, genpkgmetadata.py: silly updates in comments
 
-2004-01-10 08:34  skvidal
+2004-01-10  Seth Vidal <skvidal@linux.duke.edu>
+
+	* dumpMetadata.py, genpkgmetadata.py: CVS Id Tags
+
+2004-01-10  Seth Vidal <skvidal@linux.duke.edu>
 
 	* dumpMetadata.py: [no log message]
 
-2004-01-10 08:33  skvidal
+2004-01-10  Seth Vidal <skvidal@linux.duke.edu>
 
-	* genpkgmetadata.py:
-	  added --version and __version__ string
+	* genpkgmetadata.py: added --version and __version__ string
 
-2004-01-10 08:04  skvidal
+2004-01-10  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py, genpkgmetadata.py:
-	  move two functions around to more logically arrange the
-	  repomd.xml generating function
+	* dumpMetadata.py, genpkgmetadata.py: move two functions around to
+	more logically arrange the repomd.xml generating function
 
-2004-01-09 07:48  skvidal
+2004-01-09  Seth Vidal <skvidal@linux.duke.edu>
 
-	* dumpMetadata.py, genpkgmetadata.py: Initial revision
-
-2004-01-09 07:48  skvidal
-
-	* dumpMetadata.py, genpkgmetadata.py: metadata generate first
-	  import
+	* Initial revision
 
