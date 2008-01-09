@@ -33,7 +33,7 @@ class CreateRepoPackage(YumLocalPackage):
         YumLocalPackage.__init__(self, ts, package)
         self._checksum = None        
         self._stat = os.stat(package)
-        self.filetime = str(self._stat[-1])
+        self.filetime = str(self._stat[-2])
         self.packagesize = str(self._stat[6])
         self._hdrstart = None
         self._hdrend = None
