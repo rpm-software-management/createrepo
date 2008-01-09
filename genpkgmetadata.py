@@ -24,7 +24,6 @@ from optparse import OptionParser
 import shutil
 
 
-# for now, for later, we move all this around
 import createrepo
 from createrepo import MDError
 import createrepo.yumbased
@@ -272,7 +271,7 @@ def main(args):
                 errorprint(_('Error was %s') % e)
                 sys.exit(1)
 
-#XXX: fix to remove tree as we mung basedir
+
     try:
         os.rmdir(output_old_dir)
     except OSError, e:
