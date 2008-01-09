@@ -132,18 +132,17 @@ class CreateRepoPackage(YumLocalPackage):
   <packager>%s</packager>
   <url>%s</url>
   <time file="%s" build="%s"/>
-  <size package="%s" installed="%s" archive="%s"/>
-
-  """ % (self.name, self.arch, self.epoch, self.ver, self.rel, self.checksum, 
+  <size package="%s" installed="%s" archive="%s"/>""" % (self.name, 
+         self.arch, self.epoch, self.ver, self.rel, self.checksum, 
          self._xml(self.summary), self._xml(self.description), packager, 
          url, self.filetime, self.buildtime, self.packagesize, self.size, 
          self.archivesize)
          
 
         if baseurl:
-            msg += """<location xml:base="%s" href="%s"/>\n""" % (self._xml(baseurl), relpath)
+            msg += """<location xml:base="%s" href="%s"/>""" % (self._xml(baseurl), relpath)
         else:
-            msg += """<location href="%s"/>\n""" % relpath
+            msg += """<location href="%s"/>""" % relpath
             
         return msg
 
@@ -166,7 +165,7 @@ class CreateRepoPackage(YumLocalPackage):
         msg += self._dump_pco('conflicts')         
         msg += self._dump_pco('obsoletes')         
         msg += self._dump_files(True)
-        msg += """\n  </format>\n"""
+        msg += """\n  </format>"""
         return msg
 
     def _dump_pco(self, pcotype):
@@ -217,7 +216,7 @@ class CreateRepoPackage(YumLocalPackage):
         
         
     def _dump_files(self, primary=False):
-        msg ="\n"
+        msg =""
         if not primary:
             files = self.returnFileEntries('file')
             dirs = self.returnFileEntries('dir')
@@ -301,7 +300,7 @@ class CreateRepoPackage(YumLocalPackage):
         msg = """\n<package type="rpm">"""
         msg += self._dump_base_items(basedir, baseurl)
         msg += self._dump_format_items()
-        msg += """\n</package>\n"""
+        msg += """\n</package>"""
         return msg
 
     def do_filelists_xml_dump(self):
@@ -309,7 +308,7 @@ class CreateRepoPackage(YumLocalPackage):
     <version epoch="%s" ver="%s" rel="%s"/>\n""" % (self.checksum, self.name, 
                                      self.arch, self.epoch, self.ver, self.rel)
         msg += self._dump_files()
-        msg += "\n</package>\n"
+        msg += "</package>\n"
         return msg
 
     def do_other_xml_dump(self):   

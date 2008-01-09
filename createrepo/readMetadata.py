@@ -47,10 +47,10 @@ class MetadataIndex(object):
         self.pkg_ids = {}
         if self.opts.get('verbose'):
             print _("Scanning old repo data")
-        for file in self.files.values():
-            if not os.path.exists(file):
+        for fn in self.files.values():
+            if not os.path.exists(fn):
                 #cannot scan
-                errorprint(_("Previous repo file missing: %s") % file)
+                errorprint(_("Previous repo file missing: %s") % fn)
                 return
         root = libxml2.parseFile(self.files['base']).getRootElement()
         self._scanPackageNodes(root, self._handleBase)
@@ -193,6 +193,19 @@ class MetadataIndex(object):
 
 
 if __name__ == "__main__":
-    #test code - attempts to read a repo in working directory
-    idx = MetadataIndex(".", "repodata/primary.xml.gz", "repodata/filelists.xml.gz",
-                        "repodata/other.xml.gz", {'verbose':1})
+    cwd = os.getcwd()
+    p = os.path.join(cwd, "repodata/primary.xml.gz")     
+    f = os.path.join(cwd, "repodata/filelists.xml.gz")
+    o = os.path.join(cwd, "repodata/other.xml.gz")
+    opts = {'verbose':1, 
+            'pkgdir': cwd}
+            
+    idx = MetadataIndex(".", p, f, o, opts)
+    for fn in idx.basenodes.keys():
+       a,b,c, = idx.getNodes(fn)
+       a.serialize()
+       b.serialize()
+       c.serialize()
+       idx.freeNodes(fn)
+
+                            

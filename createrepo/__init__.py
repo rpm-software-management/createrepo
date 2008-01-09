@@ -190,7 +190,7 @@ class MetaDataGenerator:
         primaryfilepath = os.path.join(self.conf.outputdir, self.conf.tempdir, self.conf.primaryfile)
         fo = _gzipOpen(primaryfilepath, 'w')
         fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        fo.write('<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="%s">\n' %
+        fo.write('<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="%s">' %
                        self.pkgcount)
         return fo
 
@@ -199,7 +199,7 @@ class MetaDataGenerator:
         filelistpath = os.path.join(self.conf.outputdir, self.conf.tempdir, self.conf.filelistsfile)
         fo = _gzipOpen(filelistpath, 'w')
         fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        fo.write('<filelists xmlns="http://linux.duke.edu/metadata/filelists" packages="%s">\n' %
+        fo.write('<filelists xmlns="http://linux.duke.edu/metadata/filelists" packages="%s">' %
                        self.pkgcount)
         return fo
         
@@ -208,7 +208,7 @@ class MetaDataGenerator:
         otherfilepath = os.path.join(self.conf.outputdir, self.conf.tempdir, self.conf.otherfile)
         fo = _gzipOpen(otherfilepath, 'w')
         fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        fo.write('<otherdata xmlns="http://linux.duke.edu/metadata/other" packages="%s">\n' %
+        fo.write('<otherdata xmlns="http://linux.duke.edu/metadata/other" packages="%s">' %
                        self.pkgcount)
         return fo
         
@@ -230,7 +230,7 @@ class MetaDataGenerator:
             current+=1
             recycled = False
             sep = '-'
-            
+            print pkg
             # look to see if we can get the data from the old repodata
             # if so write this one out that way
             if self.conf.update:
@@ -254,8 +254,10 @@ class MetaDataGenerator:
                 self.flfile.write(po.do_filelists_xml_dump())
                 self.otherfile.write(po.do_other_xml_dump())
             else:
+                if self.conf.verbose:
+                    print "Using data from old metadata for %s" % pkg
                 sep = '*'
-                primarynode, filenode, othernode = nodes    
+                (primarynode, filenode, othernode) = nodes    
 
                 for node, outfile in ((primarynode,self.primaryfile),
                                       (filenode,self.flfile),
@@ -263,10 +265,14 @@ class MetaDataGenerator:
                     if node is None:
                         break
                     output = node.serialize('UTF-8', self.conf.pretty)
-                    outfile.write(output)
+                    if output:
+                        outfile.write(output)
+                    else:
+                        if self.conf.verbose:
+                            print "empty serialize on write to %s in %s" % (outfile, pkg)
                     outfile.write('\n')
-  
-                    self.oldData.freeNodes(pkg)
+
+                self.oldData.freeNodes(pkg)
 
             if not self.conf.quiet:
                 if self.conf.verbose:
