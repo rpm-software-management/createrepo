@@ -12,7 +12,7 @@ from optparse import OptionContainer
 
 from yum import misc, Errors
 import rpmUtils.transaction
-from utils import _, errorprint
+from utils import _
 import readMetadata
 
 try:
@@ -67,12 +67,30 @@ class MetaDataConfig(object):
         self.mdtimestamp = 0
 
 
+class SimpleMDCallBack(object):
+    def errorlog(self, thing):
+        print >> sys.stderr, thing
+        
+    def log(self, thing):
+        print thing
+    
+    def progress(self, item, current, total):
+        sys.stdout.write('\r' + ' ' * 80)
+        sys.stdout.write("\r%d/%d - %s" % (current, total, item))
+        sys.stdout.flush()
+            
+        
 class MetaDataGenerator:
-    def __init__(self, config_obj=None):
+    def __init__(self, config_obj=None, callback=None):
         self.conf = config_obj
         if config_obj == None:
             self.conf = MetaDataConfig()
-            
+        if not callback:
+            self.callback = SimpleMDCallBack()
+        else:
+            self.callback = callback    
+        
+                    
         self.ts = rpmUtils.transaction.initReadOnlyTransaction()
         self.pkgcount = 0
         self.files = []
@@ -117,7 +135,7 @@ class MetaDataGenerator:
 
     def errorlog(self, thing):
         """subclass this if you want something different...."""
-        print >> sys.stderr, thing
+        errorprint(thing)
         
     def checkTimeStamps(self):
         """check the timestamp of our target dir. If it is not newer than the repodata
@@ -128,8 +146,7 @@ class MetaDataGenerator:
             for f in files:
                 fn = os.path.join(self.conf.basedir, self.conf.directory, f)
                 if not os.path.exists(fn):
-                    #FIXME - raise don't print here
-                    errorprint(_('cannot get to file: %s') % fn)
+                    self.callback.errorlog(_('cannot get to file: %s') % fn)
                 if os.path.getctime(fn) > self.conf.mdtimestamp:
                     return False
                 else:
@@ -142,7 +159,6 @@ class MetaDataGenerator:
         for file in files:
             for glob in self.conf.excludes:
                 if fnmatch.fnmatch(file, glob):
-                    # print 'excluded: %s' % file
                     if file not in badrpms:
                         badrpms.append(file)
         for file in badrpms:
@@ -229,7 +245,6 @@ class MetaDataGenerator:
         for pkg in pkglist:
             current+=1
             recycled = False
-            sep = '-'
 
             # look to see if we can get the data from the old repodata
             # if so write this one out that way
@@ -247,7 +262,7 @@ class MetaDataGenerator:
                     po = self.read_in_package(directory, pkg)
                 except MDError, e:
                     # need to say something here
-                    self.errorlog("\nError %s: %s\n" % (pkg, e))
+                    self.callback.errorlog("\nError %s: %s\n" % (pkg, e))
                     continue
                 reldir = os.path.join(self.conf.basedir, directory)
                 self.primaryfile.write(po.do_primary_xml_dump(reldir, baseurl=self.conf.baseurl))
@@ -255,8 +270,7 @@ class MetaDataGenerator:
                 self.otherfile.write(po.do_other_xml_dump())
             else:
                 if self.conf.verbose:
-                    print "Using data from old metadata for %s" % pkg
-                sep = '*'
+                    self.callback.log(_("Using data from old metadata for %s") % pkg)
                 (primarynode, filenode, othernode) = nodes    
 
                 for node, outfile in ((primarynode,self.primaryfile),
@@ -269,39 +283,37 @@ class MetaDataGenerator:
                         outfile.write(output)
                     else:
                         if self.conf.verbose:
-                            print "empty serialize on write to %s in %s" % (outfile, pkg)
+                            self.callback.log(_("empty serialize on write to %s in %s") % (outfile, pkg))
                     outfile.write('\n')
 
                 self.oldData.freeNodes(pkg)
 
             if not self.conf.quiet:
                 if self.conf.verbose:
-                    print '%d/%d %s %s' % (current, self.pkgcount, sep, pkg)
+                    self.callback.log('%d/%d - %s' % (current, self.pkgcount, pkg))
                 else:
-                    sys.stdout.write('\r' + ' ' * 80)
-                    sys.stdout.write("\r%d/%d %s %s" % (current, self.pkgcount, sep, pkg))
-                    sys.stdout.flush()
+                    self.callback.progress(pkg, current, self.pkgcount)
 
         return current
 
 
     def closeMetadataDocs(self):
         if not self.conf.quiet:
-            print ''
+            self.callback.log('')
 
         # save them up to the tmp locations:
         if not self.conf.quiet:
-            print _('Saving Primary metadata')
+            self.callback.log(_('Saving Primary metadata'))
         self.primaryfile.write('\n</metadata>')
         self.primaryfile.close()
 
         if not self.conf.quiet:
-            print _('Saving file lists metadata')
+            self.callback.log(_('Saving file lists metadata'))
         self.flfile.write('\n</filelists>')
         self.flfile.close()
 
         if not self.conf.quiet:
-            print _('Saving other metadata')
+            self.callback.log(_('Saving other metadata'))
         self.otherfile.write('\n</otherdata>')
         self.otherfile.close()
 
@@ -429,15 +441,15 @@ class MetaDataGenerator:
         try:
             repodoc.saveFormatFileEnc(repofilepath, 'UTF-8', 1)
         except:
-            errorprint(_('Error saving temp file for rep xml: %s') % repofilepath)
-            sys.exit(1)
+            self.callback.errorlog(_('Error saving temp file for repomd.xml: %s') % repofilepath)
+            raise MDError, 'Could not save temp file: %s' % repofilepath 
 
         del repodoc
 
 class SplitMetaDataGenerator(MetaDataGenerator):
 
-    def __init__(self, config_obj=None):
-        MetaDataGenerator.__init__(self, config_obj=conf)
+    def __init__(self, config_obj=None, callback=None):
+        MetaDataGenerator.__init__(self, config_obj=conf, callback=None)
 
     def _getFragmentUrl(self, url, fragment):
         import urlparse
@@ -466,14 +478,14 @@ class SplitMetaDataGenerator(MetaDataGenerator):
         os.path.walk(startdir, extension_visitor, rpmlist)
         return rpmlist
 
-    def doPkgMetadata(self, directories):
+    def doPkgMetadata(self):
         """all the heavy lifting for the package metadata"""
         import types
-        if type(directories) == types.StringType:
-            MetaDataGenerator.doPkgMetadata(self, directories)
+        if type(self.directories) == types.StringType:
+            MetaDataGenerator.doPkgMetadata(self)
             return
         filematrix = {}
-        for mydir in directories:
+        for mydir in self.directories:
             filematrix[mydir] = self.getFileList(self.conf.basedir, mydir, '.rpm')
             self.trimRpms(filematrix[mydir])
             self.pkgcount += len(filematrix[mydir])
@@ -483,7 +495,7 @@ class SplitMetaDataGenerator(MetaDataGenerator):
         self.conf.baseurl = self._getFragmentUrl(self.conf.baseurl, mediano)
         self.openMetadataDocs()
         original_basedir = self.conf.basedir
-        for mydir in directories:
+        for mydir in self.directories:
             self.conf.baseurl = self._getFragmentUrl(self.conf.baseurl, mediano)
             current = self.writeMetadataDocs(filematrix[mydir], mydir, current)
             mediano += 1

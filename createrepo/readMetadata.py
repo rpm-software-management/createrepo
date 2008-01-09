@@ -19,13 +19,8 @@ import os
 import sys
 import libxml2
 import stat
+from utils import errorprint, _
 
-def errorprint(stuff):
-    print >> sys.stderr, stuff
-
-def _(args):
-    """Stub function for translation"""
-    return args
 
 class MetadataIndex(object):
 

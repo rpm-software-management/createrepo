@@ -140,6 +140,18 @@ def parseArgs(args, conf):
 
     return conf
 
+class MDCallBack(object):
+    def errorlog(self, thing):
+        print >> sys.stderr, thing
+        
+    def log(self, thing):
+        print thing
+    
+    def progress(self, item, current, total):
+        sys.stdout.write('\r' + ' ' * 80)
+        sys.stdout.write("\r%d/%d - %s" % (current, total, item))
+        sys.stdout.flush()
+        
 def main(args):
     conf = createrepo.MetaDataConfig()
     conf = parseArgs(args, conf)
@@ -187,16 +199,19 @@ def main(args):
         
     if conf.split:
         conf.basedir = oldbase
-        mdgen = createrepo.SplitMetaDataGenerator(config_obj=conf)
-        mdgen.doPkgMetadata(directories)
+        mdgen = createrepo.SplitMetaDataGenerator(config_obj=conf, callback=MDCallBack())
     else:
-        mdgen = createrepo.MetaDataGenerator(config_obj=conf)
+        mdgen = createrepo.MetaDataGenerator(config_obj=conf, callback=MDCallBack())
         if mdgen.checkTimeStamps():
             if mdgen.conf.verbose:
                 print _('repo is up to date')
             sys.exit(0)
+    try:
         mdgen.doPkgMetadata()
-    mdgen.doRepoMetadata()
+        mdgen.doRepoMetadata()
+    except MDError, e:
+        errorprint(_('%s') % e)
+        sys.exit(1)
 
     output_final_dir = os.path.join(mdgen.conf.outputdir, mdgen.conf.finaldir) 
     output_old_dir = os.path.join(mdgen.conf.outputdir, mdgen.conf.olddir)
