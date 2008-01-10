@@ -227,11 +227,11 @@ class CreateRepoPackage(YumLocalPackage):
             dirs = self._return_primary_dirs()
                 
         for fn in files:
-            msg += """    <file>%s</file>\n""" % utils.utf8String(fn)
+            msg += """    <file>%s</file>\n""" % self._xml(fn)
         for fn in dirs:
-            msg += """    <file type="dir">%s</file>\n""" % utils.utf8String(fn)
+            msg += """    <file type="dir">%s</file>\n""" % self._xml(fn)
         for fn in ghosts:
-            msg += """    <file type="ghost">%s</file>\n""" % utils.utf8String(fn)
+            msg += """    <file type="ghost">%s</file>\n""" % self._xml(fn)
         
         return msg
 
