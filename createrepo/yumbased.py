@@ -38,7 +38,14 @@ class CreateRepoPackage(YumLocalPackage):
         self._hdrstart = None
         self._hdrend = None
         self.xml_node = libxml2.newDoc("1.0")
-                
+        self.arch = self.isSrpm()
+        
+    def isSrpm(self):
+        if self.tagByName('sourcepackage') == 1 or not self.tagByName('sourcerpm'):
+            return 'src'
+        else:
+            return self.tagByName('arch')
+
         
     def _xml(self, item):
         item = utils.utf8String(item)
