@@ -1,3 +1,18 @@
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Library General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# Copyright 2007  Red Hat, Inc - written by seth vidal skvidal at fedoraproject.org
+
 import exceptions
 import os
 import sys
@@ -25,6 +40,7 @@ from utils import _gzipOpen, bzipFile
 
 
 __version__ = '0.9.1'
+
 
 
 class MDError(exceptions.Exception):
@@ -65,7 +81,8 @@ class MetaDataConfig(object):
         self.finaldir = 'repodata'
         self.olddir = '.olddata'
         self.mdtimestamp = 0
-
+        self.directory = None
+        self.directories = []
 
 class SimpleMDCallBack(object):
     def errorlog(self, thing):
@@ -79,6 +96,9 @@ class SimpleMDCallBack(object):
         sys.stdout.write("\r%d/%d - %s" % (current, total, item))
         sys.stdout.flush()
             
+#FIXME = make it so you pass in a dir to doPkgMetadata() and it
+# parses out basedir and directory for relative dir from there
+# it creates the .repodata directory in the output location, etc
         
 class MetaDataGenerator:
     def __init__(self, config_obj=None, callback=None):
@@ -95,7 +115,17 @@ class MetaDataGenerator:
         self.pkgcount = 0
         self.files = []
 
-    # module
+    def _setup_and_check_repo_dir(self, direc):
+        if os.path.isabs(direc):
+            self.conf.basedir = os.path.dirname(direc)
+            self.conf.directory = os.path.basename(direc)
+        else:
+            self.conf.basedir = os.path.realpath(self.conf.basedir)
+
+        if not self.conf.opts.outputdir:
+            self.conf.outputdir = os.path.join(self.conf.basedir, direc)
+
+
     def _os_path_walk(self, top, func, arg):
         """Directory tree walk with callback function.
          copy of os.path.walk, fixes the link/stating problem
