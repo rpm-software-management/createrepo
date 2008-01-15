@@ -172,12 +172,24 @@ class CreateRepoPackage(YumLocalPackage):
         msg = "  <format>\n"
         if self.license:
             msg += """    <rpm:license>%s</rpm:license>\n""" % self._xml(self.license)
+        else:
+            msg += """    <rpm:license/>"""
+            
         if self.vendor:
             msg += """    <rpm:vendor>%s</rpm:vendor>\n""" % self._xml(self.vendor)
+        else:
+            msg += """    <rpm:vendor/>"""
+            
         if self.group:
             msg += """    <rpm:group>%s</rpm:group>\n""" % self._xml(self.group)
+        else:
+            msg += """    <rpm:group/>"""
+            
         if self.buildhost:
             msg += """    <rpm:buildhost>%s</rpm:buildhost>\n""" % self._xml(self.buildhost)
+        else:
+            msg += """    <rpm:buildhost/>"""
+            
         if self.sourcerpm:
             msg += """    <rpm:sourcerpm>%s</rpm:sourcerpm>\n""" % self._xml(self.sourcerpm)
         msg +="""    <rpm:header-range start="%s" end="%s"/>""" % (self.hdrstart,
