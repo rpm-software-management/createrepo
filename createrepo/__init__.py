@@ -67,6 +67,7 @@ class MetaDataConfig(object):
         self.checkts = False
         self.split = False        
         self.update = False
+        self.skip_stat = False
         self.database = False
         self.outputdir = None
         self.file_patterns = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
@@ -211,6 +212,9 @@ class MetaDataGenerator:
                 'verbose' : self.conf.verbose,
                 'pkgdir' : os.path.normpath(os.path.join(self.conf.basedir, directory))
             }
+            if self.conf.skip_stat:
+                opts['do_stat'] = False
+                
             #and scan the old repo
             self.oldData = readMetadata.MetadataIndex(self.conf.outputdir,
                                                       primaryfile, flfile, otherfile, opts)

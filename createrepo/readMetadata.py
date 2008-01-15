@@ -81,6 +81,7 @@ class MetadataIndex(object):
         mtime = None
         size = None
         relpath = None
+        do_stat = self.opts.get('do_stat', True)         
         while node is not None:
             if node.type != "element":
                 node = node.next
@@ -106,24 +107,25 @@ class MetadataIndex(object):
         if size is None:
             print _("size missing for %s") % relpath
             return
-        filepath = os.path.join(self.opts['pkgdir'], relpath)
-        try:
-            st = os.stat(filepath)
-        except OSError:
-            #file missing -- ignore
-            return
-        if not stat.S_ISREG(st.st_mode):
-            #ignore non files
-            return
-        #check size and mtime
-        if st.st_size != size:
-            if self.opts.get('verbose'):
-                print _("Size (%i -> %i) changed for file %s") % (size,st.st_size,filepath)
-            return
-        if st.st_mtime != mtime:
-            if self.opts.get('verbose'):
-                print _("Modification time changed for %s") % filepath
-            return
+        if do_stat: 
+            filepath = os.path.join(self.opts['pkgdir'], relpath)
+            try:
+                st = os.stat(filepath)
+            except OSError:
+                #file missing -- ignore
+                return
+            if not stat.S_ISREG(st.st_mode):
+                #ignore non files
+                return
+            #check size and mtime
+            if st.st_size != size:
+                if self.opts.get('verbose'):
+                    print _("Size (%i -> %i) changed for file %s") % (size,st.st_size,filepath)
+                return
+            if st.st_mtime != mtime:
+                if self.opts.get('verbose'):
+                    print _("Modification time changed for %s") % filepath
+                return
         #otherwise we index
         self.basenodes[relpath] = top
         self.pkg_ids[relpath] = pkgid

@@ -46,21 +46,39 @@ def parseArgs(args, conf):
                       help="output more debugging info.")
     parser.add_option("-x", "--excludes", default=[], action="append",
                       help="files to exclude")
-    parser.add_option("-u", "--baseurl", default=None)
-    parser.add_option("-g", "--groupfile", default=None)
-    parser.add_option("-s", "--checksum", default="sha", dest='sumtype')
-    parser.add_option("-n", "--noepoch", default=False, action="store_true")
-    parser.add_option("-p", "--pretty", default=False, action="store_true")
-    parser.add_option("-c", "--cachedir", default=None)
-    parser.add_option("--basedir", default=os.getcwd())
-    parser.add_option("-C", "--checkts", default=False, action="store_true")
-    parser.add_option("-d", "--database", default=False, action="store_true")
-    parser.add_option("--update", default=False, action="store_true")
-    parser.add_option("--split", default=False, action="store_true")
-    parser.add_option("-i", "--pkglist", default=False, action="store_true")
-    parser.add_option("-o", "--outputdir", default="")
+    parser.add_option("-u", "--baseurl", default=None,
+                      help="baseurl to append on all files")
+    parser.add_option("-g", "--groupfile", default=None,
+                      help="path to groupfile to include in metadata")
+    parser.add_option("-s", "--checksum", default="sha", dest='sumtype',
+                      help="Deprecated, ignore")
+    parser.add_option("-n", "--noepoch", default=False, action="store_true",
+                      help="don't add zero epochs for non-existent epochs"\
+                         "(incompatible with yum and smart but required for" \
+                         "systems with rpm < 4.2.1)")
+    parser.add_option("-p", "--pretty", default=False, action="store_true",
+                      help="make sure all xml generated is formatted")
+    parser.add_option("-c", "--cachedir", default=None,
+                      help="set path to cache dir")
+    parser.add_option("-C", "--checkts", default=False, action="store_true",
+      help="check timestamps on files vs the metadata to see if we need to update")
+    parser.add_option("-d", "--database", default=False, action="store_true",
+                      help="create sqlite database files")
+    parser.add_option("--update", default=False, action="store_true",
+                      help="use the existing repodata to speed up creation of new")
+    parser.add_option("--skip-stat", dest='skip_stat', default=False, action="store_true",
+                      help="skip the stat() call on a --update, assumes if the file" \
+                            "name is the same then the file is still the same" \
+                            "(only use this if you're fairly trusting or gullible)" )
+    parser.add_option("--split", default=False, action="store_true",
+                      help="generate split media")
+    parser.add_option("-i", "--pkglist", default=None, 
+        help="use only the files listed in this file from the directory specified")
+    parser.add_option("-o", "--outputdir", default=None,
+             help="<dir> = optional directory to output to")
     parser.add_option("-S", "--skip-symlinks", dest="skip_symlinks",
-                      default=False, action="store_true")
+                      default=False, action="store_true",
+                      help="ignore symlinks of packages")
 
     (opts, argsleft) = parser.parse_args()
     if len(argsleft) > 1 and not opts.split:
