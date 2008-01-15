@@ -20,6 +20,7 @@ import libxml2
 import string
 import fnmatch
 import hashlib
+import time
 import rpm
 import yumbased
 from optparse import OptionContainer
@@ -388,6 +389,9 @@ class MetaDataGenerator:
             db_compressed_sums = {}
             
             if self.conf.database:
+                if self.conf.verbose:
+                    self.callback.log("Starting %s db creation: %s" % (ftype, time.ctime()))
+            
                 if ftype == 'primary':
                     rp.getPrimary(complete_path, csum)
                                 
@@ -434,7 +438,9 @@ class MetaDataGenerator:
                 unchecksum = data.newChild(None, 'open-checksum', db_csums[ftype])
                 unchecksum.newProp('type', sumtype)
                 database_version = data.newChild(None, 'database_version', dbversion)
-                
+                if self.conf.verbose:
+                    self.callback.log("Ending %s db creation: %s" % (ftype, time.ctime()))
+
                 
             data = reporoot.newChild(None, 'data', None)
             data.newProp('type', ftype)
