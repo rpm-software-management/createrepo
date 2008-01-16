@@ -104,11 +104,11 @@ def checkAndMakeDir(dir):
     """
     if os.path.exists(dir):
         if not os.path.isdir(dir):
-            errorprint(_('%s is not a dir') % dir)
+            #errorprint(_('%s is not a dir') % dir)
             result = False
         else:
             if not os.access(dir, os.W_OK):
-                errorprint(_('%s is not writable') % dir)
+                #errorprint(_('%s is not writable') % dir)
                 result = False
             else:
                 result = True
@@ -116,7 +116,7 @@ def checkAndMakeDir(dir):
         try:
             os.mkdir(dir)
         except OSError, e:
-            errorprint(_('Error creating dir %s: %s') % (dir, e))
+            #errorprint(_('Error creating dir %s: %s') % (dir, e))
             result = False
         else:
             result = True

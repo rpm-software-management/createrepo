@@ -106,16 +106,10 @@ def parseArgs(args, conf):
         setattr(conf, opt.dest, getattr(opts, opt.dest))
     
     directory = directories[0]
-    directory = os.path.normpath(directory)
-    if conf.split:
-        pass
-    elif os.path.isabs(directory):
-        conf.basedir = os.path.dirname(directory)
-        directory = os.path.basename(directory)
-    else:
-        conf.basedir = os.path.realpath(conf.basedir)
+    conf.directory = directory
+    conf.directories = directories
 
-   
+    # FIXME - I think this is unnecessary
     if not opts.outputdir:
         conf.outputdir = os.path.join(conf.basedir, directory)
     if conf.groupfile:
@@ -124,10 +118,12 @@ def parseArgs(args, conf):
             a = os.path.join(conf.basedir, directory, conf.groupfile)
         elif not os.path.isabs(a):
             a = os.path.join(conf.basedir, directory, conf.groupfile)
+        # FIXME, move this test most likely inside the class
         if not os.path.exists(a):
             errorprint(_('Error: groupfile %s cannot be found.' % a))
             usage()
         conf.groupfile = a
+    # FIXME - move this one inside the class, too
     if conf.cachedir:
         conf.cache = True
         a = conf.cachedir
@@ -148,12 +144,6 @@ def parseArgs(args, conf):
             
         conf.pkglist = lst
         
-    #setup some defaults
-
-    # Fixup first directory
-    directories[0] = directory
-    conf.directory = directory
-    conf.directories = directories
 
     return conf
 
@@ -172,130 +162,25 @@ class MDCallBack(object):
 def main(args):
     conf = createrepo.MetaDataConfig()
     conf = parseArgs(args, conf)
-    # FIXME - some of these should be moved into the module and out of the cli routines        
-    testdir = os.path.realpath(os.path.join(conf.basedir, conf.directory))
-    # start the sanity/stupidity checks
-    if not os.path.exists(testdir):
-        errorprint(_('Directory %s must exist') % (conf.directory,))
-        sys.exit(1)
 
-    if not os.path.isdir(testdir):
-        errorprint(_('%s - must be a directory') 
-                   % (conf.directory,))
-        sys.exit(1)
-
-    if not os.access(conf.outputdir, os.W_OK):
-        errorprint(_('Directory %s must be writable.') % (conf.outputdir,))
-        sys.exit(1)
-
-    if conf.split:
-        oldbase = conf.basedir
-        conf.basedir = os.path.join(conf.basedir, conf.directory)
-    if not checkAndMakeDir(os.path.join(conf.outputdir, conf.tempdir)):
-        sys.exit(1)
-
-    if not checkAndMakeDir(os.path.join(conf.outputdir, conf.finaldir)):
-        sys.exit(1)
-
-    if os.path.exists(os.path.join(conf.outputdir, conf.olddir)):
-        errorprint(_('Old data directory exists, please remove: %s') % conf.olddir)
-        sys.exit(1)
-
-    # make sure we can write to where we want to write to:
-    for direc in ['tempdir', 'finaldir']:
-        for f in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile']:
-            filepath = os.path.join(conf.outputdir, direc, f)
-            if os.path.exists(filepath):
-                if not os.access(filepath, os.W_OK):
-                    errorprint(_('error in must be able to write to metadata files:\n  -> %s') % filepath)
-                    usage()
-                if conf.checkts:
-                    timestamp = os.path.getctime(filepath)
-                    if timestamp > conf.mdtimestamp:
-                        conf.mdtimestamp = timestamp
-        
-    if conf.split:
-        conf.basedir = oldbase
-        mdgen = createrepo.SplitMetaDataGenerator(config_obj=conf, callback=MDCallBack())
-    else:
-        mdgen = createrepo.MetaDataGenerator(config_obj=conf, callback=MDCallBack())
-        if mdgen.checkTimeStamps():
-            if mdgen.conf.verbose:
-                print _('repo is up to date')
-            sys.exit(0)
     try:
+        if conf.split:
+            mdgen = createrepo.SplitMetaDataGenerator(config_obj=conf, callback=MDCallBack())
+        else:
+            mdgen = createrepo.MetaDataGenerator(config_obj=conf, callback=MDCallBack())
+            if mdgen.checkTimeStamps():
+                if mdgen.conf.verbose:
+                    print _('repo is up to date')
+                sys.exit(0)
+
         mdgen.doPkgMetadata()
         mdgen.doRepoMetadata()
+        mdgen.doFinalMove()
+        
     except MDError, e:
         errorprint(_('%s') % e)
         sys.exit(1)
 
-    output_final_dir = os.path.join(mdgen.conf.outputdir, mdgen.conf.finaldir) 
-    output_old_dir = os.path.join(mdgen.conf.outputdir, mdgen.conf.olddir)
-    
-    if os.path.exists(output_final_dir):
-        try:
-            os.rename(output_final_dir, output_old_dir)
-        except:
-            errorprint(_('Error moving final %s to old dir %s' % (output_final_dir,
-                                                                 output_old_dir)))
-            sys.exit(1)
-
-    output_temp_dir =os.path.join(mdgen.conf.outputdir, mdgen.conf.tempdir)
-
-    try:
-        os.rename(output_temp_dir, output_final_dir)
-    except:
-        errorprint(_('Error moving final metadata into place'))
-        # put the old stuff back
-        os.rename(output_old_dir, output_final_dir)
-        sys.exit(1)
-
-    for f in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile', 'groupfile']:
-        if getattr(mdgen.conf, f):
-            fn = os.path.basename(getattr(mdgen.conf, f))
-        else:
-            continue
-        oldfile = os.path.join(output_old_dir, fn)
-
-        if os.path.exists(oldfile):
-            try:
-                os.remove(oldfile)
-            except OSError, e:
-                errorprint(_('Could not remove old metadata file: %s') % oldfile)
-                errorprint(_('Error was %s') % e)
-                sys.exit(1)
-
-    # Move everything else back from olddir (eg. repoview files)
-    for f in os.listdir(output_old_dir):
-        oldfile = os.path.join(output_old_dir, f)
-        finalfile = os.path.join(output_final_dir, f)
-        if os.path.exists(finalfile):
-            # Hmph?  Just leave it alone, then.
-            try:
-                if os.path.isdir(oldfile):
-                    shutil.rmtree(oldfile)
-                else:
-                    os.remove(oldfile)
-            except OSError, e:
-                errorprint(_('Could not remove old non-metadata file: %s') % oldfile)
-                errorprint(_('Error was %s') % e)
-                sys.exit(1)
-        else:
-            try:
-                os.rename(oldfile, finalfile)
-            except OSError, e:
-                errorprint(_('Could not restore old non-metadata file: %s -> %s') % (oldfile, finalfile))
-                errorprint(_('Error was %s') % e)
-                sys.exit(1)
-
-
-    try:
-        os.rmdir(output_old_dir)
-    except OSError, e:
-        errorprint(_('Could not remove old metadata dir: %s') % mdgen.conf.olddir)
-        errorprint(_('Error was %s') % e)
-        errorprint(_('Please clean up this directory manually.'))
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

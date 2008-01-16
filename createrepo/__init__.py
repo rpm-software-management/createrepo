@@ -37,7 +37,7 @@ except ImportError:
     pass
 
 
-from utils import _gzipOpen, bzipFile
+from utils import _gzipOpen, bzipFile, checkAndMakeDir
 
 
 __version__ = '0.9.1'
@@ -98,10 +98,7 @@ class SimpleMDCallBack(object):
         sys.stdout.write("\r%d/%d - %s" % (current, total, item))
         sys.stdout.flush()
             
-#FIXME = make it so you pass in a dir to doPkgMetadata() and it
-# parses out basedir and directory for relative dir from there
-# it creates the .repodata directory in the output location, etc
-        
+      
 class MetaDataGenerator:
     def __init__(self, config_obj=None, callback=None):
         self.conf = config_obj
@@ -116,17 +113,69 @@ class MetaDataGenerator:
         self.ts = rpmUtils.transaction.initReadOnlyTransaction()
         self.pkgcount = 0
         self.files = []
+        
+        if not self.conf.directory and not self.conf.directories:
+            raise MDError, "No directory given on which to run."
+        
+        # this does the dir setup we need done
+        self._parse_directory(self.conf.directory)
+        self._test_setup_dirs()        
 
-    def _setup_and_check_repo_dir(self, direc):
+    def _parse_directory(self, direc):
         if os.path.isabs(direc):
             self.conf.basedir = os.path.dirname(direc)
-            self.conf.directory = os.path.basename(direc)
+            self.conf.relative_dir = os.path.basename(direc)
         else:
             self.conf.basedir = os.path.realpath(self.conf.basedir)
+            self.conf.relative_dir = direc
 
-        if not self.conf.opts.outputdir:
-            self.conf.outputdir = os.path.join(self.conf.basedir, direc)
+        self.package_dir = os.path.join(self.conf.basedir, self.conf.relative_dir)
+        
+        if not self.conf.outputdir:
+            self.conf.outputdir = os.path.join(self.conf.basedir, self.conf.relative_dir)
 
+
+    def _test_setup_dirs(self):
+        testdir = os.path.realpath(os.path.join(self.conf.basedir, self.conf.relative_dir))
+        # start the sanity/stupidity checks
+        if not os.path.exists(testdir):
+            raise MDError, _('Directory %s must exist') % self.conf.directory
+
+        if not os.path.isdir(testdir):
+            raise MDError, _('%s must be a directory') % self.conf.directory
+
+        if not os.access(self.conf.outputdir, os.W_OK):
+            raise MDError, _('Directory %s must be writable.') % self.conf.outputdir
+
+# SPLIT STUFF?
+#        if self.conf.split:
+#            oldbase = self.conf.basedir
+#            self.conf.basedir = os.path.join(self.conf.basedir, self.conf.directory)
+
+        temp_output = os.path.join(self.conf.outputdir, self.conf.tempdir)
+        if not checkAndMakeDir(temp_output):
+            raise MDError, _('Cannot create/verify %s') % temp_output
+
+        temp_final = os.path.join(self.conf.outputdir, self.conf.finaldir)
+        if not checkAndMakeDir(temp_final):
+            raise MDError, _('Cannot create/verify %s') % temp_final
+
+        if os.path.exists(os.path.join(self.conf.outputdir, self.conf.olddir)):
+            raise MDError, _('Old data directory exists, please remove: %s') % self.conf.olddir
+
+        # make sure we can write to where we want to write to:
+        # and pickup the mdtimestamps while we're at it
+        for direc in ['tempdir', 'finaldir']:
+            for f in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile']:
+                filepath = os.path.join(self.conf.outputdir, direc, f)
+                if os.path.exists(filepath):
+                    if not os.access(filepath, os.W_OK):
+                        raise MDError, _('error in must be able to write to metadata files:\n  -> %s') % filepath
+
+                    if conf.checkts:
+                        timestamp = os.path.getctime(filepath)
+                        if timestamp > self.conf.mdtimestamp:
+                            self.conf.mdtimestamp = timestamp
 
     def _os_path_walk(self, top, func, arg):
         """Directory tree walk with callback function.
@@ -143,7 +192,7 @@ class MetaDataGenerator:
             if os.path.isdir(name):
                 self._os_path_walk(name, func, arg)
     # module
-    def getFileList(self, basepath, directory, ext):
+    def getFileList(self, directory, ext):
         """Return all files in path matching ext, store them in filelist,
         recurse dirs. Returns a list object"""
 
@@ -161,7 +210,7 @@ class MetaDataGenerator:
                     filelist.append(os.path.join(relativepath,fn))
 
         filelist = []
-        startdir = os.path.join(basepath, directory) + '/'
+        startdir = directory + '/'
         self._os_path_walk(startdir, extension_visitor, filelist)
         return filelist
 
@@ -198,11 +247,9 @@ class MetaDataGenerator:
                 files.remove(file)
         return files
 
-    def doPkgMetadata(self, directory=None):
+    def doPkgMetadata(self):
         """all the heavy lifting for the package metadata"""
-        if not directory:
-            directory = self.conf.directory
-            
+        
         # rpms we're going to be dealing with
         if self.conf.update:
             #build the paths
@@ -211,7 +258,7 @@ class MetaDataGenerator:
             otherfile = os.path.join(self.conf.outputdir, self.conf.finaldir, self.conf.otherfile)
             opts = {
                 'verbose' : self.conf.verbose,
-                'pkgdir' : os.path.normpath(os.path.join(self.conf.basedir, directory))
+                'pkgdir' : os.path.normpath(self.package_dir)
             }
             if self.conf.skip_stat:
                 opts['do_stat'] = False
@@ -222,12 +269,12 @@ class MetaDataGenerator:
         if self.conf.pkglist:
             packages = self.conf.pkglist
         else:
-            packages = self.getFileList(self.conf.basedir, directory, '.rpm')
+            packages = self.getFileList(self.package_dir, '.rpm')
             
         packages = self.trimRpms(packages)
         self.pkgcount = len(packages)
         self.openMetadataDocs()
-        self.writeMetadataDocs(packages, directory)
+        self.writeMetadataDocs(packages)
         self.closeMetadataDocs()
 
     # module
@@ -264,19 +311,23 @@ class MetaDataGenerator:
         return fo
         
 
-    def read_in_package(self, directory, rpmfile):
-        # directory is stupid - just make it part of the class
-        rpmfile = '%s/%s/%s' % (self.conf.basedir, directory, rpmfile)
+    def read_in_package(self, rpmfile):
+        """rpmfile == relative path to file from self.packge_dir"""
+        
+        rpmfile = '%s/%s' % (self.package_dir, rpmfile)
         try:
             po = yumbased.CreateRepoPackage(self.ts, rpmfile)
         except Errors.MiscError, e:
             raise MDError, "Unable to open package: %s" % e
         return po
 
-    def writeMetadataDocs(self, pkglist, directory, current=0):
-        # FIXME
-        # directory is unused, kill it, pkglist should come from self
-        # I don't see why current needs to be this way at all
+    def writeMetadataDocs(self, pkglist=[], directory=None, current=0):
+
+        if not pkglist:
+            pkglist = self.conf.pkglist           
+        if not directory:
+            directory=self.conf.directory
+
         for pkg in pkglist:
             current+=1
             recycled = False
@@ -294,7 +345,7 @@ class MetaDataGenerator:
             if not recycled:
                 #scan rpm files
                 try:
-                    po = self.read_in_package(directory, pkg)
+                    po = self.read_in_package(pkg)
                 except MDError, e:
                     # need to say something here
                     self.callback.errorlog("\nError %s: %s\n" % (pkg, e))
@@ -485,6 +536,72 @@ class MetaDataGenerator:
             raise MDError, 'Could not save temp file: %s' % repofilepath 
 
         del repodoc
+
+
+    def doFinalMove(self):
+        """move the just-created repodata from .repodata to repodata
+           also make sure to preserve any files we didn't mess with in the 
+           metadata dir"""
+           
+        output_final_dir = os.path.join(self.conf.outputdir, self.conf.finaldir) 
+        output_old_dir = os.path.join(self.conf.outputdir, self.conf.olddir)
+        
+        if os.path.exists(output_final_dir):
+            try:
+                os.rename(output_final_dir, output_old_dir)
+            except:
+                raise MDError, _('Error moving final %s to old dir %s' % (output_final_dir,
+                                                                     output_old_dir))
+
+        output_temp_dir = os.path.join(self.conf.outputdir, self.conf.tempdir)
+
+        try:
+            os.rename(output_temp_dir, output_final_dir)
+        except:
+            # put the old stuff back
+            os.rename(output_old_dir, output_final_dir)
+            raise MDError, _('Error moving final metadata into place')
+
+        for f in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile', 'groupfile']:
+            if getattr(self.conf, f):
+                fn = os.path.basename(getattr(self.conf, f))
+            else:
+                continue
+            oldfile = os.path.join(output_old_dir, fn)
+
+            if os.path.exists(oldfile):
+                try:
+                    os.remove(oldfile)
+                except OSError, e:
+                    raise MDError, _('Could not remove old metadata file: %s: %s') % (oldfile, e)
+
+        # Move everything else back from olddir (eg. repoview files)
+        for f in os.listdir(output_old_dir):
+            oldfile = os.path.join(output_old_dir, f)
+            finalfile = os.path.join(output_final_dir, f)
+            if os.path.exists(finalfile):
+                # Hmph?  Just leave it alone, then.
+                try:
+                    if os.path.isdir(oldfile):
+                        shutil.rmtree(oldfile)
+                    else:
+                        os.remove(oldfile)
+                except OSError, e:
+                    raise MDError, _('Could not remove old metadata file: %s: %s') % (oldfile, e)
+            else:
+                try:
+                    os.rename(oldfile, finalfile)
+                except OSError, e:
+                    msg = _('Could not restore old non-metadata file: %s -> %s') % (oldfile, finalfile)
+                    msg += _('Error was %s') % e
+                    raise MDError, msg
+
+        try:
+            os.rmdir(output_old_dir)
+        except OSError, e:
+            self.errorlog(_('Could not remove old metadata dir: %s') % self.conf.olddir)
+            self.errorlog(_('Error was %s') % e)
+            self.errorlog(_('Please clean up this directory manually.'))
 
 class SplitMetaDataGenerator(MetaDataGenerator):
 

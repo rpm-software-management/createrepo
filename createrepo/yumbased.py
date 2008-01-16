@@ -64,6 +64,7 @@ class CreateRepoPackage(YumLocalPackage):
         
     def _xml(self, item):
         item = utils.utf8String(item)
+        item = item.rstrip()
         return xml.sax.saxutils.escape(item)
         
     def _do_checksum(self):
@@ -154,7 +155,7 @@ class CreateRepoPackage(YumLocalPackage):
   <packager>%s</packager>
   <url>%s</url>
   <time file="%s" build="%s"/>
-  <size package="%s" installed="%s" archive="%s"/>""" % (self.name, 
+  <size package="%s" installed="%s" archive="%s"/>\n""" % (self.name, 
          self.arch, self.epoch, self.ver, self.rel, self.checksum, 
          self._xml(self.summary), self._xml(self.description), packager, 
          url, self.filetime, self.buildtime, self.packagesize, self.size, 
@@ -162,9 +163,9 @@ class CreateRepoPackage(YumLocalPackage):
          
 
         if baseurl:
-            msg += """<location xml:base="%s" href="%s"/>""" % (self._xml(baseurl), relpath)
+            msg += """<location xml:base="%s" href="%s"/>\n""" % (self._xml(baseurl), relpath)
         else:
-            msg += """<location href="%s"/>""" % relpath
+            msg += """<location href="%s"/>\n""" % relpath
             
         return msg
 
@@ -173,22 +174,22 @@ class CreateRepoPackage(YumLocalPackage):
         if self.license:
             msg += """    <rpm:license>%s</rpm:license>\n""" % self._xml(self.license)
         else:
-            msg += """    <rpm:license/>"""
+            msg += """    <rpm:license/>\n"""
             
         if self.vendor:
             msg += """    <rpm:vendor>%s</rpm:vendor>\n""" % self._xml(self.vendor)
         else:
-            msg += """    <rpm:vendor/>"""
+            msg += """    <rpm:vendor/>\n"""
             
         if self.group:
             msg += """    <rpm:group>%s</rpm:group>\n""" % self._xml(self.group)
         else:
-            msg += """    <rpm:group/>"""
+            msg += """    <rpm:group/>\n"""
             
         if self.buildhost:
             msg += """    <rpm:buildhost>%s</rpm:buildhost>\n""" % self._xml(self.buildhost)
         else:
-            msg += """    <rpm:buildhost/>"""
+            msg += """    <rpm:buildhost/>\n"""
             
         if self.sourcerpm:
             msg += """    <rpm:sourcerpm>%s</rpm:sourcerpm>\n""" % self._xml(self.sourcerpm)
