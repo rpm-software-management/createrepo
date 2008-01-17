@@ -2,7 +2,7 @@
 
 Summary: Creates a common metadata repository
 Name: createrepo
-Version: 0.9.1
+Version: 0.9.2
 Release: 1
 License: GPL
 Group: System Environment/Base
@@ -40,6 +40,9 @@ make DESTDIR=$RPM_BUILD_ROOT install
 %{python_sitelib}/createrepo
 
 %changelog
+* Thu Jan 17 2008 Seth Vidal <skvidal at fedoraproject.org>
+- significant api changes
+
 * Tue Jan  8 2008 Seth Vidal <skvidal at fedoraproject.org>
 - 0.9.1 - lots of fixes
 - cleanup changelog, too
