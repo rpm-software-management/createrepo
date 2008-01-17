@@ -670,10 +670,25 @@ class SplitMetaDataGenerator(MetaDataGenerator):
 
     def doPkgMetadata(self):
         """all the heavy lifting for the package metadata"""
-        import types
         if len(self.conf.directories) == 1:
             MetaDataGenerator.doPkgMetadata(self)
             return
+
+        if self.conf.update:
+            #build the paths
+            primaryfile = os.path.join(self.conf.outputdir, self.conf.finaldir, self.conf.primaryfile)
+            flfile = os.path.join(self.conf.outputdir, self.conf.finaldir, self.conf.filelistsfile)
+            otherfile = os.path.join(self.conf.outputdir, self.conf.finaldir, self.conf.otherfile)
+            opts = {
+                'verbose' : self.conf.verbose,
+                'pkgdir' : os.path.normpath(self.package_dir)
+            }
+            if self.conf.skip_stat:
+                opts['do_stat'] = False
+                
+            #and scan the old repo
+            self.oldData = readMetadata.MetadataIndex(self.conf.outputdir,
+                                                      primaryfile, flfile, otherfile, opts)
             
         filematrix = {}
         for mydir in self.conf.directories:
