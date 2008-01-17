@@ -46,6 +46,8 @@ def parseArgs(args, conf):
                       help="output more debugging info.")
     parser.add_option("-x", "--excludes", default=[], action="append",
                       help="files to exclude")
+    parser.add_option("--basedir", default=os.getcwd(),
+                      help="basedir for path to directories")                      
     parser.add_option("-u", "--baseurl", default=None,
                       help="baseurl to append on all files")
     parser.add_option("-g", "--groupfile", default=None,

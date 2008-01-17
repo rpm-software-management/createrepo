@@ -117,17 +117,24 @@ class MetaDataGenerator:
         if not self.conf.directory and not self.conf.directories:
             raise MDError, "No directory given on which to run."
         
+        if not self.conf.directories: # just makes things easier later
+            self.conf.directories = [self.conf.directory]
+        if not self.conf.directory: # ensure we have both in the config object
+            self.conf.directory = self.conf.directories[0]
+            
         # this does the dir setup we need done
-        self._parse_directory(self.conf.directory)
+        self._parse_directory()
         self._test_setup_dirs()        
 
-    def _parse_directory(self, direc):
-        if os.path.isabs(direc):
-            self.conf.basedir = os.path.dirname(direc)
-            self.conf.relative_dir = os.path.basename(direc)
+    def _parse_directory(self):
+        """pick up the first directory given to us and make sure we know
+           where things should go"""
+        if os.path.isabs(self.conf.directory):
+            self.conf.basedir = os.path.dirname(self.conf.directory)
+            self.conf.relative_dir = os.path.basename(self.conf.directory)
         else:
             self.conf.basedir = os.path.realpath(self.conf.basedir)
-            self.conf.relative_dir = direc
+            self.conf.relative_dir = self.conf.directory
 
         self.package_dir = os.path.join(self.conf.basedir, self.conf.relative_dir)
         
@@ -136,21 +143,24 @@ class MetaDataGenerator:
 
 
     def _test_setup_dirs(self):
-        testdir = os.path.realpath(os.path.join(self.conf.basedir, self.conf.relative_dir))
         # start the sanity/stupidity checks
-        if not os.path.exists(testdir):
-            raise MDError, _('Directory %s must exist') % self.conf.directory
+        for mydir in self.conf.directories:
+            if os.path.isabs(mydir):
+                testdir = mydir
+            else:
+                if mydir.startswith('../'):
+                    testdir = os.path.realpath(mydir)
+                else:
+                    testdir = os.path.join(self.conf.basedir, mydir)
 
-        if not os.path.isdir(testdir):
-            raise MDError, _('%s must be a directory') % self.conf.directory
+            if not os.path.exists(testdir):
+                raise MDError, _('Directory %s must exist') % mydir
+
+            if not os.path.isdir(testdir):
+                raise MDError, _('%s must be a directory') % mydir
 
         if not os.access(self.conf.outputdir, os.W_OK):
             raise MDError, _('Directory %s must be writable.') % self.conf.outputdir
-
-# SPLIT STUFF?
-#        if self.conf.split:
-#            oldbase = self.conf.basedir
-#            self.conf.basedir = os.path.join(self.conf.basedir, self.conf.directory)
 
         temp_output = os.path.join(self.conf.outputdir, self.conf.tempdir)
         if not checkAndMakeDir(temp_output):
@@ -311,10 +321,12 @@ class MetaDataGenerator:
         return fo
         
 
-    def read_in_package(self, rpmfile):
+    def read_in_package(self, rpmfile, pkgpath=None):
         """rpmfile == relative path to file from self.packge_dir"""
-        
-        rpmfile = '%s/%s' % (self.package_dir, rpmfile)
+        if not pkgpath:
+            pkgpath = self.package_dir
+
+        rpmfile = '%s/%s' % (pkgpath, rpmfile)
         try:
             po = yumbased.CreateRepoPackage(self.ts, rpmfile)
         except Errors.MiscError, e:
@@ -345,7 +357,7 @@ class MetaDataGenerator:
             if not recycled:
                 #scan rpm files
                 try:
-                    po = self.read_in_package(pkg)
+                    po = self.read_in_package(pkg, pkgpath=directory)
                 except MDError, e:
                     # need to say something here
                     self.callback.errorlog("\nError %s: %s\n" % (pkg, e))
@@ -604,10 +616,13 @@ class MetaDataGenerator:
             self.errorlog(_('Please clean up this directory manually.'))
 
 class SplitMetaDataGenerator(MetaDataGenerator):
-
+    """takes a series of dirs and creates repodata for all of them
+       most commonly used with -u media:// - if no outputdir is specified
+       it will create the repodata in the first dir in the list of dirs
+       """
     def __init__(self, config_obj=None, callback=None):
-        MetaDataGenerator.__init__(self, config_obj=conf, callback=None)
-
+        MetaDataGenerator.__init__(self, config_obj=config_obj, callback=None)
+        
     def _getFragmentUrl(self, url, fragment):
         import urlparse
         urlparse.uses_fragment.append('media')
@@ -616,7 +631,7 @@ class SplitMetaDataGenerator(MetaDataGenerator):
         (scheme, netloc, path, query, fragid) = urlparse.urlsplit(url)
         return urlparse.urlunsplit((scheme, netloc, path, query, str(fragment)))
 
-    def getFileList(self, basepath, directory, ext):
+    def getFileList(self, directory, ext):
 
         extlen = len(ext)
 
@@ -631,19 +646,27 @@ class SplitMetaDataGenerator(MetaDataGenerator):
                     arg.append(os.path.join(reldir,fn))
 
         rpmlist = []
-        startdir = os.path.join(basepath, directory)
-        os.path.walk(startdir, extension_visitor, rpmlist)
+        os.path.walk(directory, extension_visitor, rpmlist)
         return rpmlist
 
     def doPkgMetadata(self):
         """all the heavy lifting for the package metadata"""
         import types
-        if type(self.directories) == types.StringType:
+        if len(self.conf.directories) == 1:
             MetaDataGenerator.doPkgMetadata(self)
             return
+            
         filematrix = {}
-        for mydir in self.directories:
-            filematrix[mydir] = self.getFileList(self.conf.basedir, mydir, '.rpm')
+        for mydir in self.conf.directories:
+            if os.path.isabs(mydir):
+                thisdir = mydir
+            else:
+                if mydir.startswith('../'):
+                    thisdir = os.path.realpath(mydir)
+                else:
+                    thisdir = os.path.join(self.conf.basedir, mydir)
+        
+            filematrix[mydir] = self.getFileList(thisdir, '.rpm')
             self.trimRpms(filematrix[mydir])
             self.pkgcount += len(filematrix[mydir])
 
@@ -652,7 +675,7 @@ class SplitMetaDataGenerator(MetaDataGenerator):
         self.conf.baseurl = self._getFragmentUrl(self.conf.baseurl, mediano)
         self.openMetadataDocs()
         original_basedir = self.conf.basedir
-        for mydir in self.directories:
+        for mydir in self.conf.directories:
             self.conf.baseurl = self._getFragmentUrl(self.conf.baseurl, mediano)
             current = self.writeMetadataDocs(filematrix[mydir], mydir, current)
             mediano += 1
