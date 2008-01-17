@@ -433,6 +433,7 @@ class MetaDataGenerator:
         repoid='garbageid'
         
         if self.conf.database:
+            if not self.conf.quiet: self.callback.log('Generating sqlite DBs')
             try:
                 dbversion = str(sqlitecachec.DBVERSION)
             except AttributeError:
@@ -464,7 +465,8 @@ class MetaDataGenerator:
                 elif ftype == 'other':
                     rp.getOtherdata(complete_path, csum)
                 
-
+                
+                
                 tmp_result_name = '%s.xml.gz.sqlite' % ftype
                 tmp_result_path = os.path.join(repopath, tmp_result_name)
                 good_name = '%s.sqlite' % ftype
@@ -503,6 +505,7 @@ class MetaDataGenerator:
                 database_version = data.newChild(None, 'database_version', dbversion)
                 if self.conf.verbose:
                     self.callback.log("Ending %s db creation: %s" % (ftype, time.ctime()))
+                
 
                 
             data = reporoot.newChild(None, 'data', None)
@@ -516,7 +519,8 @@ class MetaDataGenerator:
             timestamp = data.newChild(None, 'timestamp', str(timestamp))
             unchecksum = data.newChild(None, 'open-checksum', uncsum)
             unchecksum.newProp('type', sumtype)
-        
+
+        if not self.conf.quiet: self.callback.log('Sqlite DBs complete')        
         # if we've got a group file then checksum it once and be done
         if self.conf.groupfile is not None:
             grpfile = self.conf.groupfile
