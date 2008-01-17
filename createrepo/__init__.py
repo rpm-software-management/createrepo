@@ -60,11 +60,10 @@ class MetaDataConfig(object):
         self.baseurl = ''
         self.groupfile = None
         self.sumtype = 'sha'
-        self.noepoch = False #???
+        self.noepoch = False # hmm - maybe a fixme?
         self.pretty = False
-        self.cachedir = None
+        self.cachedir = None #deprecated
         self.basedir = os.getcwd()
-        self.use_cache = False
         self.checkts = False
         self.split = False        
         self.update = False
@@ -121,6 +120,10 @@ class MetaDataGenerator:
             self.conf.directories = [self.conf.directory]
         if not self.conf.directory: # ensure we have both in the config object
             self.conf.directory = self.conf.directories[0]
+        
+        # the cachedir thing:
+        if self.conf.cachedir:
+            self.conf.update = True
             
         # this does the dir setup we need done
         self._parse_directory()
@@ -186,6 +189,18 @@ class MetaDataGenerator:
                         timestamp = os.path.getctime(filepath)
                         if timestamp > self.conf.mdtimestamp:
                             self.conf.mdtimestamp = timestamp
+        if self.conf.groupfile:
+            a = self.conf.groupfile
+            if self.conf.split:
+                a = os.path.join(self.package_dir, self.conf.groupfile)
+            elif not os.path.isabs(a):
+                a = os.path.join(self.package_dir, self.conf.groupfile)
+
+            if not os.path.exists(a):
+                raise MDError, _('Error: groupfile %s cannot be found.' % a)
+
+            self.conf.groupfile = a
+
 
     def _os_path_walk(self, top, func, arg):
         """Directory tree walk with callback function.

@@ -61,7 +61,7 @@ def parseArgs(args, conf):
     parser.add_option("-p", "--pretty", default=False, action="store_true",
                       help="make sure all xml generated is formatted")
     parser.add_option("-c", "--cachedir", default=None,
-                      help="set path to cache dir")
+                      help="enables --update as cachedir is MUCH slower")
     parser.add_option("-C", "--checkts", default=False, action="store_true",
       help="check timestamps on files vs the metadata to see if we need to update")
     parser.add_option("-d", "--database", default=False, action="store_true",
@@ -110,31 +110,10 @@ def parseArgs(args, conf):
     directory = directories[0]
     conf.directory = directory
     conf.directories = directories
-
-    # FIXME - I think this is unnecessary
-    if not opts.outputdir:
-        conf.outputdir = os.path.join(conf.basedir, directory)
-    if conf.groupfile:
-        a = conf.groupfile
-        if conf.split:
-            a = os.path.join(conf.basedir, directory, conf.groupfile)
-        elif not os.path.isabs(a):
-            a = os.path.join(conf.basedir, directory, conf.groupfile)
-        # FIXME, move this test most likely inside the class
-        if not os.path.exists(a):
-            errorprint(_('Error: groupfile %s cannot be found.' % a))
-            usage()
-        conf.groupfile = a
-    # FIXME - move this one inside the class, too
+    
     if conf.cachedir:
-        conf.cache = True
-        a = conf.cachedir
-        if not os.path.isabs(a):
-            a = os.path.join(conf.outputdir ,a)
-        if not checkAndMakeDir(a):
-            errorprint(_('Error: cannot open/write to cache dir %s' % a))
-            parser.print_usage()
-        conf.cachedir = a
+        conf.update = True
+       
 
     if conf.pkglist:
         lst = []
@@ -145,7 +124,6 @@ def parseArgs(args, conf):
         pfo.close()
             
         conf.pkglist = lst
-        
 
     return conf
 
