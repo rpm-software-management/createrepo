@@ -387,7 +387,7 @@ class MetaDataGenerator:
             # if so write this one out that way
             if self.conf.update:
                 #see if we can pull the nodes from the old repo
-                print self.oldData.basenodes.keys()
+                #print self.oldData.basenodes.keys()
                 nodes = self.oldData.getNodes(pkg)
                 if nodes is not None:
                     recycled = True
