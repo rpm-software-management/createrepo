@@ -61,7 +61,7 @@ def parseArgs(args, conf):
     parser.add_option("-p", "--pretty", default=False, action="store_true",
                       help="make sure all xml generated is formatted")
     parser.add_option("-c", "--cachedir", default=None,
-                      help="enables --update as cachedir is MUCH slower")
+                      help="set path to cache dir")
     parser.add_option("-C", "--checkts", default=False, action="store_true",
       help="check timestamps on files vs the metadata to see if we need to update")
     parser.add_option("-d", "--database", default=False, action="store_true",
@@ -111,10 +111,6 @@ def parseArgs(args, conf):
     conf.directory = directory
     conf.directories = directories
     
-    if conf.cachedir:
-        conf.update = True
-       
-
     if conf.pkglist:
         lst = []
         pfo = open(conf.pkglist, 'r')

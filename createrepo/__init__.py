@@ -62,7 +62,8 @@ class MetaDataConfig(object):
         self.sumtype = 'sha'
         self.noepoch = False # hmm - maybe a fixme?
         self.pretty = False
-        self.cachedir = None #deprecated
+        self.cachedir = None 
+        self.use_cache = False
         self.basedir = os.getcwd()
         self.checkts = False
         self.split = False        
@@ -123,7 +124,7 @@ class MetaDataGenerator:
         
         # the cachedir thing:
         if self.conf.cachedir:
-            self.conf.update = True
+            self.conf.use_cache = True
             
         # this does the dir setup we need done
         self._parse_directory()
@@ -189,6 +190,7 @@ class MetaDataGenerator:
                         timestamp = os.path.getctime(filepath)
                         if timestamp > self.conf.mdtimestamp:
                             self.conf.mdtimestamp = timestamp
+
         if self.conf.groupfile:
             a = self.conf.groupfile
             if self.conf.split:
@@ -200,6 +202,15 @@ class MetaDataGenerator:
                 raise MDError, _('Error: groupfile %s cannot be found.' % a)
 
             self.conf.groupfile = a
+
+      if self.conf.cachedir:
+            a = self.conf.cachedir
+            if not os.path.isabs(a):
+                a = os.path.join(self.conf.outputdir ,a)
+            if not checkAndMakeDir(a):
+                errorprint(_('Error: cannot open/write to cache dir %s' % a))
+                parser.print_usage()
+            self.conf.cachedir = a
 
 
     def _os_path_walk(self, top, func, arg):
@@ -272,10 +283,14 @@ class MetaDataGenerator:
                 files.remove(file)
         return files
 
-    def doPkgMetadata(self):
-        """all the heavy lifting for the package metadata"""
+    def _setup_old_metadata_lookup(self):
+        """sets up the .oldData object for handling the --update call. Speeds
+           up generating updates for new metadata"""
+        #FIXME - this only actually works for single dirs. It will only
+        # function for the first dir passed to --split, not all of them
+        # this needs to be fixed by some magic in readMetadata.py
+        # using opts.pkgdirs as a list, I think.
         
-        # rpms we're going to be dealing with
         if self.conf.update:
             #build the paths
             primaryfile = os.path.join(self.conf.outputdir, self.conf.finaldir, self.conf.primaryfile)
@@ -283,7 +298,7 @@ class MetaDataGenerator:
             otherfile = os.path.join(self.conf.outputdir, self.conf.finaldir, self.conf.otherfile)
             opts = {
                 'verbose' : self.conf.verbose,
-                'pkgdir' : os.path.normpath(self.package_dir)
+                'pkgdir'  : os.path.normpath(self.package_dir)
             }
             if self.conf.skip_stat:
                 opts['do_stat'] = False
@@ -291,6 +306,12 @@ class MetaDataGenerator:
             #and scan the old repo
             self.oldData = readMetadata.MetadataIndex(self.conf.outputdir,
                                                       primaryfile, flfile, otherfile, opts)
+           
+    def doPkgMetadata(self):
+        """all the heavy lifting for the package metadata"""
+        if self.conf.update:
+        self._setup_old_metadata_lookup()        
+        # rpms we're going to be dealing with
         if self.conf.pkglist:
             packages = self.conf.pkglist
         else:
@@ -348,12 +369,14 @@ class MetaDataGenerator:
             raise MDError, "Unable to open package: %s" % e
         return po
 
-    def writeMetadataDocs(self, pkglist=[], directory=None, current=0):
+    def writeMetadataDocs(self, pkglist=[], pkgpath=None, current=0):
 
         if not pkglist:
             pkglist = self.conf.pkglist           
-        if not directory:
+        if not pkgpath:
             directory=self.conf.directory
+        else:
+            directory=pkgpath
 
         for pkg in pkglist:
             current+=1
@@ -363,6 +386,7 @@ class MetaDataGenerator:
             # if so write this one out that way
             if self.conf.update:
                 #see if we can pull the nodes from the old repo
+                print self.oldData.basenodes.keys()
                 nodes = self.oldData.getNodes(pkg)
                 if nodes is not None:
                     recycled = True
@@ -372,12 +396,15 @@ class MetaDataGenerator:
             if not recycled:
                 #scan rpm files
                 try:
-                    po = self.read_in_package(pkg, pkgpath=directory)
+                    po = self.read_in_package(pkg, pkgpath=pkgpath)
                 except MDError, e:
                     # need to say something here
                     self.callback.errorlog("\nError %s: %s\n" % (pkg, e))
                     continue
-                reldir = os.path.join(self.conf.basedir, directory)
+                if not pkgpath:
+                    reldir = os.path.join(self.conf.basedir, directory)
+                else:
+                    reldir = pkgpath
                 self.primaryfile.write(po.do_primary_xml_dump(reldir, baseurl=self.conf.baseurl))
                 self.flfile.write(po.do_filelists_xml_dump())
                 self.otherfile.write(po.do_other_xml_dump())
@@ -535,7 +562,7 @@ class MetaDataGenerator:
             unchecksum = data.newChild(None, 'open-checksum', uncsum)
             unchecksum.newProp('type', sumtype)
 
-        if not self.conf.quiet: self.callback.log('Sqlite DBs complete')        
+        if not self.conf.quiet and self.conf.database: self.callback.log('Sqlite DBs complete')        
         # if we've got a group file then checksum it once and be done
         if self.conf.groupfile is not None:
             grpfile = self.conf.groupfile
@@ -675,20 +702,7 @@ class SplitMetaDataGenerator(MetaDataGenerator):
             return
 
         if self.conf.update:
-            #build the paths
-            primaryfile = os.path.join(self.conf.outputdir, self.conf.finaldir, self.conf.primaryfile)
-            flfile = os.path.join(self.conf.outputdir, self.conf.finaldir, self.conf.filelistsfile)
-            otherfile = os.path.join(self.conf.outputdir, self.conf.finaldir, self.conf.otherfile)
-            opts = {
-                'verbose' : self.conf.verbose,
-                'pkgdir' : os.path.normpath(self.package_dir)
-            }
-            if self.conf.skip_stat:
-                opts['do_stat'] = False
-                
-            #and scan the old repo
-            self.oldData = readMetadata.MetadataIndex(self.conf.outputdir,
-                                                      primaryfile, flfile, otherfile, opts)
+            self._setup_old_metadata_lookup()
             
         filematrix = {}
         for mydir in self.conf.directories:
