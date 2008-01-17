@@ -1,3 +1,88 @@
+2008-01-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: comment out a debug print
+
+2008-01-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/yumbased.py: re-enable
+	--cachedir in code fix logic issues in cachedir from 0.4.X
+
+2008-01-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, genpkgmetadata.py: - fix more problems with relative paths and --split - revert
+	cachedir disabling - cachedir isn't working yet, but it's no longer
+	deprecated due to a use case I hadn't considered.
+
+2008-01-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: make --update and --split mostly work
+	again
+
+2008-01-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, genpkgmetadata.py: - move a bunch of tests into the base class - deprecate --cachedir -
+	make it enable --update instead b/c it is MUCH   faster
+
+2008-01-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo.spec, createrepo/__init__.py: bump version to 0.9.2
+
+2008-01-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: add some more correct outputs about the
+	sqlite db generation
+
+2008-01-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, genpkgmetadata.py: --split works again,
+	fix relative paths with ../../ curse in the direction of --split and
+	--basedir :(
+
+2008-01-16  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/utils.py,
+	createrepo/yumbased.py, genpkgmetadata.py: clean up api to simplify
+	all of the code calling it probably severely break --split for the
+	moment, though
+
+2008-01-15  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/yumbased.py: make sure we have empty stubs for items in
+	the rpm-format section, older versions of yum will go bonkers if
+	not.
+
+2008-01-15  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: - add debug output for database time generation
+
+2008-01-15  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/readMetadata.py,
+	genpkgmetadata.py: - add --skip-stat to skip the stat() call on updates - this is
+	mostly   b/c the fedora createrepo call is done over nfs and that is
+	VERY VERY   slow for 20K stat() calls :( - fix --pkglist - patch
+	from jesse keating - document options in --help output
+
+2008-01-14  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/yumbased.py: - add copyright statements and licenses to top of files - start
+	function to remove all the directory mauling in genpkgmetadata -
+	fixmes
+
+2008-01-11  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/yumbased.py: return src for arch when it's a srpm
+
+2008-01-10  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/yumbased.py: make sure that files are run through the
+	xml escaping, too.
+
+2008-01-09  Seth Vidal <skvidal@fedoraproject.org>
+
+	* ChangeLog, Makefile: update changelog, add changelog target to
+	makefile
+
 2008-01-09  Seth Vidal <skvidal@fedoraproject.org>
 
 	* genpkgmetadata.py: clean up old comments and cruft
