@@ -203,7 +203,7 @@ class MetaDataGenerator:
 
             self.conf.groupfile = a
 
-      if self.conf.cachedir:
+        if self.conf.cachedir:
             a = self.conf.cachedir
             if not os.path.isabs(a):
                 a = os.path.join(self.conf.outputdir ,a)
@@ -310,7 +310,7 @@ class MetaDataGenerator:
     def doPkgMetadata(self):
         """all the heavy lifting for the package metadata"""
         if self.conf.update:
-        self._setup_old_metadata_lookup()        
+            self._setup_old_metadata_lookup()        
         # rpms we're going to be dealing with
         if self.conf.pkglist:
             packages = self.conf.pkglist
@@ -367,6 +367,7 @@ class MetaDataGenerator:
             po = yumbased.CreateRepoPackage(self.ts, rpmfile)
         except Errors.MiscError, e:
             raise MDError, "Unable to open package: %s" % e
+        po.crp_cachedir = self.conf.cachedir
         return po
 
     def writeMetadataDocs(self, pkglist=[], pkgpath=None, current=0):

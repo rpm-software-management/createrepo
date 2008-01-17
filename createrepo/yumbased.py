@@ -22,6 +22,7 @@ import rpm
 import types
 import re
 import xml.sax.saxutils
+import md5
 
 from yum.packages import YumLocalPackage
 from yum.Errors import *
@@ -54,13 +55,13 @@ class CreateRepoPackage(YumLocalPackage):
         self._hdrend = None
         self.xml_node = libxml2.newDoc("1.0")
         self.arch = self.isSrpm()
-        
+        self.crp_cachedir = None
+                
     def isSrpm(self):
         if self.tagByName('sourcepackage') == 1 or not self.tagByName('sourcerpm'):
             return 'src'
         else:
             return self.tagByName('arch')
-
         
     def _xml(self, item):
         item = utils.utf8String(item)
@@ -68,8 +69,57 @@ class CreateRepoPackage(YumLocalPackage):
         return xml.sax.saxutils.escape(item)
         
     def _do_checksum(self):
-        if not self._checksum:
+        """return a checksum for a package:
+           - check if the checksum cache is enabled
+              if not - return the checksum
+              if so - check to see if it has a cache file
+                if so, open it and return the first line's contents
+                if not, grab the checksum and write it to a file for this pkg
+         """
+        # already got it
+        if self._checksum:
+            return self._checksum
+
+        # not using the cachedir
+        if not self.crp_cachedir:
             self._checksum = misc.checksum('sha', self.localpath)
+            return self._checksum
+
+
+        t = []
+        if type(self.hdr[rpm.RPMTAG_SIGGPG]) is not types.NoneType:
+            t.append("".join(self.hdr[rpm.RPMTAG_SIGGPG]))   
+        if type(self.hdr[rpm.RPMTAG_SIGPGP]) is not types.NoneType:
+            t.append("".join(self.hdr[rpm.RPMTAG_SIGPGP]))
+        if type(self.hdr[rpm.RPMTAG_HDRID]) is not types.NoneType:
+            t.append("".join(self.hdr[rpm.RPMTAG_HDRID]))
+
+        key = md5.new("".join(t)).hexdigest()
+                                                
+        csumtag = '%s-%s-%s-%s' % (os.path.basename(self.localpath),
+                                   key, self.size, self.filetime)
+        csumfile = '%s/%s' % (self.crp_cachedir, csumtag)
+
+        if os.path.exists(csumfile) and float(self.filetime) <= float(os.stat(csumfile)[-2]):
+            csumo = open(csumfile, 'r')
+            checksum = csumo.readline()
+            csumo.close()
+             
+        else:
+            checksum = misc.checksum('sha', self.localpath)
+            csumo = open(csumfile, 'w')
+            csumo.write(checksum)
+            csumo.close()
+        
+        self._checksum = checksum
+
+        return self._checksum
+       
+        
+           
+
+           
+
             
         return self._checksum
     checksum = property(fget=lambda self: self._do_checksum())
@@ -355,7 +405,5 @@ class CreateRepoPackage(YumLocalPackage):
         msg += self._dump_changelog()
         msg += "\n</package>\n"
         return msg
-       
-        
-           
+
 
