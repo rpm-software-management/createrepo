@@ -110,16 +110,16 @@ def parseArgs(args, conf):
     directory = directories[0]
     conf.directory = directory
     conf.directories = directories
-    
+
+    lst = []
     if conf.pkglist:
-        lst = []
         pfo = open(conf.pkglist, 'r')
         for line in pfo.readlines():
             line = line.replace('\n', '')
             lst.append(line)
         pfo.close()
             
-        conf.pkglist = lst
+    conf.pkglist = lst
 
     return conf
 
