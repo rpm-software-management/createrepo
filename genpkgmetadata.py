@@ -81,6 +81,8 @@ def parseArgs(args, conf):
     parser.add_option("-S", "--skip-symlinks", dest="skip_symlinks",
                       default=False, action="store_true",
                       help="ignore symlinks of packages")
+    parser.add_option("--changelog-limit", dest="changelog_limit",
+                      default=None, help="only import the last N changelog entries")
 
     (opts, argsleft) = parser.parse_args()
     if len(argsleft) > 1 and not opts.split:
@@ -121,6 +123,9 @@ def parseArgs(args, conf):
             
     conf.pkglist = lst
 
+    if conf.changelog_limit: # make sure it is an int, not a string
+        conf.changelog_limit = int(conf.changelog_limit)
+        
     return conf
 
 class MDCallBack(object):

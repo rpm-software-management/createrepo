@@ -372,7 +372,11 @@ class CreateRepoPackage(YumLocalPackage):
         if not self.changelog:
             return ""
         msg = "\n"
-        for (ts, author, content) in self.changelog:            
+        clog_count = 0
+        for (ts, author, content) in reversed(sorted(self.changelog)):
+            if self.crp_changelog_limit and clog_count >= self.crp_changelog_limit:
+                break
+            clog_count += 1
             c = self.xml_node.newChild(None, "changelog", None)
             c.addContent(utils.utf8String(content))
             c.newProp('author', utils.utf8String(author))

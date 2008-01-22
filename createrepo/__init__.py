@@ -85,6 +85,8 @@ class MetaDataConfig(object):
         self.mdtimestamp = 0
         self.directory = None
         self.directories = []
+        self.changelog_limit = None # needs to be an int or None
+        
 
 class SimpleMDCallBack(object):
     def errorlog(self, thing):
@@ -367,6 +369,9 @@ class MetaDataGenerator:
             po = yumbased.CreateRepoPackage(self.ts, rpmfile)
         except Errors.MiscError, e:
             raise MDError, "Unable to open package: %s" % e
+        # if we're going to add anything in from outside, here is where
+        # you can do it
+        po.crp_changelog_limit = self.conf.changelog_limit
         po.crp_cachedir = self.conf.cachedir
         return po
 
