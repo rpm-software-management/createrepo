@@ -86,6 +86,7 @@ class MetaDataConfig(object):
         self.directory = None
         self.directories = []
         self.changelog_limit = None # needs to be an int or None
+        self.unique_md_filenames = False
         
 
 class SimpleMDCallBack(object):
@@ -292,7 +293,8 @@ class MetaDataGenerator:
         # function for the first dir passed to --split, not all of them
         # this needs to be fixed by some magic in readMetadata.py
         # using opts.pkgdirs as a list, I think.
-        
+        # FIXME - this needs to read the old repomd.xml to figure out where
+        # the files WERE to pass in the right fns.
         if self.conf.update:
             #build the paths
             primaryfile = os.path.join(self.conf.outputdir, self.conf.finaldir, self.conf.primaryfile)
@@ -496,7 +498,7 @@ class MetaDataGenerator:
             zfo.close()
             csum = misc.checksum(sumtype, complete_path)
             timestamp = os.stat(complete_path)[8]
-            
+
             db_csums = {}
             db_compressed_sums = {}
             
@@ -525,7 +527,7 @@ class MetaDataGenerator:
                 compressed_name = '%s.bz2' % good_name
                 result_compressed = os.path.join(repopath, compressed_name)
                 db_csums[ftype] = misc.checksum(sumtype, resultpath)
-                
+
                 # compress the files
                 bzipFile(resultpath, result_compressed)
                 # csum the compressed file
@@ -533,6 +535,13 @@ class MetaDataGenerator:
                 # remove the uncompressed file
                 os.unlink(resultpath)
 
+                if self.conf.unique_md_filenames:
+                    csum_compressed_name = '%s-%s.bz2' % (good_name, db_compressed_sums[ftype])
+                    csum_result_compressed =  os.path.join(repopath, csum_compressed_name)
+                    os.rename(result_compressed, csum_result_compressed)
+                    result_compressed = csum_result_compressed
+                    compressed_name = csum_compressed_name
+                    
                 # timestamp the compressed file
                 db_timestamp = os.stat(result_compressed)[8]
                 
@@ -558,15 +567,28 @@ class MetaDataGenerator:
                 
             data = reporoot.newChild(None, 'data', None)
             data.newProp('type', ftype)
-            location = data.newChild(None, 'location', None)
-            if self.conf.baseurl is not None:
-                location.newProp('xml:base', self.conf.baseurl)
-            location.newProp('href', os.path.join(self.conf.finaldir, file))
+
             checksum = data.newChild(None, 'checksum', csum)
             checksum.newProp('type', sumtype)
             timestamp = data.newChild(None, 'timestamp', str(timestamp))
             unchecksum = data.newChild(None, 'open-checksum', uncsum)
             unchecksum.newProp('type', sumtype)
+            location = data.newChild(None, 'location', None)
+            if self.conf.baseurl is not None:
+                location.newProp('xml:base', self.conf.baseurl)
+            if self.conf.unique_md_filenames:
+                res_file = '%s-%s.xml.gz' % (ftype, csum)
+                orig_file = os.path.join(repopath, file)
+                dest_file = os.path.join(repopath, res_file)
+                os.rename(orig_file, dest_file)
+                
+            else:
+                res_file = file
+
+            file = res_file #???
+            
+            location.newProp('href', os.path.join(self.conf.finaldir, file))
+
 
         if not self.conf.quiet and self.conf.database: self.callback.log('Sqlite DBs complete')        
         # if we've got a group file then checksum it once and be done

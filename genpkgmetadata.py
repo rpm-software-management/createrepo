@@ -83,7 +83,11 @@ def parseArgs(args, conf):
                       help="ignore symlinks of packages")
     parser.add_option("--changelog-limit", dest="changelog_limit",
                       default=None, help="only import the last N changelog entries")
-
+    parser.add_option("--unique-md-filenames", dest="unique_md_filenames",
+                      default=False, action="store_true",
+                      help="include the file's checksum in the filename, helps" \
+                           "with proxies")
+                           
     (opts, argsleft) = parser.parse_args()
     if len(argsleft) > 1 and not opts.split:
         errorprint(_('Error: Only one directory allowed per run.'))
