@@ -532,7 +532,7 @@ class MetaDataGenerator:
                 os.unlink(resultpath)
 
                 if self.conf.unique_md_filenames:
-                    csum_compressed_name = '%s-%s.bz2' % (good_name, db_compressed_sums[ftype])
+                    csum_compressed_name = '%s-%s.bz2' % (db_compressed_sums[ftype], good_name)
                     csum_result_compressed =  os.path.join(repopath, csum_compressed_name)
                     os.rename(result_compressed, csum_result_compressed)
                     result_compressed = csum_result_compressed
@@ -573,7 +573,7 @@ class MetaDataGenerator:
             if self.conf.baseurl is not None:
                 location.newProp('xml:base', self.conf.baseurl)
             if self.conf.unique_md_filenames:
-                res_file = '%s-%s.xml.gz' % (ftype, csum)
+                res_file = '%s-%s.xml.gz' % (csum, ftype)
                 orig_file = os.path.join(repopath, file)
                 dest_file = os.path.join(repopath, res_file)
                 os.rename(orig_file, dest_file)
@@ -581,7 +581,7 @@ class MetaDataGenerator:
             else:
                 res_file = file
 
-            file = res_file #???
+            file = res_file 
             
             location.newProp('href', os.path.join(self.conf.finaldir, file))
 
