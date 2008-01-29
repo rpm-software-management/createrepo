@@ -661,6 +661,12 @@ class MetaDataGenerator:
         for f in os.listdir(output_old_dir):
             oldfile = os.path.join(output_old_dir, f)
             finalfile = os.path.join(output_final_dir, f)
+            if f.find('-') != -1 and f.split('-')[1] in ('primary.sqlite.bz2',
+                    'filelists.sqlite.bz2', 'primary.xml.gz','other.sqlite.bz2',
+                    'other.xml.gz','filelists.xml.gz'):
+                os.remove(oldfile) # kill off the old ones
+                continue
+                
             if os.path.exists(finalfile):
                 # Hmph?  Just leave it alone, then.
                 try:
