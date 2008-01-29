@@ -666,7 +666,10 @@ class MetaDataGenerator:
                     'other.xml.gz','filelists.xml.gz'):
                 os.remove(oldfile) # kill off the old ones
                 continue
-                
+            if f in ('filelists.sqlite.bz2', 'other.sqlite.bz2', 'primary.sqlite.bz2'):
+                os.remove(oldfile)
+                continue
+                    
             if os.path.exists(finalfile):
                 # Hmph?  Just leave it alone, then.
                 try:
