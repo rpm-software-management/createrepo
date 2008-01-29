@@ -111,6 +111,8 @@ def parseArgs(args, conf):
     for opt in parser.option_list:
         if opt.dest is None: # this is fairly silly
             continue
+        if getattr(opts, opt.dest) is None: # if it's not set, take the default from the base class
+            continue
         setattr(conf, opt.dest, getattr(opts, opt.dest))
     
     directory = directories[0]

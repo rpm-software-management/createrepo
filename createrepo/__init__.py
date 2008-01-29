@@ -57,7 +57,7 @@ class MetaDataConfig(object):
         self.quiet = False
         self.verbose = False
         self.excludes = []
-        self.baseurl = ''
+        self.baseurl = None
         self.groupfile = None
         self.sumtype = 'sha'
         self.noepoch = False # hmm - maybe a fixme?
