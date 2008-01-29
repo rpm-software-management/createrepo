@@ -297,9 +297,6 @@ class MetaDataGenerator:
         # the files WERE to pass in the right fns.
         if self.conf.update:
             #build the paths
-            primaryfile = os.path.join(self.conf.outputdir, self.conf.finaldir, self.conf.primaryfile)
-            flfile = os.path.join(self.conf.outputdir, self.conf.finaldir, self.conf.filelistsfile)
-            otherfile = os.path.join(self.conf.outputdir, self.conf.finaldir, self.conf.otherfile)
             opts = {
                 'verbose' : self.conf.verbose,
                 'pkgdir'  : os.path.normpath(self.package_dir)
@@ -308,8 +305,7 @@ class MetaDataGenerator:
                 opts['do_stat'] = False
                 
             #and scan the old repo
-            self.oldData = readMetadata.MetadataIndex(self.conf.outputdir,
-                                                      primaryfile, flfile, otherfile, opts)
+            self.oldData = readMetadata.MetadataIndex(self.conf.outputdir, opts)
            
     def doPkgMetadata(self):
         """all the heavy lifting for the package metadata"""

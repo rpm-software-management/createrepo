@@ -21,14 +21,25 @@ import libxml2
 import stat
 from utils import errorprint, _
 
+from yum import repoMDObject
+
 
 class MetadataIndex(object):
 
-    def __init__(self, outputdir, basefile, filelistfile, otherfile, opts=None):
+    def __init__(self, outputdir, opts=None):
         if opts is None:
             opts = {}
         self.opts = opts
         self.outputdir = outputdir
+        repodatadir = self.outputdir + '/repodata'
+        myrepomdxml = repodatadir + '/repomd.xml'
+        repomd = repoMDObject.RepoMD('garbageid', myrepomdxml)
+        b = repomd.getData('primary').location[1]
+        f = repomd.getData('filelists').location[1]
+        o = repomd.getData('other').location[1]
+        basefile = os.path.join(self.outputdir, b)
+        filelistfile = os.path.join(self.outputdir, f)
+        otherfile = os.path.join(self.outputdir, o)
         self.files = {'base' : basefile,
                       'filelist' : filelistfile,
                       'other' : otherfile}
@@ -191,13 +202,10 @@ class MetadataIndex(object):
 
 if __name__ == "__main__":
     cwd = os.getcwd()
-    p = os.path.join(cwd, "repodata/primary.xml.gz")     
-    f = os.path.join(cwd, "repodata/filelists.xml.gz")
-    o = os.path.join(cwd, "repodata/other.xml.gz")
     opts = {'verbose':1, 
             'pkgdir': cwd}
             
-    idx = MetadataIndex(".", p, f, o, opts)
+    idx = MetadataIndex(cwd, opts)
     for fn in idx.basenodes.keys():
        a,b,c, = idx.getNodes(fn)
        a.serialize()
