@@ -40,7 +40,7 @@ except ImportError:
 from utils import _gzipOpen, bzipFile, checkAndMakeDir
 
 
-__version__ = '0.9.3'
+__version__ = '0.9.4'
 
 
 
