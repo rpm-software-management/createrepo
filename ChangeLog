@@ -1,3 +1,49 @@
+2008-01-29  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, genpkgmetadata.py: make sure things work
+	out as the right default
+
+2008-01-28  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo.spec, createrepo/__init__.py: bump ver to 0.9.4 in spec
+	and module
+
+2008-01-28  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: make sure non-unique-md-filenanmes-repos
+	cleanup sqlite files if we switch to unique-md-filenames
+
+2008-01-28  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: clean up old versions of primary,
+	filelists and other that are lingering in the repodata dir due to
+	sha1-addition
+
+2008-01-28  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: swap around the filename creation order so
+	it doesn't make leaves files around
+
+2008-01-28  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/readMetadata.py: make
+	readMetadata.py take its metadata file locations from repomd.xml
+	using the yum parser for it. complete --unique-md-filenames
+	implementation
+
+2008-01-28  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, genpkgmetadata.py: part of
+	--unique-md-filenames is complete. This lets createrepo generate
+	metadata files with the file's checksum included in the filename.
+	This helps it work more nicely with proxies. --update support will
+	not work with --unique-md-filenames at the moment. Need to read in
+	repomd.xml to make that work.
+
+2008-01-22  Seth Vidal <skvidal@fedoraproject.org>
+
+	* ChangeLog: changelog merge
+
 2008-01-22  Seth Vidal <skvidal@fedoraproject.org>
 
 	* createrepo.spec, createrepo/__init__.py: 0.9.3
