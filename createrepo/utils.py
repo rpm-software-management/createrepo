@@ -17,10 +17,12 @@
 
 
 import os
+import os.path
 import sys
 import bz2
 import gzip
 from gzip import write32u, FNAME
+from yum import misc
 
 def errorprint(stuff):
     print >> sys.stderr, stuff
@@ -121,4 +123,17 @@ def checkAndMakeDir(dir):
         else:
             result = True
     return result
+
+def checksum_and_rename(fn_path):
+    """checksum the file rename the file to contain the checksum as a prefix
+       return the new filename"""
+    csum = misc.checksum('sha', fn_path)
+    fn = os.path.basename(fn_path)
+    fndir = os.path.dirname(fn_path)
+    csum_fn = csum + '-' + fn
+    csum_path = os.path.join(fndir, csum_fn)
+    os.rename(fn_path, csum_path)
+    return (csum, csum_path)
+    
+    
 

@@ -19,11 +19,13 @@
 #
 # (C) Copyright 2006  Red Hat, Inc.
 # Luke Macken <lmacken@redhat.com>
+# modified by Seth Vidal 2008
 
 import os
 import sys
-import sha
-import gzip
+
+from createrepo.utils import checksum_and_rename, GzipFile
+from yum.misc import checksum
 
 from xml.dom import minidom
 
@@ -73,15 +75,17 @@ class RepoMetadata:
         mdname += '.gz'
         mdtype = mdname.split('.')[0]
         destmd = os.path.join(self.repodir, mdname)
-        newmd = gzip.GzipFile(destmd, 'wb')
-        newmd.write(md.encode('utf-8'))
+        newmd = GzipFile(filename=destmd, mode='wb')
+        newmd.write(md)
         newmd.close()
         print "Wrote:", destmd
 
-        ## Read the gzipped metadata
-        f = file(destmd, 'r')
-        newmd = f.read()
-        f.close()
+        open_csum = checksum('sha', metadata)
+
+
+        csum, destmd = checksum_and_rename(destmd)
+        base_destmd = os.path.basename(destmd)
+        
 
         ## Remove any stale metadata
         for elem in self.doc.getElementsByTagName('data'):
@@ -95,25 +99,25 @@ class RepoMetadata:
         data.appendChild(self.doc.createTextNode("\n    "))
 
         self._insert_element(data, 'location',
-                             attrs={ 'href' : 'repodata/' + mdname })
+                             attrs={ 'href' : 'repodata/' + base_destmd })
         data.appendChild(self.doc.createTextNode("\n    "))
         self._insert_element(data, 'checksum', attrs={ 'type' : 'sha' },
-                             text=sha.new(newmd).hexdigest())
+                             text=csum)
         data.appendChild(self.doc.createTextNode("\n    "))
         self._insert_element(data, 'timestamp',
                              text=str(os.stat(destmd).st_mtime))
         data.appendChild(self.doc.createTextNode("\n    "))
         self._insert_element(data, 'open-checksum', attrs={ 'type' : 'sha' },
-                             text=sha.new(md).hexdigest())
+                             text=open_csum)
 
         data.appendChild(self.doc.createTextNode("\n  "))
         root.appendChild(self.doc.createTextNode("\n"))
 
         print "           type =", mdtype 
         print "       location =", 'repodata/' + mdname
-        print "       checksum =", sha.new(newmd).hexdigest()
+        print "       checksum =", csum
         print "      timestamp =", str(os.stat(destmd).st_mtime)
-        print "  open-checksum =", sha.new(md.encode('utf-8')).hexdigest()
+        print "  open-checksum =", open_csum
 
         ## Write the updated repomd.xml
         outmd = file(self.repomdxml, 'w')

@@ -33,13 +33,17 @@ class MetadataIndex(object):
         self.outputdir = outputdir
         repodatadir = self.outputdir + '/repodata'
         myrepomdxml = repodatadir + '/repomd.xml'
-        repomd = repoMDObject.RepoMD('garbageid', myrepomdxml)
-        b = repomd.getData('primary').location[1]
-        f = repomd.getData('filelists').location[1]
-        o = repomd.getData('other').location[1]
-        basefile = os.path.join(self.outputdir, b)
-        filelistfile = os.path.join(self.outputdir, f)
-        otherfile = os.path.join(self.outputdir, o)
+        if os.path.exists(myrepomdxml):
+            repomd = repoMDObject.RepoMD('garbageid', myrepomdxml)
+            b = repomd.getData('primary').location[1]
+            f = repomd.getData('filelists').location[1]
+            o = repomd.getData('other').location[1]
+            basefile = os.path.join(self.outputdir, b)
+            filelistfile = os.path.join(self.outputdir, f)
+            otherfile = os.path.join(self.outputdir, o)
+        else:
+            basefile = filelistfile = otherfile = ""
+            
         self.files = {'base' : basefile,
                       'filelist' : filelistfile,
                       'other' : otherfile}

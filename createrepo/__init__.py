@@ -37,7 +37,7 @@ except ImportError:
     pass
 
 
-from utils import _gzipOpen, bzipFile, checkAndMakeDir
+from utils import _gzipOpen, bzipFile, checkAndMakeDir, GzipFile, checksum_and_rename
 
 
 __version__ = '0.9.4'
@@ -461,8 +461,60 @@ class MetaDataGenerator:
         self.otherfile.write('\n</otherdata>')
         self.otherfile.close()
 
+    def addArbitraryMetadata(self, mdfile, mdtype, xml_node, compress=True):
+        """add random metadata to the repodata dir and repomd.xml
+           mdfile = complete path to file
+           mdtype = the metadata type to use
+           xml_node = the node of the repomd xml object to append this 
+                      data onto
+           compress = compress the file before including it
+        """
+        # copy the file over here
+        sfile = os.path.basename(mdfile)
+        fo = open(mdfile, 'r')
+        outdir = os.path.join(self.conf.outputdir, self.conf.tempdir)
+        if compress:
+            sfile = '%s.gz' % sfile
+            outfn = os.path.join(outdir, sfile)
+            output = GzipFile(filename = outfn, mode='wb')
+        else:
+            outfn  = os.path.join(outdir, sfile)
+            output = open(outfn, 'w')
+            
+        output.write(fo.read())
+        output.close()
+        fo.seek(0)
+        open_csum = misc.checksum(self.conf.sumtype, fo)
+        fo.close()
 
+        
+        if self.conf.unique_md_filenames:
+            (csum, outfn) = checksum_and_rename(outfn)
+            sfile = os.path.basename(outfn)
+        else:
+            if compress:
+                csum = misc.checksum(self.conf.sumtype, outfn)            
+            else:
+                csum = open_csum
+            
+        timest = os.stat(outfn)[8]
 
+        # add all this garbage into the xml node like:
+        data = xml_node.newChild(None, 'data', None)
+        data.newProp('type', mdtype)
+        location = data.newChild(None, 'location', None)
+        if self.conf.baseurl is not None:
+            location.newProp('xml:base', self.conf.baseurl)
+        location.newProp('href', os.path.join(self.conf.finaldir, sfile))
+        checksum = data.newChild(None, 'checksum', csum)
+        checksum.newProp('type', self.conf.sumtype)
+        if compress:
+            opencsum = data.newChild(None, 'open-checksum', open_csum)
+            opencsum.newProp('type', self.conf.sumtype)
+
+        timestamp = data.newChild(None, 'timestamp', str(timest))
+           
+            
     def doRepoMetadata(self):
         """wrapper to generate the repomd.xml file that stores the info on the other files"""
         repodoc = libxml2.newDoc("1.0")
@@ -587,28 +639,11 @@ class MetaDataGenerator:
 
 
         if not self.conf.quiet and self.conf.database: self.callback.log('Sqlite DBs complete')        
-        # if we've got a group file then checksum it once and be done
-        if self.conf.groupfile is not None:
-            grpfile = self.conf.groupfile
-            timestamp = os.stat(grpfile)[8]
-            sfile = os.path.basename(grpfile)
-            fo = open(grpfile, 'r')
-            output = open(os.path.join(self.conf.outputdir, self.conf.tempdir, sfile), 'w')
-            output.write(fo.read())
-            output.close()
-            fo.seek(0)
-            csum = misc.checksum(sumtype, fo)
-            fo.close()
 
-            data = reporoot.newChild(None, 'data', None)
-            data.newProp('type', 'group')
-            location = data.newChild(None, 'location', None)
-            if self.conf.baseurl is not None:
-                location.newProp('xml:base', self.conf.baseurl)
-            location.newProp('href', os.path.join(self.conf.finaldir, sfile))
-            checksum = data.newChild(None, 'checksum', csum)
-            checksum.newProp('type', sumtype)
-            timestamp = data.newChild(None, 'timestamp', str(timestamp))
+
+        if self.conf.groupfile is not None:
+            self.addArbitraryMetadata(self.conf.groupfile, 'group_gz', reporoot)
+            self.addArbitraryMetadata(self.conf.groupfile, 'group', reporoot, compress=False)            
 
         # save it down
         try:
