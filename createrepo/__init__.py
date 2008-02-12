@@ -19,11 +19,8 @@ import sys
 import libxml2
 import string
 import fnmatch
-import hashlib
 import time
-import rpm
 import yumbased
-from optparse import OptionContainer
 
 
 from yum import misc, Errors

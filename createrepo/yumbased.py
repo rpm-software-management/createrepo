@@ -16,7 +16,6 @@
 
 
 import os
-import sys
 import struct
 import rpm
 import types

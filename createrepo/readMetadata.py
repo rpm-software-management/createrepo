@@ -16,7 +16,6 @@
 # Copyright 2006 Red Hat
 
 import os
-import sys
 import libxml2
 import stat
 from utils import errorprint, _
