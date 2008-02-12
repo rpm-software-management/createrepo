@@ -25,7 +25,7 @@ import shutil
 
 from yum import misc, Errors
 import rpmUtils.transaction
-from utils import _
+from utils import _, errorprint
 import readMetadata
 
 try:
