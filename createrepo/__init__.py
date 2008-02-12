@@ -13,7 +13,6 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # Copyright 2007  Red Hat, Inc - written by seth vidal skvidal at fedoraproject.org
 
-import exceptions
 import os
 import sys
 import libxml2
@@ -25,7 +24,7 @@ import shutil
 
 from yum import misc, Errors
 import rpmUtils.transaction
-from utils import _, errorprint
+from utils import _, errorprint, MDError
 import readMetadata
 
 try:
@@ -33,21 +32,10 @@ try:
 except ImportError:
     pass
 
-
 from utils import _gzipOpen, bzipFile, checkAndMakeDir, GzipFile, checksum_and_rename
-
 
 __version__ = '0.9.4'
 
-
-
-class MDError(exceptions.Exception):
-    def __init__(self, value=None):
-        exceptions.Exception.__init__(self)
-        self.value = value
-    
-    def __str__(self):
-        return self.value
 
 class MetaDataConfig(object):
     def __init__(self):

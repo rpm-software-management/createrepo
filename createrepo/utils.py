@@ -134,6 +134,12 @@ def checksum_and_rename(fn_path):
     csum_path = os.path.join(fndir, csum_fn)
     os.rename(fn_path, csum_path)
     return (csum, csum_path)
-    
-    
 
+
+class MDError(Exception):
+    def __init__(self, value=None):
+        Exception.__init__(self)
+        self.value = value
+
+    def __str__(self):
+        return self.value
