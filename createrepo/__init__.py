@@ -186,7 +186,7 @@ class MetaDataGenerator:
                     if not os.access(filepath, os.W_OK):
                         raise MDError, _('error in must be able to write to metadata files:\n  -> %s') % filepath
 
-                    if conf.checkts:
+                    if self.conf.checkts:
                         timestamp = os.path.getctime(filepath)
                         if timestamp > self.conf.mdtimestamp:
                             self.conf.mdtimestamp = timestamp
