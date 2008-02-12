@@ -21,15 +21,10 @@
 import os
 import sys
 from optparse import OptionParser
-import shutil
-
 
 import createrepo
 from createrepo import MDError
-import createrepo.yumbased
-import createrepo.utils
-
-from createrepo.utils import _gzipOpen, errorprint, _, checkAndMakeDir
+from createrepo.utils import errorprint, _
 
 
 def parseArgs(args, conf):
