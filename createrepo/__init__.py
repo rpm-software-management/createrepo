@@ -21,7 +21,7 @@ import string
 import fnmatch
 import time
 import yumbased
-
+import shutil
 
 from yum import misc, Errors
 import rpmUtils.transaction
