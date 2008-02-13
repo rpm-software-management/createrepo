@@ -196,8 +196,8 @@ class MetaDataGenerator:
             if not os.path.isabs(a):
                 a = os.path.join(self.conf.outputdir ,a)
             if not checkAndMakeDir(a):
-                errorprint(_('Error: cannot open/write to cache dir %s' % a))
-                parser.print_usage()
+                raise MDError, _('Error: cannot open/write to cache dir %s' % a)
+
             self.conf.cachedir = a
 
 
