@@ -1,3 +1,63 @@
+2008-02-18  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo.spec, createrepo/__init__.py: bump version numbers
+
+2008-02-18  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/yumbased.py: - clean up some garbage spaces and an extra 'return' - write some
+	notes on something interesting to do for completely arbitrary
+	repositories - make sure that under no circumstances will a package
+	that we   cannot get a pkgid/checksum from will be in the metadata.
+	And it will   output an error message
+
+2008-02-13  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: raise, don't print
+
+2008-02-12  Luke Macken <lmacken@redhat.com>
+
+	* genpkgmetadata.py: Clean up some more unused modules
+
+2008-02-12  Luke Macken <lmacken@redhat.com>
+
+	* createrepo/__init__.py, createrepo/utils.py: If we want to use
+	MDError in utils.py, we need to define it outside of __init__ to
+	avoid circular deps
+
+2008-02-12  Luke Macken <lmacken@redhat.com>
+
+	* createrepo/__init__.py: Pull in createrepo.utils.errorprint in our
+	__init__ module.
+
+2008-02-12  Luke Macken <lmacken@redhat.com>
+
+	* createrepo/__init__.py: Import shutil since we use it in
+	createrepo.__init__
+
+2008-02-12  Luke Macken <lmacken@redhat.com>
+
+	* createrepo/__init__.py: s/conf.checkts/self.conf.checkts/
+
+2008-02-12  Luke Macken <lmacken@redhat.com>
+
+	* createrepo/__init__.py, createrepo/readMetadata.py,
+	createrepo/yumbased.py: Remove a bunch of module imports that we
+	aren't using. One of which being 'hashlib', which prevents
+	createrepo from running on anything by Python 2.5.
+
+2008-01-31  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/readMetadata.py,
+	createrepo/utils.py, modifyrepo.py: - make sure group files are compressed/sha-named - add group_gz
+	section for compressed group file - add addArbitraryMetadata()
+	method to MetaDataGenerator class - fix up modifyrepo to generate
+	sha-named files - make modifyrepo act a bit more like createrepo for
+	its operations
+
+2008-01-30  Seth Vidal <skvidal@fedoraproject.org>
+
+	* ChangeLog: changelog merge
+
 2008-01-29  Seth Vidal <skvidal@fedoraproject.org>
 
 	* createrepo/__init__.py, genpkgmetadata.py: make sure things work
