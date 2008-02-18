@@ -113,14 +113,7 @@ class CreateRepoPackage(YumLocalPackage):
         self._checksum = checksum
 
         return self._checksum
-       
-        
-           
-
-           
-
-            
-        return self._checksum
+      
     checksum = property(fget=lambda self: self._do_checksum())
     
     def _get_header_byte_range(self):

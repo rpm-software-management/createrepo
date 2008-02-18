@@ -344,6 +344,12 @@ class MetaDataGenerator:
 
     def read_in_package(self, rpmfile, pkgpath=None):
         """rpmfile == relative path to file from self.packge_dir"""
+        # TODO/FIXME
+        # consider adding a routine to download the package from a remote location
+        # to a tempdir, operate on it, then use that location as a the baseurl
+        # for the package. That would make it possible to have repos entirely 
+        # comprised of remote packages.
+
         if not pkgpath:
             pkgpath = self.package_dir
 
@@ -356,6 +362,15 @@ class MetaDataGenerator:
         # you can do it
         po.crp_changelog_limit = self.conf.changelog_limit
         po.crp_cachedir = self.conf.cachedir
+
+        # FIXME if we wanted to put in a baseurl-per-package here is where 
+        # we should do it
+        # it would be easy to have a lookup dict in the MetaDataConfig object
+        # and work down from there for the baseurl
+
+        if po.checksum in (None, ""):
+            raise MDError, "No Package ID found for package %s, not going to add it" % e
+        
         return po
 
     def writeMetadataDocs(self, pkglist=[], pkgpath=None, current=0):
