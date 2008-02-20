@@ -20,6 +20,7 @@
 
 import os
 import sys
+import re
 from optparse import OptionParser
 
 import createrepo
@@ -118,7 +119,9 @@ def parseArgs(args, conf):
     if conf.pkglist:
         pfo = open(conf.pkglist, 'r')
         for line in pfo.readlines():
-            line = line.replace('\n', '')
+            line = line.strip()
+            if re.match('^\s*\#.*', line) or re.match('^\s*$', line):
+                continue
             lst.append(line)
         pfo.close()
             

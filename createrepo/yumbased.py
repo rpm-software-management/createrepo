@@ -167,15 +167,11 @@ class CreateRepoPackage(YumLocalPackage):
     hdrend = property(fget=lambda self: self._get_header_byte_range()[1])
     hdrstart = property(fget=lambda self: self._get_header_byte_range()[0])
     
-    def _dump_base_items(self, basedir, baseurl=None):
-        """Takes an optional baseurl and required basedir.
-           basedir is the relative path to remove from the location
-           baseurl is whether or not this package already has a
-           baseurl rather than just '.'"""
+    def _dump_base_items(self):
         
         # if we start seeing fullpaths in the location tag - this is the culprit
-        if self.localpath.startswith(basedir):
-            relpath = self.localpath.replace(basedir, '')
+        if self.crp_reldir and self.localpath.startswith(self.crp_reldir):
+            relpath = self.localpath.replace(self.crp_reldir, '')
             if relpath[0] == '/': relpath = relpath[1:]
         else:
             relpath = self.localpath
@@ -204,8 +200,8 @@ class CreateRepoPackage(YumLocalPackage):
          self.archivesize)
          
 
-        if baseurl:
-            msg += """<location xml:base="%s" href="%s"/>\n""" % (self._xml(baseurl), relpath)
+        if self.crp_baseurl:
+            msg += """<location xml:base="%s" href="%s"/>\n""" % (self._xml(self.crp_baseurl), relpath)
         else:
             msg += """<location href="%s"/>\n""" % relpath
             
@@ -379,9 +375,9 @@ class CreateRepoPackage(YumLocalPackage):
             del c
         return msg                                                 
 
-    def do_primary_xml_dump(self, basedir, baseurl=None):
+    def do_primary_xml_dump(self):
         msg = """\n<package type="rpm">"""
-        msg += self._dump_base_items(basedir, baseurl)
+        msg += self._dump_base_items()
         msg += self._dump_format_items()
         msg += """\n</package>"""
         return msg

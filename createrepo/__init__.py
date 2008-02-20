@@ -21,6 +21,8 @@ import fnmatch
 import time
 import yumbased
 import shutil
+from urlgrabber import grabber
+import tempfile
 
 from yum import misc, Errors
 import rpmUtils.transaction
@@ -72,6 +74,7 @@ class MetaDataConfig(object):
         self.directories = []
         self.changelog_limit = None # needs to be an int or None
         self.unique_md_filenames = False
+
         
 
 class SimpleMDCallBack(object):
@@ -278,8 +281,6 @@ class MetaDataGenerator:
         # function for the first dir passed to --split, not all of them
         # this needs to be fixed by some magic in readMetadata.py
         # using opts.pkgdirs as a list, I think.
-        # FIXME - this needs to read the old repomd.xml to figure out where
-        # the files WERE to pass in the right fns.
         if self.conf.update:
             #build the paths
             opts = {
@@ -288,10 +289,19 @@ class MetaDataGenerator:
             }
             if self.conf.skip_stat:
                 opts['do_stat'] = False
-                
+
             #and scan the old repo
             self.oldData = readMetadata.MetadataIndex(self.conf.outputdir, opts)
-           
+
+    def _setup_grabber(self):
+        if not hasattr(self, '_grabber'):
+            self._grabber = grabber.URLGrabber()
+    
+        return self._grabber
+
+    grabber = property(fget = lambda self: self._setup_grabber())
+    
+    
     def doPkgMetadata(self):
         """all the heavy lifting for the package metadata"""
         if self.conf.update:
@@ -342,18 +352,38 @@ class MetaDataGenerator:
         return fo
         
 
-    def read_in_package(self, rpmfile, pkgpath=None):
+    def read_in_package(self, rpmfile, pkgpath=None, reldir=None):
         """rpmfile == relative path to file from self.packge_dir"""
-        # TODO/FIXME
-        # consider adding a routine to download the package from a remote location
-        # to a tempdir, operate on it, then use that location as a the baseurl
-        # for the package. That would make it possible to have repos entirely 
-        # comprised of remote packages.
+        remote_package = False
+        baseurl = self.conf.baseurl
 
         if not pkgpath:
             pkgpath = self.package_dir
 
-        rpmfile = '%s/%s' % (pkgpath, rpmfile)
+        if not rpmfile.strip():
+            raise MDError, "Blank filename passed in, skipping"
+            
+        if rpmfile.find("://") != -1:
+            remote_package = True
+            
+            if not hasattr(self, 'tempdir'):
+                self.tempdir = tempfile.mkdtemp()
+                
+            pkgname = os.path.basename(rpmfile)
+            baseurl = os.path.dirname(rpmfile)
+            reldir = self.tempdir       
+            dest = os.path.join(self.tempdir, pkgname)
+            if not self.conf.quiet:
+                self.callback.log('\nDownloading %s' % rpmfile)                        
+            try:
+                rpmfile = self.grabber.urlgrab(rpmfile, dest)
+            except grabber.URLGrabError, e:
+                raise MDError, "Unable to retrieve remote package %s: %s" %(rpmfile, e)
+
+            
+        else:
+            rpmfile = '%s/%s' % (pkgpath, rpmfile)
+            
         try:
             po = yumbased.CreateRepoPackage(self.ts, rpmfile)
         except Errors.MiscError, e:
@@ -362,11 +392,8 @@ class MetaDataGenerator:
         # you can do it
         po.crp_changelog_limit = self.conf.changelog_limit
         po.crp_cachedir = self.conf.cachedir
-
-        # FIXME if we wanted to put in a baseurl-per-package here is where 
-        # we should do it
-        # it would be easy to have a lookup dict in the MetaDataConfig object
-        # and work down from there for the baseurl
+        po.crp_baseurl = baseurl
+        po.crp_reldir = reldir
 
         if po.checksum in (None, ""):
             raise MDError, "No Package ID found for package %s, not going to add it" % e
@@ -377,6 +404,7 @@ class MetaDataGenerator:
 
         if not pkglist:
             pkglist = self.conf.pkglist           
+
         if not pkgpath:
             directory=self.conf.directory
         else:
@@ -385,13 +413,16 @@ class MetaDataGenerator:
         for pkg in pkglist:
             current+=1
             recycled = False
-
+            
             # look to see if we can get the data from the old repodata
             # if so write this one out that way
             if self.conf.update:
                 #see if we can pull the nodes from the old repo
                 #print self.oldData.basenodes.keys()
-                nodes = self.oldData.getNodes(pkg)
+                old_pkg = pkg
+                if pkg.find("://") != -1:
+                    old_pkg = os.path.basename(pkg)
+                nodes = self.oldData.getNodes(old_pkg)
                 if nodes is not None:
                     recycled = True
 
@@ -399,17 +430,19 @@ class MetaDataGenerator:
             # otherwise do it individually
             if not recycled:
                 #scan rpm files
+                if not pkgpath:   
+                    reldir = os.path.join(self.conf.basedir, directory)
+                else:
+                    reldir = pkgpath
+
                 try:
-                    po = self.read_in_package(pkg, pkgpath=pkgpath)
+                    po = self.read_in_package(pkg, pkgpath=pkgpath, reldir=reldir)
                 except MDError, e:
                     # need to say something here
                     self.callback.errorlog("\nError %s: %s\n" % (pkg, e))
                     continue
-                if not pkgpath:
-                    reldir = os.path.join(self.conf.basedir, directory)
-                else:
-                    reldir = pkgpath
-                self.primaryfile.write(po.do_primary_xml_dump(reldir, baseurl=self.conf.baseurl))
+
+                self.primaryfile.write(po.do_primary_xml_dump())
                 self.flfile.write(po.do_filelists_xml_dump())
                 self.otherfile.write(po.do_other_xml_dump())
             else:
