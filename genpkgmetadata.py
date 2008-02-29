@@ -140,8 +140,9 @@ class MDCallBack(object):
         print thing
     
     def progress(self, item, current, total):
-        sys.stdout.write('\r' + ' ' * 80)
-        sys.stdout.write("\r%d/%d - %s" % (current, total, item))
+        beg = "%*d/%d - " % (len(str(total)), current, total)
+        left = 80 - len(beg)
+        sys.stdout.write("\r%s%-*.*s" % (beg, left, left, item))
         sys.stdout.flush()
         
 def main(args):
