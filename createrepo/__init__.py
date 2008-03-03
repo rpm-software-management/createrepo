@@ -683,7 +683,7 @@ class MetaDataGenerator:
             self.addArbitraryMetadata(self.conf.groupfile, 'group', reporoot, compress=False)            
         
         if self.rpmlib_reqs:
-            rpmlib = reporoot.newChild(None, 'rpmlib_requirements', None)
+            rpmlib = reporoot.newChild(None, 'rpm:lib', None)
             for r in self.rpmlib_reqs.keys():
                 req  = rpmlib.newChild(None, 'requires', r)
                 
