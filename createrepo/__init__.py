@@ -104,7 +104,8 @@ class MetaDataGenerator:
         self.ts = rpmUtils.transaction.initReadOnlyTransaction()
         self.pkgcount = 0
         self.files = []
-        
+        self.rpmlib_reqs = {}
+                
         if not self.conf.directory and not self.conf.directories:
             raise MDError, "No directory given on which to run."
         
@@ -394,9 +395,12 @@ class MetaDataGenerator:
         po.crp_cachedir = self.conf.cachedir
         po.crp_baseurl = baseurl
         po.crp_reldir = reldir
-
+        for r in po.requires_print:
+            if r.startswith('rpmlib('):
+                self.rpmlib_reqs[r] = 1
+           
         if po.checksum in (None, ""):
-            raise MDError, "No Package ID found for package %s, not going to add it" % e
+            raise MDError, "No Package ID found for package %s, not going to add it" % po
         
         return po
 
@@ -677,7 +681,13 @@ class MetaDataGenerator:
         if self.conf.groupfile is not None:
             self.addArbitraryMetadata(self.conf.groupfile, 'group_gz', reporoot)
             self.addArbitraryMetadata(self.conf.groupfile, 'group', reporoot, compress=False)            
-
+        
+        if self.rpmlib_reqs:
+            rpmlib = reporoot.newChild(None, 'rpmlib_requirements', None)
+            for r in self.rpmlib_reqs.keys():
+                req  = rpmlib.newChild(None, 'requires', r)
+                
+            
         # save it down
         try:
             repodoc.saveFormatFileEnc(repofilepath, 'UTF-8', 1)

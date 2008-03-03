@@ -338,6 +338,8 @@ class CreateRepoPackage(YumLocalPackage):
 
         if mylist: msg = "\n    <rpm:requires>\n"
         for (name, flags, (e,v,r),pre) in mylist:
+            if name.startswith('rpmlib('):
+                continue
             prcostring = '''      <rpm:entry name="%s"''' % name
             if flags:
                 prcostring += ''' flags="%s"''' % flags
