@@ -827,7 +827,10 @@ class MetaDataGenerator:
     def setup_sqlite_dbs(self, initdb=True):
         """sets up the sqlite dbs w/table schemas and db_infos"""
         destdir = os.path.join(self.conf.outputdir, self.conf.tempdir)
-        self.md_sqlite = MetaDataSqlite(destdir)
+        try:
+            self.md_sqlite = MetaDataSqlite(destdir)
+        except sqlite.OperationalError, e:
+            raise MDError, _('Cannot create sqlite databases: %s.\nMaybe you need to clean up a .repodata dir?') % e
         
     
     
@@ -947,7 +950,8 @@ class MetaDataSqlite(object):
              DELETE FROM provides WHERE pkgKey = old.pkgKey;    
              DELETE FROM conflicts WHERE pkgKey = old.pkgKey;    
              DELETE FROM obsoletes WHERE pkgKey = old.pkgKey;
-             END;"""
+             END;""",
+         """INSERT into db_info values (%s, 'direct_create');""" % sqlitecachec.DBVERSION,
              ]
         
         for cmd in schema:
@@ -964,7 +968,8 @@ class MetaDataSqlite(object):
             """CREATE TRIGGER remove_filelist AFTER DELETE ON packages  
                    BEGIN    
                    DELETE FROM filelist WHERE pkgKey = old.pkgKey;  
-                   END;"""
+                   END;""",
+         """INSERT into db_info values (%s, 'direct_create');""" % sqlitecachec.DBVERSION,                   
             ]
         for cmd in schema:
             executeSQL(self.filelists_cursor, cmd)
@@ -980,6 +985,7 @@ class MetaDataSqlite(object):
                  BEGIN    
                  DELETE FROM changelog WHERE pkgKey = old.pkgKey;  
                  END;""",
+         """INSERT into db_info values (%s, 'direct_create');""" % sqlitecachec.DBVERSION,                 
             ]
             
         for cmd in schema:

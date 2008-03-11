@@ -136,6 +136,18 @@ def checksum_and_rename(fn_path):
     return (csum, csum_path)
 
 
+
+def encodefilenamelist(filenamelist):
+    return '/'.join(filenamelist)
+
+def encodefiletypelist(filetypelist):
+    result = ''
+
+    for x in filetypelist:
+        result += x[0]
+    return result
+
+
 class MDError(Exception):
     def __init__(self, value=None):
         Exception.__init__(self)

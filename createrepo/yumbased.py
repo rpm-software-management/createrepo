@@ -322,8 +322,8 @@ class CreateRepoPackage(YumLocalPackage):
         # - that's what it is
         newflag = flag
         if flag is not None:
-            newflag = flag & 64
-            if newflag == 64:
+            newflag = flag & rpm.RPMSENSE_PREREQ
+            if newflag == rpm.RPMSENSE_PREREQ:
                 return 1
             else:
                 return 0
@@ -492,14 +492,47 @@ class CreateRepoPackage(YumLocalPackage):
 
     def do_filelists_sqlite_dump(self, cur):
         """inserts filelists data in place, this assumes the tables exist"""
-        #FIXME    
-        pass
+        # insert packagenumber + checksum into 'packages' table
+        q = 'insert into packages values (?, ?)'
+        p = (self.crp_packagenumber, self.checksum)
+        
+        cur.execute(q, p)
+        
+        # break up filelists and encode them
+        dirs = {}
+        for (filetype, files) in [('file', self.filelist), ('dir', self.dirlist),
+                                  ('ghost', self.ghostlist)]:
+            for filename in files:
+                (dirname,filename) = (os.path.split(filename))
+                if not dirs.has_key(dirname):
+                    dirs[dirname] = {'files':[], 'types':[]}
+                dirs[dirname]['files'].append(filename)
+                dirs[dirname]['types'].append(filetype)
 
+        # insert packagenumber|dir|files|types into files table
+        p = []
+        for (dirname,direc) in dirs.items():
+            p.append((self.crp_packagenumber, dirname, 
+                 utils.encodefilenamelist(direc['files']),
+                 utils.encodefiletypelist(direc['types'])))
+        if p:
+            q = 'insert into filelist values (?, ?, ?, ?)'
+            cur.executemany(q, p)
+        
+        
     def do_other_sqlite_dump(self, cur):
         """inserts changelog data in place, this assumes the tables exist"""    
-        #FIXME
-        pass
+        # insert packagenumber + checksum into 'packages' table
+        q = 'insert into packages values (?, ?)'
+        p = (self.crp_packagenumber, self.checksum)
         
+        cur.execute(q, p)
+
+        if self.changelog:
+            q = 'insert into changelog ("pkgKey", "date", "author", "changelog") values (%s, ?, ?, ?)' % self.crp_packagenumber
+            cur.executemany(q, self.changelog)
+
+       
     def do_sqlite_dump(self, md_sqlite):
         """write the metadata out to the sqlite dbs"""
         self.do_primary_sqlite_dump(md_sqlite.primary_cursor)
