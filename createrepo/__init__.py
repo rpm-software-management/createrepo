@@ -907,8 +907,6 @@ class SplitMetaDataGenerator(MetaDataGenerator):
 
 class MetaDataSqlite(object):
     def __init__(self, destdir):
-        #open the files up
-        #get the cursors - store them in self
         self.pri_sqlite_file = os.path.join(destdir, 'primary.sqlite')
         self.pri_cx = sqlite.Connection(self.pri_sqlite_file)
         self.file_sqlite_file = os.path.join(destdir, 'filelists.sqlite')
@@ -917,9 +915,11 @@ class MetaDataSqlite(object):
         self.other_cx = sqlite.Connection(self.other_sqlite_file)
 
         self.primary_cursor = self.pri_cx.cursor()
+
         self.filelists_cursor = self.file_cx.cursor()
-        self.other_cursor = self.other_cx.cursor()
         
+        self.other_cursor = self.other_cx.cursor()
+                
         self.create_primary_db()
         self.create_filelists_db()
         self.create_other_db()
@@ -927,6 +927,8 @@ class MetaDataSqlite(object):
     def create_primary_db(self):
         # make the tables
         schema = [
+        """PRAGMA synchronous = 0;""",
+        """pragma locking_mode = EXCLUSIVE;""",
         """CREATE TABLE conflicts (  name TEXT,  flags TEXT,  epoch TEXT,  version TEXT,  release TEXT,  pkgKey INTEGER );""",
         """CREATE TABLE db_info (dbversion INTEGER, checksum TEXT);""",
         """CREATE TABLE files (  name TEXT,  type TEXT,  pkgKey INTEGER);""",
@@ -959,6 +961,8 @@ class MetaDataSqlite(object):
 
     def create_filelists_db(self):
         schema = [
+            """PRAGMA synchronous = 0;""",
+            """pragma locking_mode = EXCLUSIVE;""",
             """CREATE TABLE db_info (dbversion INTEGER, checksum TEXT);""",
             """CREATE TABLE filelist (  pkgKey INTEGER,  dirname TEXT,  filenames TEXT,  filetypes TEXT);""",
             """CREATE TABLE packages (  pkgKey INTEGER PRIMARY KEY,  pkgId TEXT);""",
@@ -976,6 +980,8 @@ class MetaDataSqlite(object):
         
     def create_other_db(self):
         schema = [
+            """PRAGMA synchronous = 0;""",
+            """pragma locking_mode = EXCLUSIVE;""",
             """CREATE TABLE changelog (  pkgKey INTEGER,  author TEXT,  date INTEGER,  changelog TEXT);""",
             """CREATE TABLE db_info (dbversion INTEGER, checksum TEXT);""",
             """CREATE TABLE packages (  pkgKey INTEGER PRIMARY KEY,  pkgId TEXT);""",

@@ -142,9 +142,9 @@ def encodefilenamelist(filenamelist):
 
 def encodefiletypelist(filetypelist):
     result = ''
-
+    ftl = {'file':'f', 'dir':'d', 'ghost':'g'}
     for x in filetypelist:
-        result += x[0]
+        result += ftl[x]
     return result
 
 
