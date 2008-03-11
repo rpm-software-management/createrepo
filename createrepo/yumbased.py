@@ -26,10 +26,13 @@ import md5
 from yum.packages import YumLocalPackage
 from yum.Errors import *
 from yum import misc
+from yum.sqlutils import executeSQL
 from rpmUtils.transaction import initReadOnlyTransaction
 from rpmUtils.miscutils import flagToString, stringToVersion
 import libxml2
 import utils
+
+
 
 #FIXME - merge into class with config stuff
 fileglobs = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
@@ -55,7 +58,11 @@ class CreateRepoPackage(YumLocalPackage):
         self.xml_node = libxml2.newDoc("1.0")
         self.arch = self.isSrpm()
         self.crp_cachedir = None
-                
+        self.crp_reldir = None
+        self.crp_baseurl = ""
+        self.crp_packagenumber = 1
+        self.checksum_type = 'sha'
+        
     def isSrpm(self):
         if self.tagByName('sourcepackage') == 1 or not self.tagByName('sourcerpm'):
             return 'src'
@@ -81,7 +88,7 @@ class CreateRepoPackage(YumLocalPackage):
 
         # not using the cachedir
         if not self.crp_cachedir:
-            self._checksum = misc.checksum('sha', self.localpath)
+            self._checksum = misc.checksum(self.checksum_type, self.localpath)
             return self._checksum
 
 
@@ -321,9 +328,9 @@ class CreateRepoPackage(YumLocalPackage):
             else:
                 return 0
         return 0
-                
-    def _dump_requires(self):
-        """returns deps in format"""
+
+    def _requires_with_pre(self):
+        """returns requires with pre-require bit"""
         name = self.hdr[rpm.RPMTAG_REQUIRENAME]
         lst = self.hdr[rpm.RPMTAG_REQUIREFLAGS]
         flag = map(flagToString, lst)
@@ -333,6 +340,11 @@ class CreateRepoPackage(YumLocalPackage):
         if name is not None:
             lst = zip(name, flag, vers, pre)
         mylist = misc.unique(lst)
+        return mylist
+                    
+    def _dump_requires(self):
+        """returns deps in format"""
+        mylist = self._requires_with_pre()
 
         msg = ""
 
@@ -400,4 +412,103 @@ class CreateRepoPackage(YumLocalPackage):
         msg += "\n</package>\n"
         return msg
 
+    def _sqlite_null(self, item):
+        if not item:
+            return None
+        return item
+            
+    def do_primary_sqlite_dump(self, cur):
+        """insert primary data in place, this assumes the tables exist"""
+        if self.crp_reldir and self.localpath.startswith(self.crp_reldir):
+            relpath = self.localpath.replace(self.crp_reldir, '')
+            if relpath[0] == '/': relpath = relpath[1:]
+        else:
+            relpath = self.localpath
+
+        p = (self.crp_packagenumber, self.checksum, self.name, self.arch,
+            self.version, self.epoch, self.release, self.summary.strip(), 
+            self.description.strip(), self._sqlite_null(self.url), self.filetime, 
+            self.buildtime, self._sqlite_null(self.license), 
+            self._sqlite_null(self.vendor), self._sqlite_null(self.group), 
+            self._sqlite_null(self.buildhost), self._sqlite_null(self.sourcerpm), 
+            self.hdrstart, self.hdrend, self._sqlite_null(self.packager), 
+            self.packagesize, self.size, self.archivesize, relpath, 
+            self.crp_baseurl, self.checksum_type)
+                
+        q = """insert into packages values (?, ?, ?, ?, ?, ?,
+               ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, 
+               ?, ?, ?)"""
+
+        cur.execute(q, p)
+
+        # provides, obsoletes, conflicts        
+        for pco in ('obsoletes', 'provides', 'conflicts'):
+            thispco = []
+            for (name, flag, (epoch, ver, rel)) in getattr(self, pco):
+                thispco.append((name, flag, epoch, ver, rel, self.crp_packagenumber))
+
+            q = "insert into %s values (?, ?, ?, ?, ?, ?)" % pco                     
+            cur.executemany(q, thispco)
+
+        # requires        
+        reqs = []
+        for (name, flag, (epoch, ver, rel), pre) in self._requires_with_pre():
+            if name.startswith('rpmlib('):
+                continue
+            pre_bool = 'FALSE'
+            if pre == 1:
+                pre_bool = 'TRUE'
+            reqs.append((name, flag, epoch, ver,rel, self.crp_packagenumber, pre_bool))
+        q = "insert into requires values (?, ?, ?, ?, ?, ?, ?)" 
+        cur.executemany(q, reqs)
+
+        # files
+        p = []
+        for f in self._return_primary_files():
+            p.append((f,))
+        
+        if p:
+            q = "insert into files values (?, 'file', %s)" % self.crp_packagenumber
+            cur.executemany(q, p)
+            
+        # dirs
+        p = []
+        for f in self._return_primary_dirs():
+            p.append((f,))
+        if p:
+            q = "insert into files values (?, 'dir', %s)" % self.crp_packagenumber
+            cur.executemany(q, p)
+        
+       
+        # ghosts
+        p = []
+        for f in self._return_primary_files(list_of_files = self.returnFileEntries('ghost')):
+            p.append((f,))
+        if p:
+            q = "insert into files values (?, 'ghost', %s)" % self.crp_packagenumber
+            cur.executemany(q, p)
+        
+        
+
+    def do_filelists_sqlite_dump(self, cur):
+        """inserts filelists data in place, this assumes the tables exist"""
+        #FIXME    
+        pass
+
+    def do_other_sqlite_dump(self, cur):
+        """inserts changelog data in place, this assumes the tables exist"""    
+        #FIXME
+        pass
+        
+    def do_sqlite_dump(self, md_sqlite):
+        """write the metadata out to the sqlite dbs"""
+        self.do_primary_sqlite_dump(md_sqlite.primary_cursor)
+        md_sqlite.pri_cx.commit()
+        self.do_filelists_sqlite_dump(md_sqlite.filelists_cursor)
+        md_sqlite.file_cx.commit()
+        self.do_other_sqlite_dump(md_sqlite.other_cursor)
+        md_sqlite.other_cx.commit()
+        
+        
+        
 

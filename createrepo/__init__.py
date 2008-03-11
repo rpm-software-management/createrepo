@@ -21,13 +21,20 @@ import fnmatch
 import time
 import yumbased
 import shutil
+from  bz2 import BZ2File
 from urlgrabber import grabber
 import tempfile
 
 from yum import misc, Errors
+from yum.sqlutils import executeSQL
+
 import rpmUtils.transaction
 from utils import _, errorprint, MDError
 import readMetadata
+try:
+    import sqlite3 as sqlite
+except ImportError:
+    import sqlite
 
 try:
     import sqlitecachec
@@ -62,6 +69,7 @@ class MetaDataConfig(object):
         self.dir_patterns = ['.*bin\/.*', '^\/etc\/.*']
         self.skip_symlinks = False
         self.pkglist = []
+        self.database_only = False
         self.primaryfile = 'primary.xml.gz'
         self.filelistsfile = 'filelists.xml.gz'
         self.otherfile = 'other.xml.gz'
@@ -103,6 +111,7 @@ class MetaDataGenerator:
                     
         self.ts = rpmUtils.transaction.initReadOnlyTransaction()
         self.pkgcount = 0
+        self.current_pkg = 0
         self.files = []
         self.rpmlib_reqs = {}
                 
@@ -172,16 +181,15 @@ class MetaDataGenerator:
         # make sure we can write to where we want to write to:
         # and pickup the mdtimestamps while we're at it
         for direc in ['tempdir', 'finaldir']:
-            for f in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile']:
-                filepath = os.path.join(self.conf.outputdir, direc, f)
-                if os.path.exists(filepath):
-                    if not os.access(filepath, os.W_OK):
-                        raise MDError, _('error in must be able to write to metadata files:\n  -> %s') % filepath
+            filepath = os.path.join(self.conf.outputdir, direc)
+            if os.path.exists(filepath):
+                if not os.access(filepath, os.W_OK):
+                    raise MDError, _('error in must be able to write to metadata dir:\n  -> %s') % filepath
 
-                    if self.conf.checkts:
-                        timestamp = os.path.getctime(filepath)
-                        if timestamp > self.conf.mdtimestamp:
-                            self.conf.mdtimestamp = timestamp
+                if self.conf.checkts:
+                    timestamp = os.path.getctime(filepath)
+                    if timestamp > self.conf.mdtimestamp:
+                        self.conf.mdtimestamp = timestamp
 
         if self.conf.groupfile:
             a = self.conf.groupfile
@@ -321,9 +329,12 @@ class MetaDataGenerator:
 
     # module
     def openMetadataDocs(self):
-        self.primaryfile = self._setupPrimary()
-        self.flfile = self._setupFilelists()
-        self.otherfile = self._setupOther()
+        if self.conf.database_only:
+            self.setup_sqlite_dbs()
+        else:
+            self.primaryfile = self._setupPrimary()
+            self.flfile = self._setupFilelists()
+            self.otherfile = self._setupOther()
 
     def _setupPrimary(self):
         # setup the primary metadata file
@@ -395,6 +406,7 @@ class MetaDataGenerator:
         po.crp_cachedir = self.conf.cachedir
         po.crp_baseurl = baseurl
         po.crp_reldir = reldir
+        po.crp_packagenumber = self.current_pkg
         for r in po.requires_print:
             if r.startswith('rpmlib('):
                 self.rpmlib_reqs[r] = 1
@@ -404,7 +416,7 @@ class MetaDataGenerator:
         
         return po
 
-    def writeMetadataDocs(self, pkglist=[], pkgpath=None, current=0):
+    def writeMetadataDocs(self, pkglist=[], pkgpath=None):
 
         if not pkglist:
             pkglist = self.conf.pkglist           
@@ -415,7 +427,7 @@ class MetaDataGenerator:
             directory=pkgpath
 
         for pkg in pkglist:
-            current+=1
+            self.current_pkg += 1
             recycled = False
             
             # look to see if we can get the data from the old repodata
@@ -445,10 +457,12 @@ class MetaDataGenerator:
                     # need to say something here
                     self.callback.errorlog("\nError %s: %s\n" % (pkg, e))
                     continue
-
-                self.primaryfile.write(po.do_primary_xml_dump())
-                self.flfile.write(po.do_filelists_xml_dump())
-                self.otherfile.write(po.do_other_xml_dump())
+                if self.conf.database_only:
+                    po.do_sqlite_dump(self.md_sqlite)
+                else:
+                    self.primaryfile.write(po.do_primary_xml_dump())
+                    self.flfile.write(po.do_filelists_xml_dump())
+                    self.otherfile.write(po.do_other_xml_dump())
             else:
                 if self.conf.verbose:
                     self.callback.log(_("Using data from old metadata for %s") % pkg)
@@ -471,34 +485,45 @@ class MetaDataGenerator:
 
             if not self.conf.quiet:
                 if self.conf.verbose:
-                    self.callback.log('%d/%d - %s' % (current, self.pkgcount, pkg))
+                    self.callback.log('%d/%d - %s' % (self.current_pkg, self.pkgcount, pkg))
                 else:
-                    self.callback.progress(pkg, current, self.pkgcount)
+                    self.callback.progress(pkg, self.current_pkg, self.pkgcount)
 
-        return current
+        return self.current_pkg
 
 
     def closeMetadataDocs(self):
         if not self.conf.quiet:
             self.callback.log('')
 
+        
         # save them up to the tmp locations:
         if not self.conf.quiet:
             self.callback.log(_('Saving Primary metadata'))
-        self.primaryfile.write('\n</metadata>')
-        self.primaryfile.close()
+        if self.conf.database_only:
+            self.md_sqlite.pri_cx.close()
+        else:
+            self.primaryfile.write('\n</metadata>')
+            self.primaryfile.close()
 
         if not self.conf.quiet:
             self.callback.log(_('Saving file lists metadata'))
-        self.flfile.write('\n</filelists>')
-        self.flfile.close()
+        if self.conf.database_only:
+            self.md_sqlite.file_cx.close()
+        else:
+            self.flfile.write('\n</filelists>')
+            self.flfile.close()
 
         if not self.conf.quiet:
             self.callback.log(_('Saving other metadata'))
-        self.otherfile.write('\n</otherdata>')
-        self.otherfile.close()
+        if self.conf.database_only:
+            self.md_sqlite.other_cx.close()
+        else:
+            self.otherfile.write('\n</otherdata>')
+            self.otherfile.close()
 
-    def addArbitraryMetadata(self, mdfile, mdtype, xml_node, compress=True):
+    def addArbitraryMetadata(self, mdfile, mdtype, xml_node, compress=True, 
+                                             compress_type='gzip', attribs={}):
         """add random metadata to the repodata dir and repomd.xml
            mdfile = complete path to file
            mdtype = the metadata type to use
@@ -511,9 +536,14 @@ class MetaDataGenerator:
         fo = open(mdfile, 'r')
         outdir = os.path.join(self.conf.outputdir, self.conf.tempdir)
         if compress:
-            sfile = '%s.gz' % sfile
-            outfn = os.path.join(outdir, sfile)
-            output = GzipFile(filename = outfn, mode='wb')
+            if compress_type == 'gzip':
+                sfile = '%s.gz' % sfile
+                outfn = os.path.join(outdir, sfile)
+                output = GzipFile(filename = outfn, mode='wb')
+            elif compress_type == 'bzip2':
+                sfile = '%s.bz2' % sfile
+                outfn = os.path.join(outdir, sfile)
+                output = BZ2File(filename = outfn, mode='wb')
         else:
             outfn  = os.path.join(outdir, sfile)
             output = open(outfn, 'w')
@@ -550,6 +580,10 @@ class MetaDataGenerator:
             opencsum.newProp('type', self.conf.sumtype)
 
         timestamp = data.newChild(None, 'timestamp', str(timest))
+
+        # add the random stuff
+        for (k,v) in attribs.items():
+            data.newChild(None, k, str(v))
            
             
     def doRepoMetadata(self):
@@ -558,14 +592,23 @@ class MetaDataGenerator:
         reporoot = repodoc.newChild(None, "repomd", None)
         repons = reporoot.newNs('http://linux.duke.edu/metadata/repo', None)
         reporoot.setNs(repons)
+        rpmns = reporoot.newNs("http://linux.duke.edu/metadata/rpm", 'rpm')        
         repopath = os.path.join(self.conf.outputdir, self.conf.tempdir)
         repofilepath = os.path.join(repopath, self.conf.repomdfile)
 
         sumtype = self.conf.sumtype
-        workfiles = [(self.conf.otherfile, 'other',),
-                     (self.conf.filelistsfile, 'filelists'),
-                     (self.conf.primaryfile, 'primary')]
-        repoid='garbageid'
+        if self.conf.database_only:
+            workfiles = []
+            db_workfiles = [(self.md_sqlite.pri_sqlite_file, 'primary_db'),
+                            (self.md_sqlite.file_sqlite_file, 'filelists_db'),
+                            (self.md_sqlite.other_sqlite_file, 'other_db')]
+            dbversion = '10'                            
+        else:
+            workfiles = [(self.conf.otherfile, 'other',),
+                         (self.conf.filelistsfile, 'filelists'),
+                         (self.conf.primaryfile, 'primary')]
+            db_workfiles = []
+            repoid='garbageid'
         
         if self.conf.database:
             if not self.conf.quiet: self.callback.log('Generating sqlite DBs')
@@ -677,15 +720,24 @@ class MetaDataGenerator:
 
         if not self.conf.quiet and self.conf.database: self.callback.log('Sqlite DBs complete')        
 
+        for (fn, ftype) in db_workfiles:
+            attribs = {'database_version':dbversion}
+            self.addArbitraryMetadata(fn, ftype, reporoot, compress=True, 
+                                      compress_type='bzip2', attribs=attribs)
+            try:
+                os.unlink(fn)
+            except (IOError, OSError), e:
+                pass
 
+            
         if self.conf.groupfile is not None:
             self.addArbitraryMetadata(self.conf.groupfile, 'group_gz', reporoot)
             self.addArbitraryMetadata(self.conf.groupfile, 'group', reporoot, compress=False)            
         
         if self.rpmlib_reqs:
-            rpmlib = reporoot.newChild(None, 'rpm:lib', None)
+            rpmlib = reporoot.newChild(rpmns, 'lib', None)
             for r in self.rpmlib_reqs.keys():
-                req  = rpmlib.newChild(None, 'requires', r)
+                req  = rpmlib.newChild(rpmns, 'requires', r)
                 
             
         # save it down
@@ -772,6 +824,13 @@ class MetaDataGenerator:
             self.errorlog(_('Error was %s') % e)
             self.errorlog(_('Please clean up this directory manually.'))
 
+    def setup_sqlite_dbs(self, initdb=True):
+        """sets up the sqlite dbs w/table schemas and db_infos"""
+        destdir = os.path.join(self.conf.outputdir, self.conf.tempdir)
+        self.md_sqlite = MetaDataSqlite(destdir)
+        
+    
+    
 class SplitMetaDataGenerator(MetaDataGenerator):
     """takes a series of dirs and creates repodata for all of them
        most commonly used with -u media:// - if no outputdir is specified
@@ -830,17 +889,99 @@ class SplitMetaDataGenerator(MetaDataGenerator):
             self.pkgcount += len(filematrix[mydir])
 
         mediano = 1
-        current = 0
+        self.current_pkg = 0
         self.conf.baseurl = self._getFragmentUrl(self.conf.baseurl, mediano)
         self.openMetadataDocs()
         original_basedir = self.conf.basedir
         for mydir in self.conf.directories:
             self.conf.baseurl = self._getFragmentUrl(self.conf.baseurl, mediano)
-            current = self.writeMetadataDocs(filematrix[mydir], mydir, current)
+            self.writeMetadataDocs(filematrix[mydir], mydir)
             mediano += 1
         self.conf.baseurl = self._getFragmentUrl(self.conf.baseurl, 1)
         self.closeMetadataDocs()
 
 
 
+class MetaDataSqlite(object):
+    def __init__(self, destdir):
+        #open the files up
+        #get the cursors - store them in self
+        self.pri_sqlite_file = os.path.join(destdir, 'primary.sqlite')
+        self.pri_cx = sqlite.Connection(self.pri_sqlite_file)
+        self.file_sqlite_file = os.path.join(destdir, 'filelists.sqlite')
+        self.file_cx = sqlite.Connection(self.file_sqlite_file)
+        self.other_sqlite_file = os.path.join(destdir, 'other.sqlite')
+        self.other_cx = sqlite.Connection(self.other_sqlite_file)
+
+        self.primary_cursor = self.pri_cx.cursor()
+        self.filelists_cursor = self.file_cx.cursor()
+        self.other_cursor = self.other_cx.cursor()
+        
+        self.create_primary_db()
+        self.create_filelists_db()
+        self.create_other_db()
+        
+    def create_primary_db(self):
+        # make the tables
+        schema = [
+        """CREATE TABLE conflicts (  name TEXT,  flags TEXT,  epoch TEXT,  version TEXT,  release TEXT,  pkgKey INTEGER );""",
+        """CREATE TABLE db_info (dbversion INTEGER, checksum TEXT);""",
+        """CREATE TABLE files (  name TEXT,  type TEXT,  pkgKey INTEGER);""",
+        """CREATE TABLE obsoletes (  name TEXT,  flags TEXT,  epoch TEXT,  version TEXT,  release TEXT,  pkgKey INTEGER );""",
+        """CREATE TABLE packages (  pkgKey INTEGER PRIMARY KEY,  pkgId TEXT,  name TEXT,  arch TEXT,  version TEXT,  epoch TEXT,  release TEXT,  summary TEXT,  description TEXT,  url TEXT,  time_file INTEGER,  time_build INTEGER,  rpm_license TEXT,  rpm_vendor TEXT,  rpm_group TEXT,  rpm_buildhost TEXT,  rpm_sourcerpm TEXT,  rpm_header_start INTEGER,  rpm_header_end INTEGER,  rpm_packager TEXT,  size_package INTEGER,  size_installed INTEGER,  size_archive INTEGER,  location_href TEXT,  location_base TEXT,  checksum_type TEXT);""",
+        """CREATE TABLE provides (  name TEXT,  flags TEXT,  epoch TEXT,  version TEXT,  release TEXT,  pkgKey INTEGER );""",
+        """CREATE TABLE requires (  name TEXT,  flags TEXT,  epoch TEXT,  version TEXT,  release TEXT,  pkgKey INTEGER , pre BOOL DEFAULT FALSE);""",
+        """CREATE INDEX filenames ON files (name);""",
+        """CREATE INDEX packageId ON packages (pkgId);""",
+        """CREATE INDEX packagename ON packages (name);""",
+        """CREATE INDEX pkgconflicts on conflicts (pkgKey);""",
+        """CREATE INDEX pkgobsoletes on obsoletes (pkgKey);""",
+        """CREATE INDEX pkgprovides on provides (pkgKey);""",
+        """CREATE INDEX pkgrequires on requires (pkgKey);""",
+        """CREATE INDEX providesname ON provides (name);""",
+        """CREATE INDEX requiresname ON requires (name);""",
+        """CREATE TRIGGER removals AFTER DELETE ON packages  
+             BEGIN    
+             DELETE FROM files WHERE pkgKey = old.pkgKey;    
+             DELETE FROM requires WHERE pkgKey = old.pkgKey;    
+             DELETE FROM provides WHERE pkgKey = old.pkgKey;    
+             DELETE FROM conflicts WHERE pkgKey = old.pkgKey;    
+             DELETE FROM obsoletes WHERE pkgKey = old.pkgKey;
+             END;"""
+             ]
+        
+        for cmd in schema:
+            executeSQL(self.primary_cursor, cmd)
+
+    def create_filelists_db(self):
+        schema = [
+            """CREATE TABLE db_info (dbversion INTEGER, checksum TEXT);""",
+            """CREATE TABLE filelist (  pkgKey INTEGER,  dirname TEXT,  filenames TEXT,  filetypes TEXT);""",
+            """CREATE TABLE packages (  pkgKey INTEGER PRIMARY KEY,  pkgId TEXT);""",
+            """CREATE INDEX dirnames ON filelist (dirname);""",
+            """CREATE INDEX keyfile ON filelist (pkgKey);""",
+            """CREATE INDEX pkgId ON packages (pkgId);""",
+            """CREATE TRIGGER remove_filelist AFTER DELETE ON packages  
+                   BEGIN    
+                   DELETE FROM filelist WHERE pkgKey = old.pkgKey;  
+                   END;"""
+            ]
+        for cmd in schema:
+            executeSQL(self.filelists_cursor, cmd)
+        
+    def create_other_db(self):
+        schema = [
+            """CREATE TABLE changelog (  pkgKey INTEGER,  author TEXT,  date INTEGER,  changelog TEXT);""",
+            """CREATE TABLE db_info (dbversion INTEGER, checksum TEXT);""",
+            """CREATE TABLE packages (  pkgKey INTEGER PRIMARY KEY,  pkgId TEXT);""",
+            """CREATE INDEX keychange ON changelog (pkgKey);""",
+            """CREATE INDEX pkgId ON packages (pkgId);""",
+            """CREATE TRIGGER remove_changelogs AFTER DELETE ON packages  
+                 BEGIN    
+                 DELETE FROM changelog WHERE pkgKey = old.pkgKey;  
+                 END;""",
+            ]
+            
+        for cmd in schema:
+            executeSQL(self.other_cursor, cmd)
 

@@ -62,6 +62,8 @@ def parseArgs(args, conf):
       help="check timestamps on files vs the metadata to see if we need to update")
     parser.add_option("-d", "--database", default=False, action="store_true",
                       help="create sqlite database files")
+    parser.add_option("--database-only", default=False, action="store_true", dest='database_only',
+                      help="Only make the sqlite databases - does not work with --update, yet")
     parser.add_option("--update", default=False, action="store_true",
                       help="use the existing repodata to speed up creation of new")
     parser.add_option("--skip-stat", dest='skip_stat', default=False, action="store_true",
