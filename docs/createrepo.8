@@ -62,6 +62,12 @@ Show help menu.
 
 .IP "\fB\-d --database\fP"
 Generate sqlite databases for use with yum.
+.IP "\fB\-S --skip-symlinks\fP"
+Ignore symlinks of packages
+.IP "\fB\--changelog-limit\fP CHANGELOG_LIMIT"
+Only import the last N changelog entries, from each rpm, into the metadata
+.IP "\fB\--unique-md-filenames\fP"
+Include the file's checksum in the metadata filename, helps HTTP caching
 
 .IP "\fB\--database-only\fP"
 Generate only the sqlite dbs. Do not create the xml metadata at all.
