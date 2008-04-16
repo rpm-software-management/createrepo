@@ -79,9 +79,10 @@ def utf8String(string):
         return ''
     elif isinstance(string, unicode):    
         return string
+    du = False
     try:
         x = unicode(string, 'ascii')
-        return string
+        du = True
     except UnicodeError:
         encodings = ['utf-8', 'iso-8859-1', 'iso-8859-15', 'iso-8859-2']
         for enc in encodings:
@@ -93,8 +94,12 @@ def utf8String(string):
                 if x.encode(enc) == string:
                     return x.encode('utf-8')
     newstring = ''
+    # Allow BS, HT, LF, VT, FF, CR
+    bad_small_bytes = range(0, 8) + range(14, 32)
     for char in string:
-        if ord(char) > 127:
+        if ord(char) in bad_small_bytes:
+            newstring = newstring + '?'
+        elif not du and ord(char) > 127:
             newstring = newstring + '?'
         else:
             newstring = newstring + char
