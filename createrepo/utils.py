@@ -94,11 +94,14 @@ def utf8String(string):
                 if x.encode(enc) == string:
                     return x.encode('utf-8')
     newstring = ''
-    # Allow BS, HT, LF, VT, FF, CR
-    bad_small_bytes = range(0, 8) + range(14, 32)
+    # Kill bytes (or libxml will die) not in the small byte portion of:
+    #  http://www.w3.org/TR/REC-xml/#NT-Char
+    # we allow high bytes, if it passed the utf8 check above. Eg.
+    # good chars = #x9 | #xA | #xD | [#x20-...]
+    bad_small_bytes = range(0, 8) + [11, 12] + range(14, 32)
     for char in string:
         if ord(char) in bad_small_bytes:
-            newstring = newstring + '?'
+            pass # Just ignore these bytes...
         elif not du and ord(char) > 127:
             newstring = newstring + '?'
         else:
