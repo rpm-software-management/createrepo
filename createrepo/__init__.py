@@ -258,7 +258,8 @@ class MetaDataGenerator:
         """check the timestamp of our target dir. If it is not newer than the repodata
            return False, else True"""
         if self.conf.checkts:
-            files = self.getFileList(self.conf.basedir, self.conf.directory, '.rpm')
+            dn = os.path.join(self.conf.basedir, self.conf.directory)
+            files = self.getFileList(dn, '.rpm')
             files = self.trimRpms(files)
             for f in files:
                 fn = os.path.join(self.conf.basedir, self.conf.directory, f)
