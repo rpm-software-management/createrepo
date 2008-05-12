@@ -50,10 +50,6 @@ def parseArgs(args, conf):
                       help="path to groupfile to include in metadata")
     parser.add_option("-s", "--checksum", default="sha", dest='sumtype',
                       help="Deprecated, ignore")
-    parser.add_option("-n", "--noepoch", default=False, action="store_true",
-                      help="don't add zero epochs for non-existent epochs"\
-                         "(incompatible with yum and smart but required for" \
-                         "systems with rpm < 4.2.1)")
     parser.add_option("-p", "--pretty", default=False, action="store_true",
                       help="make sure all xml generated is formatted")
     parser.add_option("-c", "--cachedir", default=None,

@@ -54,7 +54,6 @@ class MetaDataConfig(object):
         self.baseurl = None
         self.groupfile = None
         self.sumtype = 'sha'
-        self.noepoch = False # hmm - maybe a fixme?
         self.pretty = False
         self.cachedir = None 
         self.use_cache = False
