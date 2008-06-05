@@ -22,6 +22,7 @@ import os
 import sys
 import re
 from optparse import OptionParser
+import time
 
 import createrepo
 from createrepo import MDError
@@ -144,9 +145,13 @@ class MDCallBack(object):
         sys.stdout.flush()
         
 def main(args):
+    start_st = time.time()
     conf = createrepo.MetaDataConfig()
     conf = parseArgs(args, conf)
+    if conf.verbose:
+        print ('start time: %0.3f' % (time.time() - start_st))
 
+    mid_st = time.time()       
     try:
         if conf.split:
             mdgen = createrepo.SplitMetaDataGenerator(config_obj=conf, callback=MDCallBack())
@@ -157,9 +162,22 @@ def main(args):
                     print _('repo is up to date')
                 sys.exit(0)
 
+        if conf.verbose:
+            print ('mid time: %0.3f' % (time.time() - mid_st))
+                
+        pm_st = time.time()
         mdgen.doPkgMetadata()
+        if conf.verbose:
+            print ('pm time: %0.3f' % (time.time() - pm_st))
+        rm_st = time.time()
         mdgen.doRepoMetadata()
+        if conf.verbose:
+            print ('rm time: %0.3f' % (time.time() - rm_st))
+        fm_st = time.time()       
         mdgen.doFinalMove()
+        if conf.verbose:
+            print ('fm time: %0.3f' % (time.time() - fm_st))
+        
         
     except MDError, e:
         errorprint(_('%s') % e)

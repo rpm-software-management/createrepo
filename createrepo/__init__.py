@@ -913,7 +913,6 @@ class MetaDataSqlite(object):
         self.file_cx = sqlite.Connection(self.file_sqlite_file)
         self.other_sqlite_file = os.path.join(destdir, 'other.sqlite')
         self.other_cx = sqlite.Connection(self.other_sqlite_file)
-
         self.primary_cursor = self.pri_cx.cursor()
 
         self.filelists_cursor = self.file_cx.cursor()
@@ -927,8 +926,8 @@ class MetaDataSqlite(object):
     def create_primary_db(self):
         # make the tables
         schema = [
-        """PRAGMA synchronous = 0;""",
-        """pragma locking_mode = EXCLUSIVE;""",
+        """PRAGMA synchronous="OFF";""",
+        """pragma locking_mode="EXCLUSIVE";""",
         """CREATE TABLE conflicts (  name TEXT,  flags TEXT,  epoch TEXT,  version TEXT,  release TEXT,  pkgKey INTEGER );""",
         """CREATE TABLE db_info (dbversion INTEGER, checksum TEXT);""",
         """CREATE TABLE files (  name TEXT,  type TEXT,  pkgKey INTEGER);""",
@@ -961,8 +960,8 @@ class MetaDataSqlite(object):
 
     def create_filelists_db(self):
         schema = [
-            """PRAGMA synchronous = 0;""",
-            """pragma locking_mode = EXCLUSIVE;""",
+            """PRAGMA synchronous="0FF";""",
+            """pragma locking_mode="EXCLUSIVE";""",
             """CREATE TABLE db_info (dbversion INTEGER, checksum TEXT);""",
             """CREATE TABLE filelist (  pkgKey INTEGER,  dirname TEXT,  filenames TEXT,  filetypes TEXT);""",
             """CREATE TABLE packages (  pkgKey INTEGER PRIMARY KEY,  pkgId TEXT);""",
@@ -980,8 +979,8 @@ class MetaDataSqlite(object):
         
     def create_other_db(self):
         schema = [
-            """PRAGMA synchronous = 0;""",
-            """pragma locking_mode = EXCLUSIVE;""",
+            """PRAGMA synchronous="OFF";""",
+            """pragma locking_mode="EXCLUSIVE";""",
             """CREATE TABLE changelog (  pkgKey INTEGER,  author TEXT,  date INTEGER,  changelog TEXT);""",
             """CREATE TABLE db_info (dbversion INTEGER, checksum TEXT);""",
             """CREATE TABLE packages (  pkgKey INTEGER PRIMARY KEY,  pkgId TEXT);""",

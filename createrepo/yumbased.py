@@ -438,7 +438,14 @@ class CreateRepoPackage(YumLocalPackage):
         q = """insert into packages values (?, ?, ?, ?, ?, ?,
                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, 
                ?, ?, ?)"""
-
+        
+        # write out all of do_primary_sqlite as an executescript - work on the 
+        # quoting for pretty much any contingency - take from sqlutils.py
+        # 
+        # e
+        #p = None
+        #q = """insert into packages values (%s, %s, %s, %s, """
+        
         cur.execute(q, p)
 
         # provides, obsoletes, conflicts        
@@ -541,6 +548,7 @@ class CreateRepoPackage(YumLocalPackage):
         md_sqlite.file_cx.commit()
         self.do_other_sqlite_dump(md_sqlite.other_cursor)
         md_sqlite.other_cx.commit()
+
         
         
         
