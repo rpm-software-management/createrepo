@@ -43,6 +43,11 @@ the existing metadata rather than recalculating it. In the case of a
 large repository with only a few new or modified rpms this can
 significantly reduce I/O and processing time.
 .br
+.IP "\fB\--skip-stat\fP"
+skip the stat() call on a --update, assumes if the filename is the same
+then the file is still the same (only use this if you're fairly trusting or
+gullible).
+.br
 .IP "\fB\-C --checkts\fP"
 Don't generate repo metadata, if their timestamps are newer than its rpms.
 This option decreases the processing time drastically again, if you happen
