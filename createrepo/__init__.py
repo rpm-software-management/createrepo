@@ -27,6 +27,8 @@ import tempfile
 
 from yum import misc, Errors
 from yum.sqlutils import executeSQL
+from yum.packageSack import MetaSack
+from yum.packages import YumAvailablePackage
 
 import rpmUtils.transaction
 from utils import _, errorprint, MDError
@@ -320,8 +322,9 @@ class MetaDataGenerator:
             packages = self.conf.pkglist
         else:
             packages = self.getFileList(self.package_dir, '.rpm')
-            
-        packages = self.trimRpms(packages)
+        
+        if not isinstance(packages, MetaSack):
+            packages = self.trimRpms(packages)
         self.pkgcount = len(packages)
         self.openMetadataDocs()
         self.writeMetadataDocs(packages)
@@ -450,19 +453,24 @@ class MetaDataGenerator:
                     reldir = os.path.join(self.conf.basedir, directory)
                 else:
                     reldir = pkgpath
+                
+                if not isinstance(pkg, YumAvailablePackage):
 
-                try:
-                    po = self.read_in_package(pkg, pkgpath=pkgpath, reldir=reldir)
-                except MDError, e:
-                    # need to say something here
-                    self.callback.errorlog("\nError %s: %s\n" % (pkg, e))
-                    continue
+                    try:
+                        po = self.read_in_package(pkg, pkgpath=pkgpath, reldir=reldir)
+                    except MDError, e:
+                        # need to say something here
+                        self.callback.errorlog("\nError %s: %s\n" % (pkg, e))
+                        continue
+                else:
+                    po = pkg
+
                 if self.conf.database_only:
                     po.do_sqlite_dump(self.md_sqlite)
                 else:
-                    self.primaryfile.write(po.do_primary_xml_dump())
-                    self.flfile.write(po.do_filelists_xml_dump())
-                    self.otherfile.write(po.do_other_xml_dump())
+                    self.primaryfile.write(po.xml_dump_primary_metadata())
+                    self.flfile.write(po.xml_dump_filelists_metadata())
+                    self.otherfile.write(po.xml_dump_other_metadata())
             else:
                 if self.conf.verbose:
                     self.callback.log(_("Using data from old metadata for %s") % pkg)

@@ -389,14 +389,14 @@ class CreateRepoPackage(YumLocalPackage):
             del c
         return msg                                                 
 
-    def do_primary_xml_dump(self):
+    def xml_dump_primary_metadata(self):
         msg = """\n<package type="rpm">"""
         msg += self._dump_base_items()
         msg += self._dump_format_items()
         msg += """\n</package>"""
         return msg
 
-    def do_filelists_xml_dump(self):
+    def xml_dump_filelists_metadata(self):
         msg = """\n<package pkgid="%s" name="%s" arch="%s">
     <version epoch="%s" ver="%s" rel="%s"/>\n""" % (self.checksum, self.name, 
                                      self.arch, self.epoch, self.ver, self.rel)
@@ -404,7 +404,7 @@ class CreateRepoPackage(YumLocalPackage):
         msg += "</package>\n"
         return msg
 
-    def do_other_xml_dump(self):   
+    def xml_dump_other_metadata(self):   
         msg = """\n<package pkgid="%s" name="%s" arch="%s">
     <version epoch="%s" ver="%s" rel="%s"/>\n""" % (self.checksum, self.name, 
                                      self.arch, self.epoch, self.ver, self.rel)
