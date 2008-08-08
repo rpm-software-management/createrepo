@@ -699,6 +699,8 @@ class MetaDataGenerator:
             checksum = data.newChild(None, 'checksum', csum)
             checksum.newProp('type', sumtype)
             timestamp = data.newChild(None, 'timestamp', str(timestamp))
+            size = os.stat(os.path.join(repopath, file))
+            data.newChild(None, 'size', str(size.st_size))
             unchecksum = data.newChild(None, 'open-checksum', uncsum)
             unchecksum.newProp('type', sumtype)
             location = data.newChild(None, 'location', None)
