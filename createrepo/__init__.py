@@ -403,13 +403,11 @@ class MetaDataGenerator:
             po = yumbased.CreateRepoPackage(self.ts, rpmfile)
         except Errors.MiscError, e:
             raise MDError, "Unable to open package: %s" % e
-        # if we're going to add anything in from outside, here is where
-        # you can do it
-        po.crp_changelog_limit = self.conf.changelog_limit
-        po.crp_cachedir = self.conf.cachedir
-        po.crp_baseurl = baseurl
-        po.crp_reldir = reldir
-        po.crp_packagenumber = self.current_pkg
+        # external info we need
+        po._cachedir = self.conf.cachedir
+        po._baseurl = baseurl
+        po._reldir = reldir
+        po._packagenumber = self.current_pkg
         for r in po.requires_print:
             if r.startswith('rpmlib('):
                 self.rpmlib_reqs[r] = 1
@@ -466,11 +464,13 @@ class MetaDataGenerator:
                     po = pkg
 
                 if self.conf.database_only:
-                    po.do_sqlite_dump(self.md_sqlite)
+                    pass # disabled right now for sanity reasons (mine)
+                    #po.do_sqlite_dump(self.md_sqlite)
                 else:
                     self.primaryfile.write(po.xml_dump_primary_metadata())
                     self.flfile.write(po.xml_dump_filelists_metadata())
-                    self.otherfile.write(po.xml_dump_other_metadata())
+                    self.otherfile.write(po.xml_dump_other_metadata(
+                              clog_limit=self.conf.changelog_limit))
             else:
                 if self.conf.verbose:
                     self.callback.log(_("Using data from old metadata for %s") % pkg)
