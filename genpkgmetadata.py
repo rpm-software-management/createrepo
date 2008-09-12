@@ -84,7 +84,7 @@ def parseArgs(args, conf):
                       help="include the file's checksum in the filename, helps" \
                            "with proxies")
                            
-    (opts, argsleft) = parser.parse_args()
+    (opts, argsleft) = parser.parse_args(args)
     if len(argsleft) > 1 and not opts.split:
         errorprint(_('Error: Only one directory allowed per run.'))
         parser.print_usage()
