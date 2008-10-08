@@ -28,6 +28,7 @@ from yum.sqlutils import executeSQL
 from rpmUtils.transaction import initReadOnlyTransaction
 from rpmUtils.miscutils import flagToString, stringToVersion
 import utils
+import tempfile
 
 class CreateRepoPackage(YumLocalPackage):
     def __init__(self, ts, package):
@@ -72,9 +73,13 @@ class CreateRepoPackage(YumLocalPackage):
              
         else:
             checksum = misc.checksum('sha', self.localpath)
-            csumo = open(csumfile, 'w')
+
+            #  This is atomic cache creation via. rename, so we can have two
+            # tasks using the same cachedir ... mash does this.
+            csumo = tempfile.NamedTemporaryFile(mode='w', dir=self.crp_cachedir)
             csumo.write(checksum)
             csumo.close()
+            os.rename(csumo.name, csumfile)
         
         self._checksum = checksum
 
