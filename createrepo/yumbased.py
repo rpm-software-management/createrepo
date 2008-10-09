@@ -76,10 +76,14 @@ class CreateRepoPackage(YumLocalPackage):
 
             #  This is atomic cache creation via. rename, so we can have two
             # tasks using the same cachedir ... mash does this.
-            csumo = tempfile.NamedTemporaryFile(mode='w', dir=self.crp_cachedir)
-            csumo.write(checksum)
-            csumo.close()
-            os.rename(csumo.name, csumfile)
+            try:
+                (csumo, tmpfilename) = tempfile.mkstemp(dir=self.crp_cachedir)
+                csumo = os.fdopen(csumo, 'w', -1)
+                csumo.write(checksum)
+                csumo.close()
+                os.rename(tmpfilename, csumfile)
+            except:
+                pass
         
         self._checksum = checksum
 
