@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-# Copyright 2008  Red Hat, Inc - written by seth vidal skvidal at fedoraproject.org
+# Copyright 2008  Red Hat, Inc - written by skvidal at fedoraproject.org
 
 # merge repos from arbitrary repo urls
 
@@ -24,6 +24,7 @@ from optparse import OptionParser
 # excludes?
 
 def parse_args(args):
+    """Parse our opts/args"""
     usage = """
     mergerepo: take 2 or more repositories and merge their metadata into a new repo
               
@@ -42,7 +43,7 @@ def parse_args(args):
                       help="Do not merge group(comps) metadata")
     parser.add_option("", "--noupdateinfo", default=False, action="store_true",
                       help="Do not merge updateinfo metadata")
-    (opts, argsleft) = parser.parse_args()
+    (opts, argsleft) = parser.parse_args(args)
 
     if len(opts.repos) < 2:
         parser.print_usage()
@@ -50,30 +51,31 @@ def parse_args(args):
 
     # sort out the comma-separated crap we somehow inherited.    
     archlist = []
-    for a in opts.archlist:
-        for arch in a.split(','):
-             archlist.append(arch)
+    for archs in opts.archlist:
+        for arch in archs.split(','):
+            archlist.append(arch)
 
     opts.archlist = archlist
     
     return opts
     
 def main(args):
+    """main"""
     opts = parse_args(args)
-    rm = createrepo.merge.RepoMergeBase(opts.repos)
+    rmbase = createrepo.merge.RepoMergeBase(opts.repos)
     if opts.archlist:
-        rm.archlist = opts.archlist
+        rmbase.archlist = opts.archlist
     if opts.outputdir:
-        rm.outputdir = opts.outputdir
+        rmbase.outputdir = opts.outputdir
     if opts.database:
-        rm.mdconf.database = True
+        rmbase.mdconf.database = True
     if opts.nogroups:
-        rm.groups = False
+        rmbase.groups = False
     if opts.noupdateinfo:
-        rm.updateinfo = False
+        rmbase.updateinfo = False
 
-    rm.merge_repos()
-    rm.write_metadata()
+    rmbase.merge_repos()
+    rmbase.write_metadata()
 
 if __name__ == "__main__":
     main(sys.argv[1:])
