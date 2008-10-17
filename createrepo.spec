@@ -2,7 +2,7 @@
 
 Summary: Creates a common metadata repository
 Name: createrepo
-Version: 0.9.5
+Version: 0.9.6
 Release: 1
 License: GPL
 Group: System Environment/Base
@@ -11,7 +11,7 @@ URL: http://linux.duke.edu/metadata/
 BuildRoot: %{_tmppath}/%{name}-%{version}root
 BuildArchitectures: noarch
 Requires: python >= 2.1, rpm-python, rpm >= 0:4.1.1, libxml2-python
-Requires: yum-metadata-parser, yum >= 3.2.19
+Requires: yum-metadata-parser, yum >= 3.2.20
 
 %description
 This utility will generate a common metadata repository from a directory of
@@ -35,11 +35,15 @@ make DESTDIR=$RPM_BUILD_ROOT install
 %{_datadir}/%{name}/*
 %{_bindir}/%{name}
 %{_bindir}/modifyrepo
+%{_bindir}/mergerepo
 %{_mandir}/man8/createrepo.8*
 %{_mandir}/man1/modifyrepo.1*
 %{python_sitelib}/createrepo
 
 %changelog
+* Fri Oct 17 2008 Seth Vidal <skvidal at fedoraproject.org>
+- add mergerepo -  0.9.6
+
 * Mon Feb 18 2008 Seth Vidal <skvidal at fedoraproject.org>
 - 0.9.5
 

@@ -45,7 +45,7 @@ except ImportError:
 
 from utils import _gzipOpen, bzipFile, checkAndMakeDir, GzipFile, checksum_and_rename
 
-__version__ = '0.9.5'
+__version__ = '0.9.6'
 
 
 class MetaDataConfig(object):
