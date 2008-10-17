@@ -45,7 +45,8 @@ INSTALL_MODULES = $(INSTALL) -m 755 -D
 RM              = rm -f
 
 MODULES = $(srcdir)/genpkgmetadata.py \
-	$(srcdir)/modifyrepo.py
+	$(srcdir)/modifyrepo.py \
+	$(srcdir)/mergerepo.py	
 
 .SUFFIXES: .py .pyc
 .py.pyc: 
