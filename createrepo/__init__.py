@@ -83,6 +83,7 @@ class MetaDataConfig(object):
         self.directories = []
         self.changelog_limit = None # needs to be an int or None
         self.unique_md_filenames = False
+        self.additional_metadata = {} # dict of 'type':'filename'
 
         
 
@@ -742,10 +743,15 @@ class MetaDataGenerator:
             self.addArbitraryMetadata(self.conf.groupfile, 'group_gz', reporoot)
             self.addArbitraryMetadata(self.conf.groupfile, 'group', reporoot, compress=False)            
         
-        if self.rpmlib_reqs:
-            rpmlib = reporoot.newChild(rpmns, 'lib', None)
-            for r in self.rpmlib_reqs.keys():
-                req  = rpmlib.newChild(rpmns, 'requires', r)
+        if self.conf.additional_metadata:
+            for md_type, mdfile in self.conf.additional_metadata.items():
+                self.addArbitraryMetadata(mdfile, md_type, reporoot)
+
+        # FIXME - disabled until we decide how best to use this
+        #if self.rpmlib_reqs:
+        #    rpmlib = reporoot.newChild(rpmns, 'lib', None)
+        #    for r in self.rpmlib_reqs.keys():
+        #        req  = rpmlib.newChild(rpmns, 'requires', r)
                 
             
         # save it down
