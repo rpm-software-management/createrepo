@@ -42,6 +42,7 @@ all: $(srcdir)/$(PKGNAME)
 install: all installdirs
 	$(INSTALL_BIN) $(srcdir)/$(PKGNAME) $(DESTDIR)$(bindir)/$(PKGNAME)
 	$(INSTALL_BIN) $(srcdir)/modifyrepo $(DESTDIR)$(bindir)/modifyrepo
+	$(INSTALL_BIN) $(srcdir)/mergerepo $(DESTDIR)$(bindir)/mergerepo
 
 
 uninstall:
@@ -73,6 +74,7 @@ distfiles:
 	$(srcdir)/$(PKGNAME) \
 	$(srcdir)/Makefile \
 	$(srcdir)/modifyrepo \
+	$(srcdir)/mergerepo \	
 	$(top_srcdir)/.disttmp/$$distdir/bin
 
 dailyfiles:
@@ -82,6 +84,7 @@ dailyfiles:
 	$(srcdir)/$(PKGNAME) \
 	$(srcdir)/Makefile \
 	$(srcdir)/modifyrepo \
+	$(srcdir)/mergerepo \	
 	$(top_srcdir)/.disttmp/$$distdir/bin
 
 installdirs:
