@@ -7,7 +7,7 @@ Release: 1
 License: GPL
 Group: System Environment/Base
 Source: %{name}-%{version}.tar.gz
-URL: http://linux.duke.edu/metadata/
+URL: http://createrepo.baseurl.org/
 BuildRoot: %{_tmppath}/%{name}-%{version}root
 BuildArchitectures: noarch
 Requires: python >= 2.1, rpm-python, rpm >= 0:4.1.1, libxml2-python

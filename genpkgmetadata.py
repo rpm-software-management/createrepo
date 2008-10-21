@@ -83,7 +83,13 @@ def parseArgs(args, conf):
                       default=False, action="store_true",
                       help="include the file's checksum in the filename, helps" \
                            "with proxies")
-                           
+    parser.add_option("--distro", default=[], action="append",
+                      help="distro tag and optional cpeid: --distro 'cpeid,textname'")
+    parser.add_option("--content", default=[], dest='content_tags', action="append",
+                      help="tags for the content in the repository")
+    parser.add_option("--revision", default=None,
+                      help="user-specified revision for this repository")
+
     (opts, argsleft) = parser.parse_args(args)
     if len(argsleft) > 1 and not opts.split:
         errorprint(_('Error: Only one directory allowed per run.'))
@@ -114,6 +120,15 @@ def parseArgs(args, conf):
     directory = directories[0]
     conf.directory = directory
     conf.directories = directories
+
+    # distro tag parsing
+
+    for spec in opts.distro:
+        if spec.find(',') == -1:
+            conf.distro_tags.append((None,spec))
+        else:
+            splitspec = spec.split(',')
+            conf.distro_tags.append((splitspec[0], splitspec[1]))
 
     lst = []
     if conf.pkglist:

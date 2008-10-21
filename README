@@ -4,7 +4,8 @@ other package-repository-related tools.
 
 run createrepo -h for usage syntax
 
-http://linux.duke.edu/createrepo/
+http://createrepo.baseurl.org/
+
 
 
 

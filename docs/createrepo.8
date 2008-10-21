@@ -73,9 +73,13 @@ Ignore symlinks of packages
 Only import the last N changelog entries, from each rpm, into the metadata
 .IP "\fB\--unique-md-filenames\fP"
 Include the file's checksum in the metadata filename, helps HTTP caching
-
-.IP "\fB\--database-only\fP"
-Generate only the sqlite dbs. Do not create the xml metadata at all.
+.IP "\--distro\fP"
+Specify distro tags. Can be specified more than once. Optional syntax specifying a
+cpeid(http://cpe.mitre.org/) --distro=cpeid,distrotag
+.IP "\--content\fP"
+Specify keyword/tags about the content of the repository. Can be specified more than once.
+.IP "\--revision\fP"
+Arbitrary string for a repository revision.
 
 .SH "EXAMPLES"
 Here is an example of a repository with a groups file. Note that the
@@ -99,11 +103,12 @@ repodata/repomd.xml
 .PP 
 .SH "AUTHORS"
 .nf 
-Seth Vidal <skvidal@phy.duke.edu>
+See the Authors file
 .fi 
 
 .PP 
 .SH "BUGS"
 Any bugs which are found should be emailed to the mailing list:
-rpm-metadata@linux.duke.edu
+rpm-metadata@lists.baseurl.org
+or reported in trac at: http://createrepo.baseurl.org
 .fi
