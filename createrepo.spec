@@ -38,6 +38,7 @@ make DESTDIR=$RPM_BUILD_ROOT install
 %{_bindir}/mergerepo
 %{_mandir}/man8/createrepo.8*
 %{_mandir}/man1/modifyrepo.1*
+%{_mandir}/man1/mergerepo.1*
 %{python_sitelib}/createrepo
 
 %changelog

@@ -22,6 +22,9 @@ from optparse import OptionParser
 
 #TODO:
 # excludes?
+# handle content/distro tags
+# support revision?
+
 
 def parse_args(args):
     """Parse our opts/args"""
