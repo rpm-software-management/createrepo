@@ -62,7 +62,10 @@ class RepoMetadata:
             mdname = 'updateinfo.xml'
         elif isinstance(metadata, str):
             if os.path.exists(metadata):
-                oldmd = file(metadata, 'r')
+                if metadata.endswith('.gz'):
+                    oldmd = GzipFile(filename=metadata, mode='rb')
+                else:
+                    oldmd = file(metadata, 'r')
                 md = oldmd.read()
                 oldmd.close()
                 mdname = os.path.basename(metadata)
@@ -72,7 +75,8 @@ class RepoMetadata:
             raise Exception('invalid metadata type')
 
         ## Compress the metadata and move it into the repodata
-        mdname += '.gz'
+        if not mdname.endswith('.gz'):
+            mdname += '.gz'
         mdtype = mdname.split('.')[0]
         destmd = os.path.join(self.repodir, mdname)
         newmd = GzipFile(filename=destmd, mode='wb')
