@@ -1,3 +1,162 @@
+2008-10-23  Seth Vidal <skvidal@fedoraproject.org>
+
+	* modifyrepo.py: allow already-compressed metadata files to work and
+	not be double-compressed
+
+2008-10-21  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo.spec, docs/Makefile, docs/mergerepo.1, mergerepo.py: 
+	mergerepo man page todos added to mergerepo
+
+2008-10-21  Seth Vidal <skvidal@fedoraproject.org>
+
+	Merge branch 'master' of
+	ssh://createrepo.baseurl.org/srv/projects/createrepo/git/createrepo
+	* 'master' of
+	ssh://createrepo.baseurl.org/srv/projects/createrepo/git/createrepo:
+	Change the NamedTemporaryFile() usage to mkstemp(), stupid API   Fix
+	parallel updates to the cachedir, thx to Michael Schwendt for
+	spotting it
+
+2008-10-21  Seth Vidal <skvidal@fedoraproject.org>
+
+	* AUTHORS, README, createrepo.spec, createrepo/__init__.py,
+	docs/createrepo.8, genpkgmetadata.py: - document --content, --distro and --revision - update urls in spec
+	and docs - add Authors file
+
+2008-10-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* Makefile: add merge repo here, too
+
+2008-10-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* mergerepo.py: pylintian cleanups
+
+2008-10-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo.spec, createrepo/__init__.py: bump version to 0.9.6 -
+	change the dep to yum 3.2.20 - since it is what WILL be needed
+
+2008-10-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* bin/Makefile, bin/mergerepo, createrepo/merge.py, mergerepo.py: 
+	add mergerepo
+
+2008-10-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: add arbitrary metadata to config options
+	for api callers
+
+2008-10-09  James Antill <james@and.org>
+
+	* createrepo/yumbased.py: Change the NamedTemporaryFile() usage to
+	mkstemp(), stupid API
+
+2008-10-08  James Antill <james@and.org>
+
+	* createrepo/yumbased.py: Fix parallel updates to the cachedir, thx
+	to Michael Schwendt for spotting it
+
+2008-09-15  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo.spec: bump the yum requirement to 3.2.19..
+
+2008-09-15  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/utils.py: remove unused utf8String function from utils
+	- move most of it into yum.misc
+
+2008-09-12  Seth Vidal <skvidal@fedoraproject.org>
+
+	* genpkgmetadata.py: make the profile option work again
+
+2008-08-13  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/yumbased.py, genpkgmetadata.py: 
+	remove most of the yumbased code, disable database-only for now
+
+2008-08-08  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/utils.py,
+	createrepo/yumbased.py: minor changes for handling a packagesack
+	and/or list of package objects as the pkglist to create the repo
+	from also rename the xml_dump functions - eventually going to remove
+	them.
+
+2008-06-17  James Antill <james@and.org>
+
+	* docs/createrepo.8: Add missing doc. for --skip-stat option
+
+2008-06-05  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/yumbased.py, genpkgmetadata.py: 
+	some fixmes and starts - and recommit a working --database-only
+
+2008-05-12  James Antill <james@and.org>
+
+	* createrepo/__init__.py, genpkgmetadata.py: Remove -n option, it's
+	a noop atm. anyway
+
+2008-05-12  James Antill <james@and.org>
+
+	* createrepo/__init__.py: Pass just dir. to getFileList(), makes -C
+	work. Fixes bug#446040
+
+2008-04-16  James Antill <james@and.org>
+
+	* createrepo/utils.py: Talk to libxml maintainer ... tweak
+
+2008-04-16  James Antill <james@and.org>
+
+	* createrepo/utils.py: Just remove bad small bytes, like 0x01 atm.
+
+2008-04-02  James Antill <james@and.org>
+
+	* docs/createrepo.8: Add some missing options to man page
+
+2008-03-11  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/utils.py: a few tweaks to speed
+	up the database creation
+
+2008-03-11  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/utils.py,
+	createrepo/yumbased.py, docs/createrepo.8: more or less complete
+	createrepo --database-only
+
+2008-03-11  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/yumbased.py, genpkgmetadata.py: - partial patch to enable --database-only output from createrepo -
+	still to implement filelists direct to sqlite, changelogs direct to
+	sqlite - this check in is just a hedge against loss from my laptop,
+	do not use the feature in this commit
+
+2008-03-03  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: better name for node
+
+2008-03-03  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/yumbased.py: exclude rpmlib
+	requires from metadata b/c they are silly store them in the
+	repomd.xml per-repo so we have them if we ever actually need them
+
+2008-02-29  James Antill <james@and.org>
+
+	* genpkgmetadata.py: Fix line overflow, minor IO optimisation
+
+2008-02-20  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/yumbased.py, genpkgmetadata.py: 
+	allow --pkglist or self.conf.pkglist to be a list of arbitrary urls
+	to packages. createrepo will download the remote urls to a tempdir,
+	read them in and add them to the metadata.
+
+2008-02-18  Seth Vidal <skvidal@fedoraproject.org>
+
+	* ChangeLog: merge changelog
+
 2008-02-18  Seth Vidal <skvidal@fedoraproject.org>
 
 	* createrepo.spec, createrepo/__init__.py: bump version numbers
