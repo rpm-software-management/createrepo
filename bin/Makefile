@@ -36,7 +36,8 @@ INSTALL_MODULES = $(INSTALL) -m 755 -D
 RM 		= rm -f
 
 
-all: $(srcdir)/$(PKGNAME)
+all:
+	echo "Nothing to do"
 
 
 install: all installdirs
@@ -74,7 +75,7 @@ distfiles:
 	$(srcdir)/$(PKGNAME) \
 	$(srcdir)/Makefile \
 	$(srcdir)/modifyrepo \
-	$(srcdir)/mergerepo \	
+	$(srcdir)/mergerepo \
 	$(top_srcdir)/.disttmp/$$distdir/bin
 
 dailyfiles:
