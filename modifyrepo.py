@@ -135,6 +135,14 @@ if __name__ == '__main__':
     if len(sys.argv) != 3 or '-h' in sys.argv:
         print "Usage: %s <input metadata> <output repodata>" % sys.argv[0]
         sys.exit()
+    try:
+        repomd = RepoMetadata(sys.argv[2])
+    except Exception, e:
+        print "Could not access repository: %s" % str(e)
+        sys.exit(1)
+    try:
+        repomd.add(sys.argv[1])
+    except Exception, e:
+        print "Could not add metadata from file %s: %s" % (sys.argv[1], str(e))
+        sys.exit(1)
 
-    repomd = RepoMetadata(sys.argv[2])
-    repomd.add(sys.argv[1])
