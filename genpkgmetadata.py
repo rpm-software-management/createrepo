@@ -64,6 +64,8 @@ def parseArgs(args, conf):
     #                  help="Only make the sqlite databases - does not work with --update, yet")
     parser.add_option("--update", default=False, action="store_true",
                       help="use the existing repodata to speed up creation of new")
+    parser.add_option("--update-md-path", default=None, dest='update_md_path',
+                      help="use the existing repodata  for --update from this path")
     parser.add_option("--skip-stat", dest='skip_stat', default=False, action="store_true",
                       help="skip the stat() call on a --update, assumes if the file" \
                             "name is the same then the file is still the same" \

@@ -63,6 +63,7 @@ class MetaDataConfig(object):
         self.checkts = False
         self.split = False        
         self.update = False
+        self.update_md_path = None
         self.skip_stat = False
         self.database = False
         self.outputdir = None
@@ -300,11 +301,17 @@ class MetaDataGenerator:
                 'verbose' : self.conf.verbose,
                 'pkgdir'  : os.path.normpath(self.package_dir)
             }
+
             if self.conf.skip_stat:
                 opts['do_stat'] = False
 
+            if self.conf.update_md_path:
+                old_repo_path = os.path.normpath(self.conf.update_md_path)
+            else:
+                old_repo_path = self.conf.outputdir
+
             #and scan the old repo
-            self.oldData = readMetadata.MetadataIndex(self.conf.outputdir, opts)
+            self.oldData = readMetadata.MetadataIndex(old_repo_path, opts)
 
     def _setup_grabber(self):
         if not hasattr(self, '_grabber'):
