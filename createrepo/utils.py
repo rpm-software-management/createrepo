@@ -36,7 +36,7 @@ class GzipFile(gzip.GzipFile):
     def _write_gzip_header(self):
         self.fileobj.write('\037\213')             # magic header
         self.fileobj.write('\010')                 # compression method
-        fname = self.filename[:-3]
+        fname = self.name[:-3]
         flags = 0
         if fname:
             flags = FNAME
