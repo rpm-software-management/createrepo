@@ -52,6 +52,7 @@ class MetaDataConfig(object):
     def __init__(self):
         self.quiet = False
         self.verbose = False
+        self.profile = False
         self.excludes = []
         self.baseurl = None
         self.groupfile = None

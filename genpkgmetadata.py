@@ -41,6 +41,8 @@ def parseArgs(args, conf):
                       help="output nothing except for serious errors")
     parser.add_option("-v", "--verbose", default=False, action="store_true",
                       help="output more debugging info.")
+    parser.add_option("--profile", default=False, action="store_true",
+                      help="output timing/profile info.")
     parser.add_option("-x", "--excludes", default=[], action="append",
                       help="files to exclude")
     parser.add_option("--basedir", default=os.getcwd(),
@@ -166,7 +168,7 @@ def main(args):
     start_st = time.time()
     conf = createrepo.MetaDataConfig()
     conf = parseArgs(args, conf)
-    if conf.verbose:
+    if conf.profile:
         print ('start time: %0.3f' % (time.time() - start_st))
 
     mid_st = time.time()       
@@ -180,20 +182,20 @@ def main(args):
                     print _('repo is up to date')
                 sys.exit(0)
 
-        if conf.verbose:
+        if conf.profile:
             print ('mid time: %0.3f' % (time.time() - mid_st))
                 
         pm_st = time.time()
         mdgen.doPkgMetadata()
-        if conf.verbose:
+        if conf.profile:
             print ('pm time: %0.3f' % (time.time() - pm_st))
         rm_st = time.time()
         mdgen.doRepoMetadata()
-        if conf.verbose:
+        if conf.profile:
             print ('rm time: %0.3f' % (time.time() - rm_st))
         fm_st = time.time()       
         mdgen.doFinalMove()
-        if conf.verbose:
+        if conf.profile:
             print ('fm time: %0.3f' % (time.time() - fm_st))
         
         
