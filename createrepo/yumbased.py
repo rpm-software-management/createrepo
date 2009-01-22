@@ -19,7 +19,6 @@ import os
 import rpm
 import types
 import re
-import md5
 
 from yum.packages import YumLocalPackage
 from yum.Errors import *
@@ -60,7 +59,9 @@ class CreateRepoPackage(YumLocalPackage):
         if type(self.hdr[rpm.RPMTAG_HDRID]) is not types.NoneType:
             t.append("".join(self.hdr[rpm.RPMTAG_HDRID]))
 
-        key = md5.new("".join(t)).hexdigest()
+        kcsum = misc.Checksums()
+        kcsum.update("".join(t))
+        key = kcsum.hexdigest()
                                                 
         csumtag = '%s-%s-%s-%s' % (os.path.basename(self.localpath),
                                    key, self.size, self.filetime)
