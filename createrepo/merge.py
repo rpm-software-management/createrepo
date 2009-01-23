@@ -35,13 +35,23 @@ import tempfile
 
 
 class RepoMergeBase():
-    def __init__(self, repolist=[]):
+    def __init__(self, repolist=[], yumbase=None, mdconf=None, mdbase_class=None ):
         self.repolist = repolist
         self.outputdir = '%s/merged_repo' % os.getcwd()
         self.exclude_tuples = []
         self.sort_func = self._sort_func # callback function to magically sort pkgs
-        self.mdconf = createrepo.MetaDataConfig()
-        self.yumbase = yum.YumBase()
+        if not mdconf:
+            self.mdconf = createrepo.MetaDataConfig()
+        else:
+            self.mdconf = mdconf
+        if not mdbase_class
+            self.mdbase_class = createrepo.MetaDataGenerator
+        else:
+            self.mdbase_class = mdbase_class
+        if not yumbase:
+            self.yumbase = yum.YumBase()
+        else:
+            self.yumbase = yumbase
         self.yumbase.conf.cachedir = getCacheDir()
         self.yumbase.conf.cache = 0
         # default to all arches
@@ -121,7 +131,7 @@ class RepoMergeBase():
         if not os.path.exists(self.mdconf.directory):
             os.makedirs(self.mdconf.directory)
 
-        mdgen = createrepo.MetaDataGenerator(config_obj=self.mdconf)
+        mdgen = self.mdbase_class(config_obj=self.mdconf)
         mdgen.doPkgMetadata()
         mdgen.doRepoMetadata()
         mdgen.doFinalMove()
