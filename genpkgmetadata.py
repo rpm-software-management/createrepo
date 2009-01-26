@@ -51,7 +51,7 @@ def parseArgs(args, conf):
                       help="baseurl to append on all files")
     parser.add_option("-g", "--groupfile", default=None,
                       help="path to groupfile to include in metadata")
-    parser.add_option("-s", "--checksum", default="sha", dest='sumtype',
+    parser.add_option("-s", "--checksum", default="sha256", dest='sumtype',
                       help="Deprecated, ignore")
     parser.add_option("-p", "--pretty", default=False, action="store_true",
                       help="make sure all xml generated is formatted")

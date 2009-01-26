@@ -48,6 +48,7 @@ class CreateRepoPackage(YumLocalPackage):
         # not using the cachedir
         if not self._cachedir:
             self._checksum = misc.checksum(self.checksum_type, self.localpath)
+            self._checksums = [(self.checksum_type, self._checksum, 1)]            
             return self._checksum
 
 
@@ -73,7 +74,7 @@ class CreateRepoPackage(YumLocalPackage):
             csumo.close()
              
         else:
-            checksum = misc.checksum('sha', self.localpath)
+            checksum = misc.checksum(self.checksum_type, self.localpath)
 
             #  This is atomic cache creation via. rename, so we can have two
             # tasks using the same cachedir ... mash does this.
@@ -87,6 +88,7 @@ class CreateRepoPackage(YumLocalPackage):
                 pass
         
         self._checksum = checksum
+        self._checksums = [(self.checksum_type, checksum, 1)]
 
         return self._checksum
     
