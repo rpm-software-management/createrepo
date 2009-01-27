@@ -35,6 +35,7 @@ class RepoMetadata:
         """ Parses the repomd.xml file existing in the given repo directory. """
         self.repodir = os.path.abspath(repo)
         self.repomdxml = os.path.join(self.repodir, 'repomd.xml')
+        self.checksum_type = 'sha256'
         if not os.path.exists(self.repomdxml):
             raise Exception('%s not found' % self.repomdxml)
         self.doc = minidom.parse(self.repomdxml)
@@ -84,7 +85,7 @@ class RepoMetadata:
         newmd.close()
         print "Wrote:", destmd
 
-        open_csum = checksum('sha', metadata)
+        open_csum = checksum(self.checksum_type, metadata)
 
 
         csum, destmd = checksum_and_rename(destmd)
@@ -105,13 +106,13 @@ class RepoMetadata:
         self._insert_element(data, 'location',
                              attrs={ 'href' : 'repodata/' + base_destmd })
         data.appendChild(self.doc.createTextNode("\n    "))
-        self._insert_element(data, 'checksum', attrs={ 'type' : 'sha' },
+        self._insert_element(data, 'checksum', attrs={ 'type' : self.checksum_type },
                              text=csum)
         data.appendChild(self.doc.createTextNode("\n    "))
         self._insert_element(data, 'timestamp',
                              text=str(os.stat(destmd).st_mtime))
         data.appendChild(self.doc.createTextNode("\n    "))
-        self._insert_element(data, 'open-checksum', attrs={ 'type' : 'sha' },
+        self._insert_element(data, 'open-checksum', attrs={ 'type' : self.checksum_type },
                              text=open_csum)
 
         data.appendChild(self.doc.createTextNode("\n  "))
