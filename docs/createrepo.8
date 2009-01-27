@@ -69,6 +69,11 @@ Show help menu.
 Generate sqlite databases for use with yum.
 .IP "\fB\-S --skip-symlinks\fP"
 Ignore symlinks of packages
+.IP "\fB\-s --checksum\fP"
+Choose the checksum type used in repomd.xml and for packages in the metadata.
+The default is now sha256, the older default was sha which is actually sha1.
+.IP "\fB\-profile\fP"
+Output time based profiling information.
 .IP "\fB\--changelog-limit\fP CHANGELOG_LIMIT"
 Only import the last N changelog entries, from each rpm, into the metadata
 .IP "\fB\--unique-md-filenames\fP"
