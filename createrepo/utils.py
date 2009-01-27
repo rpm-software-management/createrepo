@@ -103,7 +103,7 @@ def checkAndMakeDir(dir):
 def checksum_and_rename(fn_path):
     """checksum the file rename the file to contain the checksum as a prefix
        return the new filename"""
-    csum = misc.checksum('sha', fn_path)
+    csum = misc.checksum('sha256', fn_path)
     fn = os.path.basename(fn_path)
     fndir = os.path.dirname(fn_path)
     csum_fn = csum + '-' + fn
