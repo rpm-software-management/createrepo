@@ -97,6 +97,8 @@ def parseArgs(args, conf):
                       help="create delta rpms and metadata")
     parser.add_option("--oldpackagedirs", default=[], dest="oldpackage_paths", 
                       action="append", help="paths to look for older pkgs to delta against")
+    parser.add_option("--num-deltas", default=1, dest='num_deltas', type='int',
+                      help="the number of older versions to make deltas against")
 
 
     (opts, argsleft) = parser.parse_args(args)
