@@ -93,6 +93,11 @@ def parseArgs(args, conf):
                       help="tags for the content in the repository")
     parser.add_option("--revision", default=None,
                       help="user-specified revision for this repository")
+    parser.add_option("--deltas", default=False, action="store_true",
+                      help="create delta rpms and metadata")
+    parser.add_option("--oldpackagedirs", default=[], dest="oldpackage_paths", 
+                      action="append", help="paths to look for older pkgs to delta against")
+
 
     (opts, argsleft) = parser.parse_args(args)
     if len(argsleft) > 1 and not opts.split:

@@ -25,7 +25,7 @@ from  bz2 import BZ2File
 from urlgrabber import grabber
 import tempfile
 
-from yum import misc, Errors
+from yum import misc, Errors, to_unicode
 from yum.sqlutils import executeSQL
 from yum.packageSack import MetaSack
 from yum.packages import YumAvailablePackage
@@ -44,6 +44,7 @@ except ImportError:
     pass
 
 from utils import _gzipOpen, bzipFile, checkAndMakeDir, GzipFile, checksum_and_rename
+import deltarpms
 
 __version__ = '0.9.6'
 
@@ -64,7 +65,13 @@ class MetaDataConfig(object):
         self.checkts = False
         self.split = False        
         self.update = False
-        self.update_md_path = None
+        self.deltas = False # do the deltarpm thing
+        self.deltadir = None # where to put the .drpms - defaults to 'drpms' inside 'repodata'
+        self.delta_relative = 'drpms/'
+        self.oldpackage_paths = [] # where to look for the old packages - 
+        self.deltafile = 'prestodelta.xml.gz'
+        self.num_deltas = 1 # number of older versions to delta (max)
+        self.update_md_path = None 
         self.skip_stat = False
         self.database = False
         self.outputdir = None
@@ -151,7 +158,6 @@ class MetaDataGenerator:
         if not self.conf.outputdir:
             self.conf.outputdir = os.path.join(self.conf.basedir, self.conf.relative_dir)
 
-
     def _test_setup_dirs(self):
         # start the sanity/stupidity checks
         for mydir in self.conf.directories:
@@ -180,13 +186,23 @@ class MetaDataGenerator:
         if not checkAndMakeDir(temp_final):
             raise MDError, _('Cannot create/verify %s') % temp_final
 
+        if self.conf.deltas:
+            temp_delta = os.path.join(self.conf.outputdir, self.conf.delta_relative)
+        if not checkAndMakeDir(temp_delta):
+            raise MDError, _('Cannot create/verify %s') % temp_delta
+        self.conf.deltadir = temp_delta
+
         if os.path.exists(os.path.join(self.conf.outputdir, self.conf.olddir)):
             raise MDError, _('Old data directory exists, please remove: %s') % self.conf.olddir
 
         # make sure we can write to where we want to write to:
         # and pickup the mdtimestamps while we're at it
-        for direc in ['tempdir', 'finaldir']:
-            filepath = os.path.join(self.conf.outputdir, direc)
+        direcs = ['tempdir' , 'finaldir']
+        if self.conf.deltas:
+            direcs.append('deltadir')
+
+        for direc in direcs:
+            filepath = os.path.join(self.conf.outputdir, getattr(self.conf, direc))
             if os.path.exists(filepath):
                 if not os.access(filepath, os.W_OK):
                     raise MDError, _('error in must be able to write to metadata dir:\n  -> %s') % filepath
@@ -348,6 +364,8 @@ class MetaDataGenerator:
             self.primaryfile = self._setupPrimary()
             self.flfile = self._setupFilelists()
             self.otherfile = self._setupOther()
+        if self.conf.deltas:
+            self.deltafile = self._setupDelta()
 
     def _setupPrimary(self):
         # setup the primary metadata file
@@ -374,6 +392,14 @@ class MetaDataGenerator:
         fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         fo.write('<otherdata xmlns="http://linux.duke.edu/metadata/other" packages="%s">' %
                        self.pkgcount)
+        return fo
+
+    def _setupDelta(self):
+        # setup the other file
+        deltafilepath = os.path.join(self.conf.outputdir, self.conf.tempdir, self.conf.deltafile)
+        fo = _gzipOpen(deltafilepath, 'w')
+        fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+        fo.write('<prestodelta>\n')
         return fo
         
 
@@ -452,7 +478,8 @@ class MetaDataGenerator:
                 nodes = self.oldData.getNodes(old_pkg)
                 if nodes is not None:
                     recycled = True
-
+                
+                # FIXME also open up the delta file
             
             # otherwise do it individually
             if not recycled:
@@ -470,6 +497,11 @@ class MetaDataGenerator:
                         # need to say something here
                         self.callback.errorlog("\nError %s: %s\n" % (pkg, e))
                         continue
+                    # we can use deltas:
+                    presto_md = self._do_delta_rpm_package(po)
+                    if presto_md:
+                        self.deltafile.write(presto_md)
+
                 else:
                     po = pkg
 
@@ -500,6 +532,9 @@ class MetaDataGenerator:
                     outfile.write('\n')
 
                 self.oldData.freeNodes(pkg)
+                #FIXME - if we're in update and we have deltas enabled
+                #        check the presto data for this pkg and write its info back out
+                #       to our deltafile
 
             if not self.conf.quiet:
                 if self.conf.verbose:
@@ -539,6 +574,87 @@ class MetaDataGenerator:
         else:
             self.otherfile.write('\n</otherdata>')
             self.otherfile.close()
+
+        if not self.conf.quiet:
+            self.callback.log(_('Saving delta metadata'))
+        self.deltafile.write('\n</prestodelta>')
+        self.deltafile.close()
+
+    def _do_delta_rpm_package(self, pkg):
+        """makes the drpms, if possible, for this package object.
+           returns the presto/delta xml metadata as a string
+        """
+
+        results = u""
+        thisdeltastart = u"""  <newpackage name="%s" epoch="%s" version="%s" release="%s" arch="%s">\n""" % (pkg.name,
+                                     pkg.epoch, pkg.ver, pkg.release, pkg.arch)
+        thisdeltaend = u"""  </newpackage>\n"""
+
+        # generate a list of all the potential 'old rpms'
+        opl = self._get_old_package_list()
+        # get list of potential candidates which are likely to match
+        pot_cand = []
+        for fn in opl:
+            if os.path.basename(fn).startswith(pkg.name):
+                pot_cand.append(fn)
+        
+        candidates = []
+        for fn in pot_cand:
+            try:
+                thispo = yumbased.CreateRepoPackage(self.ts, fn)
+            except Errors.MiscError, e:
+                continue
+            if (thispo.name, thispo.arch) != (pkg.name, pkg.arch):
+                # not the same, doesn't matter
+                continue
+            if thispo == pkg: #exactly the same, doesn't matter
+                continue
+            if thispo.EVR >= pkg.EVR: # greater or equal, doesn't matter
+                continue
+            candidates.append(thispo)
+            candidates.sort()
+            candidates.reverse()
+
+        drpm_results = u""
+        for delta_p in candidates[0:self.conf.num_deltas]:
+            #make drpm of pkg and delta_p
+            drpmfn = deltarpms.create_drpm(delta_p, pkg, self.conf.deltadir)
+
+            if drpmfn:
+                # TODO more sanity check the drpm for size, etc
+                # make xml of drpm
+                try:
+                    drpm_po = yumbased.CreateRepoPackage(self.ts, drpmfn)
+                except Errors.MiscError, e:
+                    os.unlink(drpmfn)
+                    continue
+                rel_drpmfn = drpmfn.replace(self.conf.outputdir, '')
+                if rel_drpmfn[0] == '/':
+                    rel_drpmfn = rel_drpmfn[1:]
+                if not self.conf.quiet:
+                    if self.conf.verbose:
+                        self.callback.log('created drpm from %s to %s: %s' % (
+                            delta_p, pkg, drpmfn))
+
+                drpm = deltarpms.DeltaRPMPackage(drpm_po, self.conf.outputdir, rel_drpmfn)
+                drpm_results += to_unicode(drpm.xml_dump_metadata())
+        
+        if drpm_results:
+            results = thisdeltastart + drpm_results + thisdeltaend
+        
+        return results
+
+    def _get_old_package_list(self):
+        if hasattr(self, '_old_package_list'):
+            return self._old_package_list
+        
+        opl = []
+        for d in self.conf.oldpackage_paths:
+            for f in self.getFileList(d, 'rpm'):
+                opl.append(d + '/' + f)
+                    
+        self._old_package_list = opl
+        return self._old_package_list
 
     def addArbitraryMetadata(self, mdfile, mdtype, xml_node, compress=True, 
                                              compress_type='gzip', attribs={}):
@@ -638,6 +754,8 @@ class MetaDataGenerator:
             db_workfiles = []
             repoid='garbageid'
         
+        if self.conf.deltas:
+            workfiles.append((self.conf.deltafile, 'deltainfo'))
         if self.conf.database:
             if not self.conf.quiet: self.callback.log('Generating sqlite DBs')
             try:
