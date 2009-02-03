@@ -188,9 +188,9 @@ class MetaDataGenerator:
 
         if self.conf.deltas:
             temp_delta = os.path.join(self.conf.outputdir, self.conf.delta_relative)
-        if not checkAndMakeDir(temp_delta):
-            raise MDError, _('Cannot create/verify %s') % temp_delta
-        self.conf.deltadir = temp_delta
+            if not checkAndMakeDir(temp_delta):
+                raise MDError, _('Cannot create/verify %s') % temp_delta
+            self.conf.deltadir = temp_delta
 
         if os.path.exists(os.path.join(self.conf.outputdir, self.conf.olddir)):
             raise MDError, _('Old data directory exists, please remove: %s') % self.conf.olddir
