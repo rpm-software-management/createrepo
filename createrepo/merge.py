@@ -34,7 +34,7 @@ import tempfile
 # excludes?
 
 
-class RepoMergeBase():
+class RepoMergeBase:
     def __init__(self, repolist=[], yumbase=None, mdconf=None, mdbase_class=None ):
         self.repolist = repolist
         self.outputdir = '%s/merged_repo' % os.getcwd()
@@ -44,7 +44,7 @@ class RepoMergeBase():
             self.mdconf = createrepo.MetaDataConfig()
         else:
             self.mdconf = mdconf
-        if not mdbase_class
+        if not mdbase_class:
             self.mdbase_class = createrepo.MetaDataGenerator
         else:
             self.mdbase_class = mdbase_class
