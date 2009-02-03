@@ -575,10 +575,11 @@ class MetaDataGenerator:
             self.otherfile.write('\n</otherdata>')
             self.otherfile.close()
 
-        if not self.conf.quiet:
-            self.callback.log(_('Saving delta metadata'))
-        self.deltafile.write('\n</prestodelta>')
-        self.deltafile.close()
+        if self.conf.deltas:
+            if not self.conf.quiet:
+                self.callback.log(_('Saving delta metadata'))
+            self.deltafile.write('\n</prestodelta>')
+            self.deltafile.close()
 
     def _do_delta_rpm_package(self, pkg):
         """makes the drpms, if possible, for this package object.
