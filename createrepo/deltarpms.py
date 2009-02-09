@@ -19,6 +19,8 @@ import os.path
 import commands
 from yum import misc
 import gzip
+import yumbased
+from utils import _, errorprint, MDError
 
 class DeltaRPMPackage:
     """each drpm is one object, you pass it a drpm file
@@ -27,17 +29,17 @@ class DeltaRPMPackage:
 
     mode_cache = {}
 
-    def __init__(self, pkgobj, basedir, filename):
+    def __init__(self, po, basedir, filename):
         try:
             stats = os.stat(os.path.join(basedir, filename))
             self.size = stats[6]
             self.mtime = stats[8]
             del stats
         except OSError, e:
-            raise MDError, "Error Stat'ing file %s %s" % (basedir, filename)
+            raise MDError, "Error Stat'ing file %s%s" % (basedir, filename)
         self.csum_type = 'sha256'
         self.relativepath = filename
-        self.po  = pkgobj
+        self.po  = po
 
         fd = os.open(self.po.localpath, os.O_RDONLY)
         os.lseek(fd, 0, 0)
@@ -110,8 +112,7 @@ class DeltaRPMPackage:
         (oldname, oldepoch, oldver, oldrel) = self.oldnevr
         sequence = "%s-%s" % (self.oldnevrstring, self.sequence)
 
-        delta_tag = """
-    <delta oldepoch="%s" oldversion="%s" oldrelease="%s">
+        delta_tag = """    <delta oldepoch="%s" oldversion="%s" oldrelease="%s">
       <filename>%s</filename>
       <sequence>%s</sequence>
       <size>%s</size>
@@ -138,3 +139,6 @@ def create_drpm(old_pkg, new_pkg, destdir):
             return None
     
     return delta_rpm_path
+
+
+    

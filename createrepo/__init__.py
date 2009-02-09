@@ -498,9 +498,7 @@ class MetaDataGenerator:
                         self.callback.errorlog("\nError %s: %s\n" % (pkg, e))
                         continue
                     # we can use deltas:
-                    presto_md = self._do_delta_rpm_package(po)
-                    if presto_md:
-                        self.deltafile.write(presto_md)
+                    self._do_delta_rpm_package(po)
 
                 else:
                     po = pkg
@@ -578,6 +576,7 @@ class MetaDataGenerator:
         if self.conf.deltas:
             if not self.conf.quiet:
                 self.callback.log(_('Saving delta metadata'))
+            self.deltafile.write(self.generate_delta_xml())
             self.deltafile.write('\n</prestodelta>')
             self.deltafile.close()
 
@@ -586,76 +585,81 @@ class MetaDataGenerator:
            returns the presto/delta xml metadata as a string
         """
 
-        results = u""
-        thisdeltastart = u"""  <newpackage name="%s" epoch="%s" version="%s" release="%s" arch="%s">\n""" % (pkg.name,
-                                     pkg.epoch, pkg.ver, pkg.release, pkg.arch)
-        thisdeltaend = u"""  </newpackage>\n"""
-
         # generate a list of all the potential 'old rpms'
-        opl = self._get_old_package_list()
+        opd = self._get_old_package_dict() # yes I could make this a property but <shrug>
+        
+        # for each of our old_package_paths - make a drpm from the newest of that pkg
         # get list of potential candidates which are likely to match
-        pot_cand = []
-        for fn in opl:
-            if os.path.basename(fn).startswith(pkg.name):
-                pot_cand.append(fn)
-        
-        candidates = []
-        for fn in pot_cand:
-            try:
-                thispo = yumbased.CreateRepoPackage(self.ts, fn)
-            except Errors.MiscError, e:
-                continue
-            if (thispo.name, thispo.arch) != (pkg.name, pkg.arch):
-                # not the same, doesn't matter
-                continue
-            if thispo == pkg: #exactly the same, doesn't matter
-                continue
-            if thispo.EVR >= pkg.EVR: # greater or equal, doesn't matter
-                continue
-            candidates.append(thispo)
-            candidates.sort()
-            candidates.reverse()
-
-        drpm_results = u""
-        for delta_p in candidates[0:self.conf.num_deltas]:
-            #make drpm of pkg and delta_p
-            drpmfn = deltarpms.create_drpm(delta_p, pkg, self.conf.deltadir)
-
-            if drpmfn:
-                # TODO more sanity check the drpm for size, etc
-                # make xml of drpm
+        for d in self.conf.oldpackage_paths:
+            pot_cand = []
+            for fn in opd[d]:
+                if os.path.basename(fn).startswith(pkg.name):
+                    pot_cand.append(fn)
+            
+            candidates = []
+            for fn in pot_cand:
                 try:
-                    drpm_po = yumbased.CreateRepoPackage(self.ts, drpmfn)
+                    thispo = yumbased.CreateRepoPackage(self.ts, fn)
                 except Errors.MiscError, e:
-                    os.unlink(drpmfn)
                     continue
-                rel_drpmfn = drpmfn.replace(self.conf.outputdir, '')
-                if rel_drpmfn[0] == '/':
-                    rel_drpmfn = rel_drpmfn[1:]
-                if not self.conf.quiet:
-                    if self.conf.verbose:
-                        self.callback.log('created drpm from %s to %s: %s' % (
-                            delta_p, pkg, drpmfn))
+                if (thispo.name, thispo.arch) != (pkg.name, pkg.arch):
+                    # not the same, doesn't matter
+                    continue
+                if thispo == pkg: #exactly the same, doesn't matter
+                    continue
+                if thispo.EVR >= pkg.EVR: # greater or equal, doesn't matter
+                    continue
+                candidates.append(thispo)
+                candidates.sort()
+                candidates.reverse()
 
-                drpm = deltarpms.DeltaRPMPackage(drpm_po, self.conf.outputdir, rel_drpmfn)
-                drpm_results += to_unicode(drpm.xml_dump_metadata())
-        
-        if drpm_results:
-            results = thisdeltastart + drpm_results + thisdeltaend
-        
-        return results
+            for delta_p in candidates[0:self.conf.num_deltas]:
+                #make drpm of pkg and delta_p
+                drpmfn = deltarpms.create_drpm(delta_p, pkg, self.conf.deltadir)
+                self.callback.log('created drpm from %s to %s: %s' % (
+                        delta_p, pkg, drpmfn))
 
-    def _get_old_package_list(self):
-        if hasattr(self, '_old_package_list'):
-            return self._old_package_list
+    def _get_old_package_dict(self):
+        if hasattr(self, '_old_package_dict'):
+            return self._old_package_dict
         
+        self._old_package_dict = {}
         opl = []
         for d in self.conf.oldpackage_paths:
             for f in self.getFileList(d, 'rpm'):
-                opl.append(d + '/' + f)
+                if not self._old_package_dict.has_key(d):
+                    self._old_package_dict[d] = []
+                self._old_package_dict[d].append(d + '/' + f)
                     
-        self._old_package_list = opl
-        return self._old_package_list
+        return self._old_package_dict
+
+    def generate_delta_xml(self):
+        """take the delta rpm output dir, process all the drpm files
+           produce the text output for the presto/delta xml metadata"""
+        # go through the drpm dir
+        # for each file -store the drpm info in a dict based on its target. Just
+        # appending the output. for each of the keys in the dict, return
+        # the tag for the target + each of the drpm infos + closure for the target
+        # tag
+        targets = {}
+        result = u''
+        for drpm_fn in self.getFileList(self.conf.deltadir, 'drpm'):
+            drpm_rel_fn = os.path.normpath(self.conf.delta_relative + '/' + drpm_fn) # this is annoying
+            drpm_po = yumbased.CreateRepoPackage(self.ts, self.conf.deltadir + '/' + drpm_fn)
+            
+            drpm = deltarpms.DeltaRPMPackage(drpm_po, self.conf.outputdir, drpm_rel_fn)
+            if not targets.has_key(drpm_po.pkgtup):
+                targets[drpm_po.pkgtup] = u''
+            targets[drpm_po.pkgtup] += drpm.xml_dump_metadata()
+        
+        for (n,e,v,r,a) in targets.keys():
+            result += """  <newpackage name="%s" epoch="%s" version="%s" release="%s" arch="%s"\n""" % (
+                    n,e,v,r,a)
+            for src in targets[(n,e,v,r,a)]:
+                result += src
+            result += """   </newpackage>\n"""
+
+        return result
 
     def addArbitraryMetadata(self, mdfile, mdtype, xml_node, compress=True, 
                                              compress_type='gzip', attribs={}):
