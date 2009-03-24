@@ -1,3 +1,113 @@
+2009-03-24  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo.spec, createrepo/__init__.py: 0.9.7 require yum 3.2.22
+
+
+2009-02-09  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/deltarpms.py: when we process
+	the rpms only do the drpm creation. after we're done take the drpms
+	and generate the metadata from there
+
+2009-02-03  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/merge.py: some fixes and to make it work on
+	rhel5/python2.4
+
+2009-02-03  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: and one more mistake
+
+2009-02-03  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: correct tabbing so createrepo works when
+	you're NOT using deltas
+
+2009-01-29  Seth Vidal <skvidal@fedoraproject.org>
+
+	* genpkgmetadata.py: add --num-deltas option
+
+2009-01-29  Seth Vidal <skvidal@fedoraproject.org>
+
+	Merge branch 'master' of
+	ssh://createrepo.baseurl.org/srv/projects/createrepo/git/createrepo
+	* 'master' of
+	ssh://createrepo.baseurl.org/srv/projects/createrepo/git/createrepo:
+	Add missing documentation on --checksum and --profile
+
+2009-01-29  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/deltarpms.py,
+	genpkgmetadata.py: --deltas, enable the creation and
+	metadata-creation for presto/deltarpms
+
+2009-01-27  James Antill <james@and.org>
+
+	Merge branch 'master' of
+	ssh://yum.baseurl.org/srv/projects/createrepo/git/createrepo  *
+	'master' of
+	ssh://yum.baseurl.org/srv/projects/createrepo/git/createrepo:   make
+	modifyrepo behave with sha256 as the default checksum
+
+2009-01-27  James Antill <james@and.org>
+
+	* docs/createrepo.8: Add missing documentation on --checksum and
+	--profile
+
+2009-01-27  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/utils.py, modifyrepo.py: make modifyrepo behave with
+	sha256 as the default checksum
+
+2009-01-26  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/yumbased.py, genpkgmetadata.py: 
+	make sha256 the default checksum type everywhere
+
+2009-01-23  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/merge.py: add init options to specify your own yumbase
+	object, mdconf object md generator class
+
+2009-01-22  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/utils.py: make sure we keep working on python 2.4 :(
+
+2009-01-22  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/utils.py: use gzip.name not gzip.filename to avoid
+	python 2.6 deprecation warnings
+
+2009-01-22  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/yumbased.py: get rid of the md5 badness - use yum's
+	Checksum class so we don't have to deal with python 2.4 vs 2.6isms
+
+2009-01-22  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, genpkgmetadata.py: add --profile option to
+	the cli interface so profile info is outputted only when it is used.
+
+
+2009-01-19  James Antill <james@and.org>
+
+	* createrepo/yumbased.py: Use correct cachedir after rename
+
+2008-12-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, genpkgmetadata.py: allow alternative path
+	for --update via --update-md-path, So your old repodata does not
+	have to be in the path you want to look through.
+
+2008-10-28  Seth Vidal <skvidal@fedoraproject.org>
+
+	* modifyrepo.py: try/excepts on modifyrepo so we don't smack the
+	user with a traceback
+
+2008-10-28  Seth Vidal <skvidal@fedoraproject.org>
+
+	* ChangeLog: remerge changelog
+
 2008-10-28  Seth Vidal <skvidal@fedoraproject.org>
 
 	* bin/Makefile: minor changes to the make file so that it will make
