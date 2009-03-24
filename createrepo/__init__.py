@@ -46,7 +46,7 @@ except ImportError:
 from utils import _gzipOpen, bzipFile, checkAndMakeDir, GzipFile, checksum_and_rename
 import deltarpms
 
-__version__ = '0.9.6'
+__version__ = '0.9.7'
 
 
 class MetaDataConfig(object):
