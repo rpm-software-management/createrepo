@@ -88,7 +88,7 @@ class RepoMetadata:
         open_csum = checksum(self.checksum_type, metadata)
 
 
-        csum, destmd = checksum_and_rename(destmd)
+        csum, destmd = checksum_and_rename(destmd, self.checksum_type)
         base_destmd = os.path.basename(destmd)
         
 

@@ -695,7 +695,7 @@ class MetaDataGenerator:
 
         
         if self.conf.unique_md_filenames:
-            (csum, outfn) = checksum_and_rename(outfn)
+            (csum, outfn) = checksum_and_rename(outfn, self.conf.sumtype)
             sfile = os.path.basename(outfn)
         else:
             if compress:
