@@ -616,7 +616,8 @@ class MetaDataGenerator:
             for delta_p in candidates[0:self.conf.num_deltas]:
                 #make drpm of pkg and delta_p
                 drpmfn = deltarpms.create_drpm(delta_p, pkg, self.conf.deltadir)
-                self.callback.log('created drpm from %s to %s: %s' % (
+                if not self.conf.quiet:
+                    self.callback.log('created drpm from %s to %s: %s' % (
                         delta_p, pkg, drpmfn))
 
     def _get_old_package_dict(self):
