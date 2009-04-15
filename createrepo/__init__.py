@@ -653,10 +653,10 @@ class MetaDataGenerator:
                 targets[drpm_po.pkgtup] = u''
             targets[drpm_po.pkgtup] += drpm.xml_dump_metadata()
         
-        for (n,e,v,r,a) in targets.keys():
+        for (n,a,e,v,r) in targets.keys():
             result += """  <newpackage name="%s" epoch="%s" version="%s" release="%s" arch="%s">\n""" % (
                     n,e,v,r,a)
-            for src in targets[(n,e,v,r,a)]:
+            for src in targets[(n,a,e,v,r)]:
                 result += src
             result += """   </newpackage>\n"""
 
