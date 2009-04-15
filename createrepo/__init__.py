@@ -760,7 +760,7 @@ class MetaDataGenerator:
             repoid='garbageid'
         
         if self.conf.deltas:
-            workfiles.append((self.conf.deltafile, 'deltainfo'))
+            workfiles.append((self.conf.deltafile, 'prestodelta'))
         if self.conf.database:
             if not self.conf.quiet: self.callback.log('Generating sqlite DBs')
             try:
@@ -793,54 +793,54 @@ class MetaDataGenerator:
                     
                 elif ftype == 'other':
                     rp.getOtherdata(complete_path, csum)
+        
+                if ftype in ['primary', 'filelists', 'other']:                
+                    tmp_result_name = '%s.xml.gz.sqlite' % ftype
+                    tmp_result_path = os.path.join(repopath, tmp_result_name)
+                    good_name = '%s.sqlite' % ftype
+                    resultpath = os.path.join(repopath, good_name)
                 
-                
-                
-                tmp_result_name = '%s.xml.gz.sqlite' % ftype
-                tmp_result_path = os.path.join(repopath, tmp_result_name)
-                good_name = '%s.sqlite' % ftype
-                resultpath = os.path.join(repopath, good_name)
-                
-                # rename from silly name to not silly name
-                os.rename(tmp_result_path, resultpath)
-                compressed_name = '%s.bz2' % good_name
-                result_compressed = os.path.join(repopath, compressed_name)
-                db_csums[ftype] = misc.checksum(sumtype, resultpath)
+                    # rename from silly name to not silly name
+                    os.rename(tmp_result_path, resultpath)
+                    compressed_name = '%s.bz2' % good_name
+                    result_compressed = os.path.join(repopath, compressed_name)
+                    db_csums[ftype] = misc.checksum(sumtype, resultpath)
 
-                # compress the files
-                bzipFile(resultpath, result_compressed)
-                # csum the compressed file
-                db_compressed_sums[ftype] = misc.checksum(sumtype, result_compressed)
-                # remove the uncompressed file
-                os.unlink(resultpath)
+                    # compress the files
+                    bzipFile(resultpath, result_compressed)
+                    # csum the compressed file
+                    db_compressed_sums[ftype] = misc.checksum(sumtype, result_compressed)
+                    # remove the uncompressed file
+                    os.unlink(resultpath)
 
-                if self.conf.unique_md_filenames:
-                    csum_compressed_name = '%s-%s.bz2' % (db_compressed_sums[ftype], good_name)
-                    csum_result_compressed =  os.path.join(repopath, csum_compressed_name)
-                    os.rename(result_compressed, csum_result_compressed)
-                    result_compressed = csum_result_compressed
-                    compressed_name = csum_compressed_name
+                    if self.conf.unique_md_filenames:
+                        csum_compressed_name = '%s-%s.bz2' % (db_compressed_sums[ftype], good_name)
+                        csum_result_compressed =  os.path.join(repopath, csum_compressed_name)
+                        os.rename(result_compressed, csum_result_compressed)
+                        result_compressed = csum_result_compressed
+                        compressed_name = csum_compressed_name
                     
-                # timestamp the compressed file
-                db_timestamp = os.stat(result_compressed)[8]
+                    # timestamp the compressed file
+                    db_timestamp = os.stat(result_compressed)[8]
                 
-                # add this data as a section to the repomdxml
-                db_data_type = '%s_db' % ftype
-                data = reporoot.newChild(None, 'data', None)
-                data.newProp('type', db_data_type)
-                location = data.newChild(None, 'location', None)
-                if self.conf.baseurl is not None:
-                    location.newProp('xml:base', self.conf.baseurl)
+                    # add this data as a section to the repomdxml
+                    db_data_type = '%s_db' % ftype
+                    data = reporoot.newChild(None, 'data', None)
+                    data.newProp('type', db_data_type)
+                    location = data.newChild(None, 'location', None)
                 
-                location.newProp('href', os.path.join(self.conf.finaldir, compressed_name))
-                checksum = data.newChild(None, 'checksum', db_compressed_sums[ftype])
-                checksum.newProp('type', sumtype)
-                db_tstamp = data.newChild(None, 'timestamp', str(db_timestamp))
-                unchecksum = data.newChild(None, 'open-checksum', db_csums[ftype])
-                unchecksum.newProp('type', sumtype)
-                database_version = data.newChild(None, 'database_version', dbversion)
-                if self.conf.verbose:
-                    self.callback.log("Ending %s db creation: %s" % (ftype, time.ctime()))
+                    if self.conf.baseurl is not None:
+                        location.newProp('xml:base', self.conf.baseurl)
+                
+                    location.newProp('href', os.path.join(self.conf.finaldir, compressed_name))
+                    checksum = data.newChild(None, 'checksum', db_compressed_sums[ftype])
+                    checksum.newProp('type', sumtype)
+                    db_tstamp = data.newChild(None, 'timestamp', str(db_timestamp))
+                    unchecksum = data.newChild(None, 'open-checksum', db_csums[ftype])
+                    unchecksum.newProp('type', sumtype)
+                    database_version = data.newChild(None, 'database_version', dbversion)
+                    if self.conf.verbose:
+                        self.callback.log("Ending %s db creation: %s" % (ftype, time.ctime()))
                 
 
                 
