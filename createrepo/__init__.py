@@ -24,6 +24,7 @@ import shutil
 from  bz2 import BZ2File
 from urlgrabber import grabber
 import tempfile
+import stat
 
 from yum import misc, Errors, to_unicode
 from yum.sqlutils import executeSQL
@@ -71,6 +72,7 @@ class MetaDataConfig(object):
         self.oldpackage_paths = [] # where to look for the old packages - 
         self.deltafile = 'prestodelta.xml.gz'
         self.num_deltas = 1 # number of older versions to delta (max)
+        self.max_delta_rpm_size = 100000000
         self.update_md_path = None 
         self.skip_stat = False
         self.database = False
@@ -584,6 +586,13 @@ class MetaDataGenerator:
         """makes the drpms, if possible, for this package object.
            returns the presto/delta xml metadata as a string
         """
+        
+        # duck and cover if the pkg.size is > whatever
+        if int(pkg.size) > self.conf.max_delta_rpm_size:
+            if not self.conf.quiet: 
+                self.callback.log("Skipping %s package " \
+                                    "that is > max_delta_rpm_size"  % pkg)
+            return
 
         # generate a list of all the potential 'old rpms'
         opd = self._get_old_package_dict() # yes I could make this a property but <shrug>
@@ -628,6 +637,11 @@ class MetaDataGenerator:
         opl = []
         for d in self.conf.oldpackage_paths:
             for f in self.getFileList(d, 'rpm'):
+                fp = d + '/' + f
+                if int(os.stat(fp)[stat.ST_SIZE]) > self.conf.max_delta_rpm_size:
+                    self.callback.log("Skipping %s package " \
+                                      "that is > max_delta_rpm_size"  % pkg)
+                    continue
                 if not self._old_package_dict.has_key(d):
                     self._old_package_dict[d] = []
                 self._old_package_dict[d].append(d + '/' + f)
