@@ -30,9 +30,11 @@ import utils
 import tempfile
 
 class CreateRepoPackage(YumLocalPackage):
-    def __init__(self, ts, package):
+    def __init__(self, ts, package, sumtype=None):
         YumLocalPackage.__init__(self, ts, package)
-        
+        if sumtype:
+            self.checksum_type = sumtype
+
     def _do_checksum(self):
         """return a checksum for a package:
            - check if the checksum cache is enabled

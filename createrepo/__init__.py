@@ -438,7 +438,7 @@ class MetaDataGenerator:
             rpmfile = '%s/%s' % (pkgpath, rpmfile)
             
         try:
-            po = yumbased.CreateRepoPackage(self.ts, rpmfile)
+            po = yumbased.CreateRepoPackage(self.ts, rpmfile, sumtype=self.conf.sumtype)
         except Errors.MiscError, e:
             raise MDError, "Unable to open package: %s" % e
         # external info we need
@@ -608,7 +608,7 @@ class MetaDataGenerator:
             candidates = []
             for fn in pot_cand:
                 try:
-                    thispo = yumbased.CreateRepoPackage(self.ts, fn)
+                    thispo = yumbased.CreateRepoPackage(self.ts, fn, sumtype=self.conf.sumtype)
                 except Errors.MiscError, e:
                     continue
                 if (thispo.name, thispo.arch) != (pkg.name, pkg.arch):
@@ -660,7 +660,8 @@ class MetaDataGenerator:
         result = u''
         for drpm_fn in self.getFileList(self.conf.deltadir, 'drpm'):
             drpm_rel_fn = os.path.normpath(self.conf.delta_relative + '/' + drpm_fn) # this is annoying
-            drpm_po = yumbased.CreateRepoPackage(self.ts, self.conf.deltadir + '/' + drpm_fn)
+            drpm_po = yumbased.CreateRepoPackage(self.ts, 
+                 self.conf.deltadir + '/' + drpm_fn, sumtype=self.conf.sumtype)
             
             drpm = deltarpms.DeltaRPMPackage(drpm_po, self.conf.outputdir, drpm_rel_fn)
             if not targets.has_key(drpm_po.pkgtup):
