@@ -60,7 +60,7 @@ class CreateRepoPackage(YumLocalPackage):
         if type(self.hdr[rpm.RPMTAG_HDRID]) is not types.NoneType:
             t.append("".join(self.hdr[rpm.RPMTAG_HDRID]))
 
-        kcsum = misc.Checksums()
+        kcsum = misc.Checksums(checksums=[self.checksum_type])
         kcsum.update("".join(t))
         key = kcsum.hexdigest()
                                                 
