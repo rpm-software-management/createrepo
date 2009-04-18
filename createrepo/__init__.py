@@ -640,7 +640,7 @@ class MetaDataGenerator:
                 fp = d + '/' + f
                 if int(os.stat(fp)[stat.ST_SIZE]) > self.conf.max_delta_rpm_size:
                     self.callback.log("Skipping %s package " \
-                                      "that is > max_delta_rpm_size"  % pkg)
+                                      "that is > max_delta_rpm_size"  % f)
                     continue
                 if not self._old_package_dict.has_key(d):
                     self._old_package_dict[d] = []
