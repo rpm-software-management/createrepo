@@ -76,25 +76,25 @@ def returnFD(filename):
         raise MDError, "Error opening file"
     return fdno
 
-def checkAndMakeDir(dir):
+def checkAndMakeDir(directory):
     """
-     check out the dir and make it, if possible, return 1 if done, else return 0
+     check out the directory and make it, if possible, return 1 if done, else return 0
     """
-    if os.path.exists(dir):
-        if not os.path.isdir(dir):
-            #errorprint(_('%s is not a dir') % dir)
+    if os.path.exists(directory):
+        if not os.path.isdir(directory):
+            #errorprint(_('%s is not a dir') % directory)
             result = False
         else:
-            if not os.access(dir, os.W_OK):
-                #errorprint(_('%s is not writable') % dir)
+            if not os.access(directory, os.W_OK):
+                #errorprint(_('%s is not writable') % directory)
                 result = False
             else:
                 result = True
     else:
         try:
-            os.mkdir(dir)
+            os.mkdir(directory)
         except OSError, e:
-            #errorprint(_('Error creating dir %s: %s') % (dir, e))
+            #errorprint(_('Error creating dir %s: %s') % (directory, e))
             result = False
         else:
             result = True

@@ -297,14 +297,14 @@ class MetaDataGenerator:
 
     def trimRpms(self, files):
         badrpms = []
-        for file in files:
+        for rpm_file in files:
             for glob in self.conf.excludes:
-                if fnmatch.fnmatch(file, glob):
-                    if file not in badrpms:
-                        badrpms.append(file)
-        for file in badrpms:
-            if file in files:
-                files.remove(file)
+                if fnmatch.fnmatch(rpm_file, glob):
+                    if rpm_file not in badrpms:
+                        badrpms.append(rpm_file)
+        for rpm_file in badrpms:
+            if rpm_file in files:
+                files.remove(rpm_file)
         return files
 
     def _setup_old_metadata_lookup(self):
@@ -785,8 +785,8 @@ class MetaDataGenerator:
                 dbversion = '9'
             rp = sqlitecachec.RepodataParserSqlite(repopath, repoid, None)
 
-        for (file, ftype) in workfiles:
-            complete_path = os.path.join(repopath, file)
+        for (rpm_file, ftype) in workfiles:
+            complete_path = os.path.join(repopath, rpm_file)
             
             zfo = _gzipOpen(complete_path)
             uncsum = misc.checksum(sumtype, zfo)
@@ -873,16 +873,16 @@ class MetaDataGenerator:
                 location.newProp('xml:base', self.conf.baseurl)
             if self.conf.unique_md_filenames:
                 res_file = '%s-%s.xml.gz' % (csum, ftype)
-                orig_file = os.path.join(repopath, file)
+                orig_file = os.path.join(repopath, rpm_file)
                 dest_file = os.path.join(repopath, res_file)
                 os.rename(orig_file, dest_file)
                 
             else:
-                res_file = file
+                res_file = rpm_file
 
-            file = res_file 
+            rpm_file = res_file 
             
-            location.newProp('href', os.path.join(self.conf.finaldir, file))
+            location.newProp('href', os.path.join(self.conf.finaldir, rpm_file))
 
 
         if not self.conf.quiet and self.conf.database: self.callback.log('Sqlite DBs complete')        
