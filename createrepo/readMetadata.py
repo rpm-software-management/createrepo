@@ -210,10 +210,10 @@ if __name__ == "__main__":
             
     idx = MetadataIndex(cwd, opts)
     for fn in idx.basenodes.keys():
-       a,b,c, = idx.getNodes(fn)
-       a.serialize()
-       b.serialize()
-       c.serialize()
-       idx.freeNodes(fn)
+        a,b,c, = idx.getNodes(fn)
+        a.serialize()
+        b.serialize()
+        c.serialize()
+        idx.freeNodes(fn)
 
                             
