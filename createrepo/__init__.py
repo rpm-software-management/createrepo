@@ -16,7 +16,6 @@
 import os
 import sys
 import libxml2
-import string
 import fnmatch
 import time
 import yumbased
@@ -1030,7 +1029,7 @@ class SplitMetaDataGenerator(MetaDataGenerator):
             for fn in names:
                 if os.path.isdir(fn):
                     continue
-                elif string.lower(fn[-extlen:]) == '%s' % (ext):
+                elif fn[-extlen:].lower() == '%s' % (ext):
                     reldir = os.path.basename(dirname)
                     if reldir == os.path.basename(directory):
                         reldir = ""
