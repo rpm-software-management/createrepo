@@ -18,14 +18,10 @@
 import os
 import rpm
 import types
-import re
 
 from yum.packages import YumLocalPackage
 from yum.Errors import *
 from yum import misc
-from yum.sqlutils import executeSQL
-from rpmUtils.transaction import initReadOnlyTransaction
-from rpmUtils.miscutils import flagToString, stringToVersion
 import utils
 import tempfile
 

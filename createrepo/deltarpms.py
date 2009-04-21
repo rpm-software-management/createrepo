@@ -19,8 +19,7 @@ import os.path
 import commands
 from yum import misc
 import gzip
-import yumbased
-from utils import _, errorprint, MDError
+from utils import MDError
 
 class DeltaRPMPackage:
     """each drpm is one object, you pass it a drpm file
