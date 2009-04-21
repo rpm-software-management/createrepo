@@ -95,6 +95,12 @@ distclean: clean
 	  $(MAKE) -C $$subdir distclean VERSION=$(VERSION) PKGNAME=$(PKGNAME); \
 	done
 
+pylint:
+	@pylint --rcfile=test/createrepo-pylintrc *.py createrepo
+
+pylint-short:
+	@pylint -r n --rcfile=test/createrepo-pylintrc *.py createrepo
+
 mostlyclean:
 	$(MAKE) clean
 
