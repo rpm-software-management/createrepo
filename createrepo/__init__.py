@@ -499,7 +499,8 @@ class MetaDataGenerator:
                         self.callback.errorlog("\nError %s: %s\n" % (pkg, e))
                         continue
                     # we can use deltas:
-                    self._do_delta_rpm_package(po)
+                    if self.conf.deltas:
+                        self._do_delta_rpm_package(po)
 
                 else:
                     po = pkg
