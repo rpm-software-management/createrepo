@@ -16,7 +16,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # Copyright 2004 Duke University
-# Portions Copyright 2007  Red Hat, Inc - written by seth vidal skvidal at fedoraproject.org
+# Portions Copyright 2009  Red Hat, Inc - 
+# written by seth vidal skvidal at fedoraproject.org
 
 import os
 import sys
@@ -29,7 +30,7 @@ from createrepo import MDError
 from createrepo.utils import errorprint, _
 
 
-def parseArgs(args, conf):
+def parse_args(args, conf):
     """
        Parse the command line args. return a config object.
        Sanity check all the things being passed in.
@@ -38,67 +39,69 @@ def parseArgs(args, conf):
     parser = OptionParser(version = "createrepo %s" % createrepo.__version__)
     # query options
     parser.add_option("-q", "--quiet", default=False, action="store_true",
-                      help="output nothing except for serious errors")
+        help="output nothing except for serious errors")
     parser.add_option("-v", "--verbose", default=False, action="store_true",
-                      help="output more debugging info.")
+        help="output more debugging info.")
     parser.add_option("--profile", default=False, action="store_true",
-                      help="output timing/profile info.")
+        help="output timing/profile info.")
     parser.add_option("-x", "--excludes", default=[], action="append",
-                      help="files to exclude")
+        help="files to exclude")
     parser.add_option("--basedir", default=os.getcwd(),
-                      help="basedir for path to directories")                      
+        help="basedir for path to directories")
     parser.add_option("-u", "--baseurl", default=None,
-                      help="baseurl to append on all files")
+        help="baseurl to append on all files")
     parser.add_option("-g", "--groupfile", default=None,
-                      help="path to groupfile to include in metadata")
+        help="path to groupfile to include in metadata")
     parser.add_option("-s", "--checksum", default="sha256", dest='sumtype',
-                      help="specify the checksum type to use")
+        help="specify the checksum type to use")
     parser.add_option("-p", "--pretty", default=False, action="store_true",
-                      help="make sure all xml generated is formatted")
+        help="make sure all xml generated is formatted")
     parser.add_option("-c", "--cachedir", default=None,
-                      help="set path to cache dir")
+        help="set path to cache dir")
     parser.add_option("-C", "--checkts", default=False, action="store_true",
-      help="check timestamps on files vs the metadata to see if we need to update")
+        help="check timestamps on files vs the metadata to see" \
+           "if we need to update")
     parser.add_option("-d", "--database", default=False, action="store_true",
-                      help="create sqlite database files")
+        help="create sqlite database files")
     # temporarily disabled
-    #parser.add_option("--database-only", default=False, action="store_true", dest='database_only',
-    #                  help="Only make the sqlite databases - does not work with --update, yet")
+    #parser.add_option("--database-only", default=False, action="store_true", 
+    #  dest='database_only',
+    #  help="Only make the sqlite databases - does not work with --update, yet")
     parser.add_option("--update", default=False, action="store_true",
-                      help="use the existing repodata to speed up creation of new")
+        help="use the existing repodata to speed up creation of new")
     parser.add_option("--update-md-path", default=None, dest='update_md_path',
-                      help="use the existing repodata  for --update from this path")
-    parser.add_option("--skip-stat", dest='skip_stat', default=False, action="store_true",
-                      help="skip the stat() call on a --update, assumes if the file" \
-                            "name is the same then the file is still the same" \
-                            "(only use this if you're fairly trusting or gullible)" )
+        help="use the existing repodata  for --update from this path")
+    parser.add_option("--skip-stat", dest='skip_stat', default=False, 
+        help="skip the stat() call on a --update, assumes if the file" \
+             "name is the same then the file is still the same" \
+             "(only use this if you're fairly trusting or gullible)",
+        action="store_true")
     parser.add_option("--split", default=False, action="store_true",
-                      help="generate split media")
+        help="generate split media")
     parser.add_option("-i", "--pkglist", default=None, 
-        help="use only the files listed in this file from the directory specified")
+        help="use only the files listed in this file from the" \
+             "directory specified")
     parser.add_option("-o", "--outputdir", default=None,
-             help="<dir> = optional directory to output to")
+        help="<dir> = optional directory to output to")
     parser.add_option("-S", "--skip-symlinks", dest="skip_symlinks",
-                      default=False, action="store_true",
-                      help="ignore symlinks of packages")
+        default=False, action="store_true", help="ignore symlinks of packages")
     parser.add_option("--changelog-limit", dest="changelog_limit",
-                      default=None, help="only import the last N changelog entries")
+        default=None, help="only import the last N changelog entries")
     parser.add_option("--unique-md-filenames", dest="unique_md_filenames",
-                      default=False, action="store_true",
-                      help="include the file's checksum in the filename, helps" \
-                           "with proxies")
+        help="include the file's checksum in the filename,helps with proxies",
+        default=False, action="store_true")
     parser.add_option("--distro", default=[], action="append",
-                      help="distro tag and optional cpeid: --distro 'cpeid,textname'")
-    parser.add_option("--content", default=[], dest='content_tags', action="append",
-                      help="tags for the content in the repository")
+        help="distro tag and optional cpeid: --distro" "'cpeid,textname'")
+    parser.add_option("--content", default=[], dest='content_tags', 
+        action="append", help="tags for the content in the repository")
     parser.add_option("--revision", default=None,
-                      help="user-specified revision for this repository")
+        help="user-specified revision for this repository")
     parser.add_option("--deltas", default=False, action="store_true",
-                      help="create delta rpms and metadata")
+        help="create delta rpms and metadata")
     parser.add_option("--oldpackagedirs", default=[], dest="oldpackage_paths", 
-                      action="append", help="paths to look for older pkgs to delta against")
+        action="append", help="paths to look for older pkgs to delta against")
     parser.add_option("--num-deltas", default=1, dest='num_deltas', type='int',
-                      help="the number of older versions to make deltas against")
+        help="the number of older versions to make deltas against")
 
 
     (opts, argsleft) = parser.parse_args(args)
@@ -120,11 +123,12 @@ def parseArgs(args, conf):
         sys.exit(1)
 
 
-    # let's switch over to using the conf object - put all the opts options into it
+    # let's switch over to using the conf object - put all the opts into it
     for opt in parser.option_list:
         if opt.dest is None: # this is fairly silly
             continue
-        if getattr(opts, opt.dest) is None: # if it's not set, take the default from the base class
+        # if it's not set, take the default from the base class
+        if getattr(opts, opt.dest) is None:
             continue
         setattr(conf, opt.dest, getattr(opts, opt.dest))
     
@@ -136,7 +140,7 @@ def parseArgs(args, conf):
 
     for spec in opts.distro:
         if spec.find(',') == -1:
-            conf.distro_tags.append((None,spec))
+            conf.distro_tags.append((None, spec))
         else:
             splitspec = spec.split(',')
             conf.distro_tags.append((splitspec[0], splitspec[1]))
@@ -159,31 +163,38 @@ def parseArgs(args, conf):
     return conf
 
 class MDCallBack(object):
+    """cli callback object for createrepo"""
     def errorlog(self, thing):
+        """error log output"""
         print >> sys.stderr, thing
         
     def log(self, thing):
+        """log output"""
         print thing
     
     def progress(self, item, current, total):
+        """progress bar"""
         beg = "%*d/%d - " % (len(str(total)), current, total)
         left = 80 - len(beg)
         sys.stdout.write("\r%s%-*.*s" % (beg, left, left, item))
         sys.stdout.flush()
         
 def main(args):
+    """createrepo from cli main flow"""
     start_st = time.time()
     conf = createrepo.MetaDataConfig()
-    conf = parseArgs(args, conf)
+    conf = parse_args(args, conf)
     if conf.profile:
         print ('start time: %0.3f' % (time.time() - start_st))
 
     mid_st = time.time()       
     try:
         if conf.split:
-            mdgen = createrepo.SplitMetaDataGenerator(config_obj=conf, callback=MDCallBack())
+            mdgen = createrepo.SplitMetaDataGenerator(config_obj=conf, 
+                                                      callback=MDCallBack())
         else:
-            mdgen = createrepo.MetaDataGenerator(config_obj=conf, callback=MDCallBack())
+            mdgen = createrepo.MetaDataGenerator(config_obj=conf, 
+                                                 callback=MDCallBack())
             if mdgen.checkTimeStamps():
                 if mdgen.conf.verbose:
                     print _('repo is up to date')
@@ -200,14 +211,14 @@ def main(args):
         mdgen.doRepoMetadata()
         if conf.profile:
             print ('rm time: %0.3f' % (time.time() - rm_st))
-        fm_st = time.time()       
+        fm_st = time.time()
         mdgen.doFinalMove()
         if conf.profile:
             print ('fm time: %0.3f' % (time.time() - fm_st))
         
         
-    except MDError, e:
-        errorprint(_('%s') % e)
+    except MDError, errormsg:
+        errorprint(_('%s') % errormsg)
         sys.exit(1)
 
 
