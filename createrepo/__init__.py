@@ -11,7 +11,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-# Copyright 2007  Red Hat, Inc - written by seth vidal skvidal at fedoraproject.org
+# Copyright 2009  Red Hat, Inc - 
+# written by seth vidal skvidal at fedoraproject.org
 
 import os
 import sys
@@ -43,7 +44,8 @@ try:
 except ImportError:
     pass
 
-from utils import _gzipOpen, bzipFile, checkAndMakeDir, GzipFile, checksum_and_rename
+from utils import _gzipOpen, bzipFile, checkAndMakeDir, GzipFile, \
+                  checksum_and_rename
 import deltarpms
 
 __version__ = '0.9.7'
@@ -66,7 +68,8 @@ class MetaDataConfig(object):
         self.split = False        
         self.update = False
         self.deltas = False # do the deltarpm thing
-        self.deltadir = None # where to put the .drpms - defaults to 'drpms' inside 'repodata'
+        # where to put the .drpms - defaults to 'drpms' inside 'repodata'
+        self.deltadir = None 
         self.delta_relative = 'drpms/'
         self.oldpackage_paths = [] # where to look for the old packages - 
         self.deltafile = 'prestodelta.xml.gz'
@@ -154,10 +157,12 @@ class MetaDataGenerator:
             self.conf.basedir = os.path.realpath(self.conf.basedir)
             self.conf.relative_dir = self.conf.directory
 
-        self.package_dir = os.path.join(self.conf.basedir, self.conf.relative_dir)
+        self.package_dir = os.path.join(self.conf.basedir, 
+                                        self.conf.relative_dir)
         
         if not self.conf.outputdir:
-            self.conf.outputdir = os.path.join(self.conf.basedir, self.conf.relative_dir)
+            self.conf.outputdir = os.path.join(self.conf.basedir, 
+                                               self.conf.relative_dir)
 
     def _test_setup_dirs(self):
         # start the sanity/stupidity checks
@@ -188,7 +193,8 @@ class MetaDataGenerator:
             raise MDError, _('Cannot create/verify %s') % temp_final
 
         if self.conf.deltas:
-            temp_delta = os.path.join(self.conf.outputdir, self.conf.delta_relative)
+            temp_delta = os.path.join(self.conf.outputdir, 
+                                      self.conf.delta_relative)
             if not checkAndMakeDir(temp_delta):
                 raise MDError, _('Cannot create/verify %s') % temp_delta
             self.conf.deltadir = temp_delta
@@ -203,7 +209,8 @@ class MetaDataGenerator:
             direcs.append('deltadir')
 
         for direc in direcs:
-            filepath = os.path.join(self.conf.outputdir, getattr(self.conf, direc))
+            filepath = os.path.join(self.conf.outputdir, getattr(self.conf, 
+                                                                 direc))
             if os.path.exists(filepath):
                 if not os.access(filepath, os.W_OK):
                     raise MDError, _('error in must be able to write to metadata dir:\n  -> %s') % filepath
@@ -228,7 +235,7 @@ class MetaDataGenerator:
         if self.conf.cachedir:
             a = self.conf.cachedir
             if not os.path.isabs(a):
-                a = os.path.join(self.conf.outputdir ,a)
+                a = os.path.join(self.conf.outputdir, a)
             if not checkAndMakeDir(a):
                 raise MDError, _('Error: cannot open/write to cache dir %s' % a)
 
@@ -265,7 +272,7 @@ class MetaDataGenerator:
                 elif fn[-extlen:].lower() == '%s' % (ext):
                     relativepath = dirname.replace(startdir, "", 1)
                     relativepath = relativepath.lstrip("/")
-                    filelist.append(os.path.join(relativepath,fn))
+                    filelist.append(os.path.join(relativepath, fn))
 
         filelist = []
         startdir = directory + '/'
@@ -277,8 +284,8 @@ class MetaDataGenerator:
         errorprint(thing)
         
     def checkTimeStamps(self):
-        """check the timestamp of our target dir. If it is not newer than the repodata
-           return False, else True"""
+        """check the timestamp of our target dir. If it is not newer than 
+           the repodata return False, else True"""
         if self.conf.checkts:
             dn = os.path.join(self.conf.basedir, self.conf.directory)
             files = self.getFileList(dn, '.rpm')
@@ -370,34 +377,40 @@ class MetaDataGenerator:
 
     def _setupPrimary(self):
         # setup the primary metadata file
-        primaryfilepath = os.path.join(self.conf.outputdir, self.conf.tempdir, self.conf.primaryfile)
+        primaryfilepath = os.path.join(self.conf.outputdir, self.conf.tempdir, 
+                                       self.conf.primaryfile)
         fo = _gzipOpen(primaryfilepath, 'w')
         fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        fo.write('<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="%s">' %
+        fo.write('<metadata xmlns="http://linux.duke.edu/metadata/common"' \
+            ' xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="%s">' %
                        self.pkgcount)
         return fo
 
     def _setupFilelists(self):
         # setup the filelist file
-        filelistpath = os.path.join(self.conf.outputdir, self.conf.tempdir, self.conf.filelistsfile)
+        filelistpath = os.path.join(self.conf.outputdir, self.conf.tempdir, 
+                                    self.conf.filelistsfile)
         fo = _gzipOpen(filelistpath, 'w')
         fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        fo.write('<filelists xmlns="http://linux.duke.edu/metadata/filelists" packages="%s">' %
-                       self.pkgcount)
+        fo.write('<filelists xmlns="http://linux.duke.edu/metadata/filelists"' \
+                 ' packages="%s">' % self.pkgcount)
         return fo
         
     def _setupOther(self):
         # setup the other file
-        otherfilepath = os.path.join(self.conf.outputdir, self.conf.tempdir, self.conf.otherfile)
+        otherfilepath = os.path.join(self.conf.outputdir, self.conf.tempdir, 
+                                     self.conf.otherfile)
         fo = _gzipOpen(otherfilepath, 'w')
         fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        fo.write('<otherdata xmlns="http://linux.duke.edu/metadata/other" packages="%s">' %
+        fo.write('<otherdata xmlns="http://linux.duke.edu/metadata/other"' \
+                 ' packages="%s">' %
                        self.pkgcount)
         return fo
 
     def _setupDelta(self):
         # setup the other file
-        deltafilepath = os.path.join(self.conf.outputdir, self.conf.tempdir, self.conf.deltafile)
+        deltafilepath = os.path.join(self.conf.outputdir, self.conf.tempdir, 
+                                     self.conf.deltafile)
         fo = _gzipOpen(deltafilepath, 'w')
         fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         fo.write('<prestodelta>\n')
@@ -406,7 +419,6 @@ class MetaDataGenerator:
 
     def read_in_package(self, rpmfile, pkgpath=None, reldir=None):
         """rpmfile == relative path to file from self.packge_dir"""
-        remote_package = False
         baseurl = self.conf.baseurl
 
         if not pkgpath:
@@ -416,7 +428,6 @@ class MetaDataGenerator:
             raise MDError, "Blank filename passed in, skipping"
             
         if rpmfile.find("://") != -1:
-            remote_package = True
             
             if not hasattr(self, 'tempdir'):
                 self.tempdir = tempfile.mkdtemp()
@@ -426,18 +437,20 @@ class MetaDataGenerator:
             reldir = self.tempdir       
             dest = os.path.join(self.tempdir, pkgname)
             if not self.conf.quiet:
-                self.callback.log('\nDownloading %s' % rpmfile)                        
+                self.callback.log('\nDownloading %s' % rpmfile)
             try:
                 rpmfile = self.grabber.urlgrab(rpmfile, dest)
             except grabber.URLGrabError, e:
-                raise MDError, "Unable to retrieve remote package %s: %s" %(rpmfile, e)
+                raise MDError, "Unable to retrieve remote package %s: %s" % (
+                                                                     rpmfile, e)
 
             
         else:
             rpmfile = '%s/%s' % (pkgpath, rpmfile)
             
         try:
-            po = yumbased.CreateRepoPackage(self.ts, rpmfile, sumtype=self.conf.sumtype)
+            po = yumbased.CreateRepoPackage(self.ts, rpmfile, 
+                                            sumtype=self.conf.sumtype)
         except Errors.MiscError, e:
             raise MDError, "Unable to open package: %s" % e
         # external info we need
@@ -450,7 +463,8 @@ class MetaDataGenerator:
                 self.rpmlib_reqs[r] = 1
            
         if po.checksum in (None, ""):
-            raise MDError, "No Package ID found for package %s, not going to add it" % po
+            raise MDError, "No Package ID found for package %s, not going to" \
+                           " add it" % po
         
         return po
 
@@ -460,9 +474,9 @@ class MetaDataGenerator:
             pkglist = self.conf.pkglist           
 
         if not pkgpath:
-            directory=self.conf.directory
+            directory = self.conf.directory
         else:
-            directory=pkgpath
+            directory = pkgpath
 
         for pkg in pkglist:
             self.current_pkg += 1
@@ -493,7 +507,8 @@ class MetaDataGenerator:
                 if not isinstance(pkg, YumAvailablePackage):
 
                     try:
-                        po = self.read_in_package(pkg, pkgpath=pkgpath, reldir=reldir)
+                        po = self.read_in_package(pkg, pkgpath=pkgpath, 
+                                                  reldir=reldir)
                     except MDError, e:
                         # need to say something here
                         self.callback.errorlog("\nError %s: %s\n" % (pkg, e))
@@ -515,12 +530,13 @@ class MetaDataGenerator:
                               clog_limit=self.conf.changelog_limit))
             else:
                 if self.conf.verbose:
-                    self.callback.log(_("Using data from old metadata for %s") % pkg)
+                    self.callback.log(_("Using data from old metadata for %s") 
+                                     % pkg)
                 (primarynode, filenode, othernode) = nodes    
 
-                for node, outfile in ((primarynode,self.primaryfile),
-                                      (filenode,self.flfile),
-                                      (othernode,self.otherfile)):
+                for node, outfile in ((primarynode, self.primaryfile),
+                                      (filenode, self.flfile),
+                                      (othernode, self.otherfile)):
                     if node is None:
                         break
                     output = node.serialize('UTF-8', self.conf.pretty)
@@ -528,17 +544,19 @@ class MetaDataGenerator:
                         outfile.write(output)
                     else:
                         if self.conf.verbose:
-                            self.callback.log(_("empty serialize on write to %s in %s") % (outfile, pkg))
+                            self.callback.log(_("empty serialize on write to" \
+                                                "%s in %s") % (outfile, pkg))
                     outfile.write('\n')
 
                 self.oldData.freeNodes(pkg)
                 #FIXME - if we're in update and we have deltas enabled
-                #        check the presto data for this pkg and write its info back out
-                #       to our deltafile
+                # check the presto data for this pkg and write its info back out
+                # to our deltafile
 
             if not self.conf.quiet:
                 if self.conf.verbose:
-                    self.callback.log('%d/%d - %s' % (self.current_pkg, self.pkgcount, pkg))
+                    self.callback.log('%d/%d - %s' % (self.current_pkg, 
+                                                      self.pkgcount, pkg))
                 else:
                     self.callback.progress(pkg, self.current_pkg, self.pkgcount)
 
@@ -595,9 +613,9 @@ class MetaDataGenerator:
             return
 
         # generate a list of all the potential 'old rpms'
-        opd = self._get_old_package_dict() # yes I could make this a property but <shrug>
-        
-        # for each of our old_package_paths - make a drpm from the newest of that pkg
+        opd = self._get_old_package_dict()
+        # for each of our old_package_paths - 
+        # make a drpm from the newest of that pkg
         # get list of potential candidates which are likely to match
         for d in self.conf.oldpackage_paths:
             pot_cand = []
@@ -608,7 +626,8 @@ class MetaDataGenerator:
             candidates = []
             for fn in pot_cand:
                 try:
-                    thispo = yumbased.CreateRepoPackage(self.ts, fn, sumtype=self.conf.sumtype)
+                    thispo = yumbased.CreateRepoPackage(self.ts, fn, 
+                                                     sumtype=self.conf.sumtype)
                 except Errors.MiscError, e:
                     continue
                 if (thispo.name, thispo.arch) != (pkg.name, pkg.arch):
@@ -638,7 +657,8 @@ class MetaDataGenerator:
         for d in self.conf.oldpackage_paths:
             for f in self.getFileList(d, 'rpm'):
                 fp = d + '/' + f
-                if int(os.stat(fp)[stat.ST_SIZE]) > self.conf.max_delta_rpm_size:
+                fpstat = os.stat(fp)
+                if int(fpstat[stat.ST_SIZE]) > self.conf.max_delta_rpm_size:
                     self.callback.log("Skipping %s package " \
                                       "that is > max_delta_rpm_size"  % f)
                     continue
@@ -659,19 +679,21 @@ class MetaDataGenerator:
         targets = {}
         result = u''
         for drpm_fn in self.getFileList(self.conf.deltadir, 'drpm'):
-            drpm_rel_fn = os.path.normpath(self.conf.delta_relative + '/' + drpm_fn) # this is annoying
+            drpm_rel_fn = os.path.normpath(self.conf.delta_relative + 
+                                           '/' + drpm_fn) # this is annoying
             drpm_po = yumbased.CreateRepoPackage(self.ts, 
                  self.conf.deltadir + '/' + drpm_fn, sumtype=self.conf.sumtype)
             
-            drpm = deltarpms.DeltaRPMPackage(drpm_po, self.conf.outputdir, drpm_rel_fn)
+            drpm = deltarpms.DeltaRPMPackage(drpm_po, self.conf.outputdir, 
+                                             drpm_rel_fn)
             if not targets.has_key(drpm_po.pkgtup):
                 targets[drpm_po.pkgtup] = u''
             targets[drpm_po.pkgtup] += drpm.xml_dump_metadata()
         
-        for (n,a,e,v,r) in targets.keys():
+        for (n, a, e, v, r) in targets.keys():
             result += """  <newpackage name="%s" epoch="%s" version="%s" release="%s" arch="%s">\n""" % (
-                    n,e,v,r,a)
-            for src in targets[(n,a,e,v,r)]:
+                    n, e, v, r, a)
+            for src in targets[(n, a, e, v, r)]:
                 result += src
             result += """   </newpackage>\n"""
 
@@ -737,12 +759,13 @@ class MetaDataGenerator:
         timestamp = data.newChild(None, 'timestamp', str(timest))
 
         # add the random stuff
-        for (k,v) in attribs.items():
+        for (k, v) in attribs.items():
             data.newChild(None, k, str(v))
            
             
     def doRepoMetadata(self):
-        """wrapper to generate the repomd.xml file that stores the info on the other files"""
+        """wrapper to generate the repomd.xml file that stores the info 
+           on the other files"""
         repodoc = libxml2.newDoc("1.0")
         reporoot = repodoc.newChild(None, "repomd", None)
         repons = reporoot.newNs('http://linux.duke.edu/metadata/repo', None)
@@ -756,7 +779,7 @@ class MetaDataGenerator:
             tags = reporoot.newChild(None, 'tags', None)
             for item in self.conf.content_tags:
                 c_tags = tags.newChild(None, 'content', item)
-            for (cpeid,item) in self.conf.distro_tags:
+            for (cpeid, item) in self.conf.distro_tags:
                 d_tags = tags.newChild(None, 'distro', item)
                 if cpeid:
                     d_tags.newProp('cpeid', cpeid)
@@ -773,7 +796,7 @@ class MetaDataGenerator:
                          (self.conf.filelistsfile, 'filelists'),
                          (self.conf.primaryfile, 'primary')]
             db_workfiles = []
-            repoid='garbageid'
+            repoid = 'garbageid'
         
         if self.conf.deltas:
             workfiles.append((self.conf.deltafile, 'prestodelta'))
@@ -799,7 +822,8 @@ class MetaDataGenerator:
             
             if self.conf.database:
                 if self.conf.verbose:
-                    self.callback.log("Starting %s db creation: %s" % (ftype, time.ctime()))
+                    self.callback.log("Starting %s db creation: %s" % (ftype, 
+                                                                  time.ctime()))
             
                 if ftype == 'primary':
                     rp.getPrimary(complete_path, csum)
@@ -825,13 +849,16 @@ class MetaDataGenerator:
                     # compress the files
                     bzipFile(resultpath, result_compressed)
                     # csum the compressed file
-                    db_compressed_sums[ftype] = misc.checksum(sumtype, result_compressed)
+                    db_compressed_sums[ftype] = misc.checksum(sumtype, 
+                                                             result_compressed)
                     # remove the uncompressed file
                     os.unlink(resultpath)
 
                     if self.conf.unique_md_filenames:
-                        csum_compressed_name = '%s-%s.bz2' % (db_compressed_sums[ftype], good_name)
-                        csum_result_compressed =  os.path.join(repopath, csum_compressed_name)
+                        csum_compressed_name = '%s-%s.bz2' % (
+                                           db_compressed_sums[ftype], good_name)
+                        csum_result_compressed =  os.path.join(repopath, 
+                                                           csum_compressed_name)
                         os.rename(result_compressed, csum_result_compressed)
                         result_compressed = csum_result_compressed
                         compressed_name = csum_compressed_name
@@ -848,15 +875,21 @@ class MetaDataGenerator:
                     if self.conf.baseurl is not None:
                         location.newProp('xml:base', self.conf.baseurl)
                 
-                    location.newProp('href', os.path.join(self.conf.finaldir, compressed_name))
-                    checksum = data.newChild(None, 'checksum', db_compressed_sums[ftype])
+                    location.newProp('href', os.path.join(self.conf.finaldir, 
+                                                               compressed_name))
+                    checksum = data.newChild(None, 'checksum', 
+                                                    db_compressed_sums[ftype])
                     checksum.newProp('type', sumtype)
-                    db_tstamp = data.newChild(None, 'timestamp', str(db_timestamp))
-                    unchecksum = data.newChild(None, 'open-checksum', db_csums[ftype])
+                    db_tstamp = data.newChild(None, 'timestamp', 
+                                                    str(db_timestamp))
+                    unchecksum = data.newChild(None, 'open-checksum', 
+                                                    db_csums[ftype])
                     unchecksum.newProp('type', sumtype)
-                    database_version = data.newChild(None, 'database_version', dbversion)
+                    database_version = data.newChild(None, 'database_version', 
+                                                     dbversion)
                     if self.conf.verbose:
-                        self.callback.log("Ending %s db creation: %s" % (ftype, time.ctime()))
+                        self.callback.log("Ending %s db creation: %s" % (ftype, 
+                                                                  time.ctime()))
                 
 
                 
@@ -885,7 +918,8 @@ class MetaDataGenerator:
             location.newProp('href', os.path.join(self.conf.finaldir, rpm_file))
 
 
-        if not self.conf.quiet and self.conf.database: self.callback.log('Sqlite DBs complete')        
+        if not self.conf.quiet and self.conf.database: 
+            self.callback.log('Sqlite DBs complete')
 
         for (fn, ftype) in db_workfiles:
             attribs = {'database_version':dbversion}
@@ -899,7 +933,8 @@ class MetaDataGenerator:
             
         if self.conf.groupfile is not None:
             self.addArbitraryMetadata(self.conf.groupfile, 'group_gz', reporoot)
-            self.addArbitraryMetadata(self.conf.groupfile, 'group', reporoot, compress=False)            
+            self.addArbitraryMetadata(self.conf.groupfile, 'group', reporoot, 
+                                      compress=False)
         
         if self.conf.additional_metadata:
             for md_type, mdfile in self.conf.additional_metadata.items():
@@ -916,7 +951,8 @@ class MetaDataGenerator:
         try:
             repodoc.saveFormatFileEnc(repofilepath, 'UTF-8', 1)
         except:
-            self.callback.errorlog(_('Error saving temp file for repomd.xml: %s') % repofilepath)
+            self.callback.errorlog(
+                  _('Error saving temp file for repomd.xml: %s') % repofilepath)
             raise MDError, 'Could not save temp file: %s' % repofilepath 
 
         del repodoc
@@ -934,8 +970,8 @@ class MetaDataGenerator:
             try:
                 os.rename(output_final_dir, output_old_dir)
             except:
-                raise MDError, _('Error moving final %s to old dir %s' % (output_final_dir,
-                                                                     output_old_dir))
+                raise MDError, _('Error moving final %s to old dir %s' % (
+                                 output_final_dir, output_old_dir))
 
         output_temp_dir = os.path.join(self.conf.outputdir, self.conf.tempdir)
 
@@ -946,7 +982,8 @@ class MetaDataGenerator:
             os.rename(output_old_dir, output_final_dir)
             raise MDError, _('Error moving final metadata into place')
 
-        for f in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile', 'groupfile']:
+        for f in ['primaryfile', 'filelistsfile', 'otherfile', 'repomdfile', 
+                 'groupfile']:
             if getattr(self.conf, f):
                 fn = os.path.basename(getattr(self.conf, f))
             else:
@@ -957,7 +994,8 @@ class MetaDataGenerator:
                 try:
                     os.remove(oldfile)
                 except OSError, e:
-                    raise MDError, _('Could not remove old metadata file: %s: %s') % (oldfile, e)
+                    raise MDError, _(
+                    'Could not remove old metadata file: %s: %s') % (oldfile, e)
 
         # Move everything else back from olddir (eg. repoview files)
         for f in os.listdir(output_old_dir):
@@ -968,7 +1006,8 @@ class MetaDataGenerator:
                     'other.xml.gz','filelists.xml.gz'):
                 os.remove(oldfile) # kill off the old ones
                 continue
-            if f in ('filelists.sqlite.bz2', 'other.sqlite.bz2', 'primary.sqlite.bz2'):
+            if f in ('filelists.sqlite.bz2', 'other.sqlite.bz2', 
+                     'primary.sqlite.bz2'):
                 os.remove(oldfile)
                 continue
                     
@@ -980,7 +1019,8 @@ class MetaDataGenerator:
                     else:
                         os.remove(oldfile)
                 except OSError, e:
-                    raise MDError, _('Could not remove old metadata file: %s: %s') % (oldfile, e)
+                    raise MDError, _(
+                    'Could not remove old metadata file: %s: %s') % (oldfile, e)
             else:
                 try:
                     os.rename(oldfile, finalfile)
@@ -992,7 +1032,8 @@ class MetaDataGenerator:
         try:
             os.rmdir(output_old_dir)
         except OSError, e:
-            self.errorlog(_('Could not remove old metadata dir: %s') % self.conf.olddir)
+            self.errorlog(_('Could not remove old metadata dir: %s') 
+                          % self.conf.olddir)
             self.errorlog(_('Error was %s') % e)
             self.errorlog(_('Please clean up this directory manually.'))
 
@@ -1002,7 +1043,8 @@ class MetaDataGenerator:
         try:
             self.md_sqlite = MetaDataSqlite(destdir)
         except sqlite.OperationalError, e:
-            raise MDError, _('Cannot create sqlite databases: %s.\nMaybe you need to clean up a .repodata dir?') % e
+            raise MDError, _('Cannot create sqlite databases: %s.\n'\
+                'Maybe you need to clean up a .repodata dir?') % e
         
     
     
@@ -1034,7 +1076,7 @@ class SplitMetaDataGenerator(MetaDataGenerator):
                     reldir = os.path.basename(dirname)
                     if reldir == os.path.basename(directory):
                         reldir = ""
-                    arg.append(os.path.join(reldir,fn))
+                    arg.append(os.path.join(reldir, fn))
 
         rpmlist = []
         os.path.walk(directory, extension_visitor, rpmlist)
