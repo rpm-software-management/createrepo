@@ -24,10 +24,11 @@
 import os
 import sys
 
-from createrepo.utils import checksum_and_rename, GzipFile
+from createrepo.utils import checksum_and_rename, GzipFile, MDError
 from yum.misc import checksum
 
 from xml.dom import minidom
+
 
 class RepoMetadata:
 
@@ -37,11 +38,13 @@ class RepoMetadata:
         self.repomdxml = os.path.join(self.repodir, 'repomd.xml')
         self.checksum_type = 'sha256'
         if not os.path.exists(self.repomdxml):
-            raise Exception('%s not found' % self.repomdxml)
+            raise MDError, '%s not found' % self.repomdxml
         self.doc = minidom.parse(self.repomdxml)
 
-    def _insert_element(self, parent, name, attrs={}, text=None):
+    def _insert_element(self, parent, name, attrs=None, text=None):
         child = self.doc.createElement(name)
+        if not attrs:
+            attrs = {}
         for item in attrs.items():
             child.setAttribute(item[0], item[1])
         if text:
@@ -57,7 +60,7 @@ class RepoMetadata:
         """
         md = None
         if not metadata:
-            raise Exception('metadata cannot be None')
+            raise MDError, 'metadata cannot be None'
         if isinstance(metadata, minidom.Document):
             md = metadata.toxml()
             mdname = 'updateinfo.xml'
@@ -71,9 +74,9 @@ class RepoMetadata:
                 oldmd.close()
                 mdname = os.path.basename(metadata)
             else:
-                raise Exception('%s not found' % metadata)
+                raise MDError, '%s not found' % metadata
         else:
-            raise Exception('invalid metadata type')
+            raise MDError, 'invalid metadata type'
 
         ## Compress the metadata and move it into the repodata
         if not mdname.endswith('.gz'):
@@ -106,13 +109,15 @@ class RepoMetadata:
         self._insert_element(data, 'location',
                              attrs={ 'href' : 'repodata/' + base_destmd })
         data.appendChild(self.doc.createTextNode("\n    "))
-        self._insert_element(data, 'checksum', attrs={ 'type' : self.checksum_type },
+        self._insert_element(data, 'checksum', 
+                             attrs={ 'type' : self.checksum_type }, 
                              text=csum)
         data.appendChild(self.doc.createTextNode("\n    "))
         self._insert_element(data, 'timestamp',
                              text=str(os.stat(destmd).st_mtime))
         data.appendChild(self.doc.createTextNode("\n    "))
-        self._insert_element(data, 'open-checksum', attrs={ 'type' : self.checksum_type },
+        self._insert_element(data, 'open-checksum', 
+                             attrs={ 'type' : self.checksum_type },
                              text=open_csum)
 
         data.appendChild(self.doc.createTextNode("\n  "))
@@ -138,12 +143,12 @@ if __name__ == '__main__':
         sys.exit()
     try:
         repomd = RepoMetadata(sys.argv[2])
-    except Exception, e:
+    except MDError, e:
         print "Could not access repository: %s" % str(e)
         sys.exit(1)
     try:
         repomd.add(sys.argv[1])
-    except Exception, e:
+    except MDError, e:
         print "Could not add metadata from file %s: %s" % (sys.argv[1], str(e))
         sys.exit(1)
 
