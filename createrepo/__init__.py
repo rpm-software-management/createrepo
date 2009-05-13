@@ -619,6 +619,8 @@ class MetaDataGenerator:
         # get list of potential candidates which are likely to match
         for d in self.conf.oldpackage_paths:
             pot_cand = []
+            if d not in opd:
+                continue
             for fn in opd[d]:
                 if os.path.basename(fn).startswith(pkg.name):
                     pot_cand.append(fn)
