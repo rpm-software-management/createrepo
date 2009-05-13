@@ -814,7 +814,12 @@ class MetaDataGenerator:
             complete_path = os.path.join(repopath, rpm_file)
             
             zfo = _gzipOpen(complete_path)
-            uncsum = misc.checksum(sumtype, zfo)
+            # This is misc.checksum() done locally so we can get the size too.
+            data = misc.Checksums([sumtype])
+            while data.read(zfo, 2**16):
+                pass
+            uncsum = data.hexdigest(sumtype)
+            unsize = len(data)
             zfo.close()
             csum = misc.checksum(sumtype, complete_path)
             timestamp = os.stat(complete_path)[8]
@@ -853,6 +858,8 @@ class MetaDataGenerator:
                     # csum the compressed file
                     db_compressed_sums[ftype] = misc.checksum(sumtype, 
                                                              result_compressed)
+                    # timestamp+size the uncompressed file
+                    un_stat = os.stat(resultpath)
                     # remove the uncompressed file
                     os.unlink(resultpath)
 
@@ -865,8 +872,8 @@ class MetaDataGenerator:
                         result_compressed = csum_result_compressed
                         compressed_name = csum_compressed_name
                     
-                    # timestamp the compressed file
-                    db_timestamp = os.stat(result_compressed)[8]
+                    # timestamp+size the compressed file
+                    db_stat = os.stat(result_compressed)
                 
                     # add this data as a section to the repomdxml
                     db_data_type = '%s_db' % ftype
@@ -883,7 +890,9 @@ class MetaDataGenerator:
                                                     db_compressed_sums[ftype])
                     checksum.newProp('type', sumtype)
                     db_tstamp = data.newChild(None, 'timestamp', 
-                                                    str(db_timestamp))
+                                                    str(db_stat.st_mtime))
+                    data.newChild(None, 'size', str(db_stat.st_size))
+                    data.newChild(None, 'open-size', str(un_stat.st_size))
                     unchecksum = data.newChild(None, 'open-checksum', 
                                                     db_csums[ftype])
                     unchecksum.newProp('type', sumtype)
@@ -901,8 +910,9 @@ class MetaDataGenerator:
             checksum = data.newChild(None, 'checksum', csum)
             checksum.newProp('type', sumtype)
             timestamp = data.newChild(None, 'timestamp', str(timestamp))
-            size = os.stat(os.path.join(repopath, file))
+            size = os.stat(os.path.join(repopath, rpm_file))
             data.newChild(None, 'size', str(size.st_size))
+            data.newChild(None, 'open-size', str(unsize))
             unchecksum = data.newChild(None, 'open-checksum', uncsum)
             unchecksum.newProp('type', sumtype)
             location = data.newChild(None, 'location', None)
