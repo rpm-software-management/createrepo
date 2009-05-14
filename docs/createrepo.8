@@ -74,7 +74,7 @@ Choose the checksum type used in repomd.xml and for packages in the metadata.
 The default is now "sha256" (if python has hashlib). The older default was
 "sha", which is actually "sha1", however explicitly using "sha1" doesn't work
 on older (3.0.x) versions of yum, you need to specify "sha".
-.IP "\fB\-profile\fP"
+.IP "\fB\--profile\fP"
 Output time based profiling information.
 .IP "\fB\--changelog-limit\fP CHANGELOG_LIMIT"
 Only import the last N changelog entries, from each rpm, into the metadata
