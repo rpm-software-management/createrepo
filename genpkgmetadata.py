@@ -28,6 +28,7 @@ import time
 import createrepo
 from createrepo import MDError
 from createrepo.utils import errorprint, _
+import yum.misc
 
 
 def parse_args(args, conf):
@@ -36,6 +37,8 @@ def parse_args(args, conf):
        Sanity check all the things being passed in.
     """
     
+    _def   = yum.misc._default_checksums[0]
+    _avail = yum.misc._available_checksums
     parser = OptionParser(version = "createrepo %s" % createrepo.__version__)
     # query options
     parser.add_option("-q", "--quiet", default=False, action="store_true",
@@ -52,8 +55,8 @@ def parse_args(args, conf):
         help="baseurl to append on all files")
     parser.add_option("-g", "--groupfile", default=None,
         help="path to groupfile to include in metadata")
-    parser.add_option("-s", "--checksum", default="sha256", dest='sumtype',
-        help="specify the checksum type to use")
+    parser.add_option("-s", "--checksum", default=_def, dest='sumtype',
+        help="specify the checksum type to use (default: %s)" % _def)
     parser.add_option("-p", "--pretty", default=False, action="store_true",
         help="make sure all xml generated is formatted")
     parser.add_option("-c", "--cachedir", default=None,
@@ -118,6 +121,14 @@ def parse_args(args, conf):
     else:
         directories = argsleft
     
+    if opts.sumtype == 'sha1':
+        errorprint(_('Warning: It is more compatible to use sha instead of sha1'))
+
+    if opts.sumtype != 'sha' and opts.sumtype not in _avail:
+        errorprint(_('Error: Checksum %s not available (sha, %s)') %
+                   (opts.sumtype, ", ".join(sorted(_avail))))
+        sys.exit(1)
+
     if opts.split and opts.checkts:
         errorprint(_('--split and --checkts options are mutually exclusive'))
         sys.exit(1)
