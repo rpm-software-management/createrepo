@@ -256,7 +256,6 @@ class MetaDataGenerator:
             name = os.path.join(top, name)
             if os.path.isdir(name):
                 self._os_path_walk(name, func, arg)
-    # module
     def getFileList(self, directory, ext):
         """Return all files in path matching ext, store them in filelist,
         recurse dirs. Returns a list object"""
@@ -364,7 +363,6 @@ class MetaDataGenerator:
         self.writeMetadataDocs(packages)
         self.closeMetadataDocs()
 
-    # module
     def openMetadataDocs(self):
         if self.conf.database_only:
             self.setup_sqlite_dbs()
@@ -594,11 +592,14 @@ class MetaDataGenerator:
             self.otherfile.close()
 
         if self.conf.deltas:
+            deltam_st = time.time()
             if not self.conf.quiet:
                 self.callback.log(_('Saving delta metadata'))
             self.deltafile.write(self.generate_delta_xml())
             self.deltafile.write('\n</prestodelta>')
             self.deltafile.close()
+            if self.conf.profile:
+                self.callback.log('deltam time: %0.3f' % (time.time() - deltam_st))
 
     def _do_delta_rpm_package(self, pkg):
         """makes the drpms, if possible, for this package object.
@@ -679,7 +680,7 @@ class MetaDataGenerator:
         # the tag for the target + each of the drpm infos + closure for the target
         # tag
         targets = {}
-        result = u''
+        results = []
         for drpm_fn in self.getFileList(self.conf.deltadir, 'drpm'):
             drpm_rel_fn = os.path.normpath(self.conf.delta_relative + 
                                            '/' + drpm_fn) # this is annoying
@@ -689,17 +690,19 @@ class MetaDataGenerator:
             drpm = deltarpms.DeltaRPMPackage(drpm_po, self.conf.outputdir, 
                                              drpm_rel_fn)
             if not targets.has_key(drpm_po.pkgtup):
-                targets[drpm_po.pkgtup] = u''
-            targets[drpm_po.pkgtup] += drpm.xml_dump_metadata()
+                targets[drpm_po.pkgtup] = []
+            targets[drpm_po.pkgtup].append(drpm.xml_dump_metadata())
         
         for (n, a, e, v, r) in targets.keys():
-            result += """  <newpackage name="%s" epoch="%s" version="%s" release="%s" arch="%s">\n""" % (
-                    n, e, v, r, a)
-            for src in targets[(n, a, e, v, r)]:
-                result += src
-            result += """   </newpackage>\n"""
+            results.append("""  <newpackage name="%s" epoch="%s" version="%s" release="%s" arch="%s">\n""" % (
+                    n, e, v, r, a))
+            results.extend(targets[(n,a,e,v,r)])
+#            for src in targets[(n, a, e, v, r)]:
+#                results.append(src)
 
-        return result
+            results.append("   </newpackage>\n")
+
+        return ' '.join(results)
 
     def addArbitraryMetadata(self, mdfile, mdtype, xml_node, compress=True, 
                                              compress_type='gzip', attribs={}):
@@ -828,8 +831,9 @@ class MetaDataGenerator:
             db_compressed_sums = {}
             
             if self.conf.database:
-                if self.conf.verbose:
-                    self.callback.log("Starting %s db creation: %s" % (ftype, 
+                if ftype in ['primary', 'filelists', 'other']:
+                    if self.conf.verbose:
+                        self.callback.log("Starting %s db creation: %s" % (ftype, 
                                                                   time.ctime()))
             
                 if ftype == 'primary':
