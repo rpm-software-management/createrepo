@@ -74,7 +74,7 @@ class MetaDataConfig(object):
         self.oldpackage_paths = [] # where to look for the old packages - 
         self.deltafile = 'prestodelta.xml.gz'
         self.num_deltas = 1 # number of older versions to delta (max)
-        self.max_delta_rpm_size = 100000000
+        self.max_delta_rpm_size = 1000000000
         self.update_md_path = None 
         self.skip_stat = False
         self.database = False
@@ -605,7 +605,7 @@ class MetaDataGenerator:
         """makes the drpms, if possible, for this package object.
            returns the presto/delta xml metadata as a string
         """
-
+        drpm_pkg_time = time.time()
         # duck and cover if the pkg.size is > whatever
         if int(pkg.size) > self.conf.max_delta_rpm_size:
             if not self.conf.quiet: 
@@ -648,9 +648,12 @@ class MetaDataGenerator:
                 #make drpm of pkg and delta_p
                 dt_st = time.time()
                 drpmfn = deltarpms.create_drpm(delta_p, pkg, self.conf.deltadir)
-                if not self.conf.quiet:
+                if not self.conf.quiet or self.conf.profile:
                     self.callback.log('created drpm from %s to %s: %s in %0.3f' % (
                         delta_p, pkg, drpmfn, (time.time() - dt_st)))
+        if self.conf.profile:
+            self.callback.log('total drpm time for %s: %0.3f' % (pkg, 
+                                                 (time.time() - drpm_pkg_time)))
 
     def _get_old_package_dict(self):
         if hasattr(self, '_old_package_dict'):
