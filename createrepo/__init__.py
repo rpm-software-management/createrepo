@@ -605,7 +605,7 @@ class MetaDataGenerator:
         """makes the drpms, if possible, for this package object.
            returns the presto/delta xml metadata as a string
         """
-        
+
         # duck and cover if the pkg.size is > whatever
         if int(pkg.size) > self.conf.max_delta_rpm_size:
             if not self.conf.quiet: 
@@ -646,10 +646,11 @@ class MetaDataGenerator:
 
             for delta_p in candidates[0:self.conf.num_deltas]:
                 #make drpm of pkg and delta_p
+                dt_st = time.time()
                 drpmfn = deltarpms.create_drpm(delta_p, pkg, self.conf.deltadir)
                 if not self.conf.quiet:
-                    self.callback.log('created drpm from %s to %s: %s' % (
-                        delta_p, pkg, drpmfn))
+                    self.callback.log('created drpm from %s to %s: %s in %0.3f' % (
+                        delta_p, pkg, drpmfn, (time.time() - dt_st)))
 
     def _get_old_package_dict(self):
         if hasattr(self, '_old_package_dict'):
