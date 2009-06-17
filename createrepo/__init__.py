@@ -74,7 +74,7 @@ class MetaDataConfig(object):
         self.oldpackage_paths = [] # where to look for the old packages - 
         self.deltafile = 'prestodelta.xml.gz'
         self.num_deltas = 1 # number of older versions to delta (max)
-        self.max_delta_rpm_size = 1000000000
+        self.max_delta_rpm_size = 100000000
         self.update_md_path = None 
         self.skip_stat = False
         self.database = False
