@@ -216,9 +216,12 @@ class MetaDataGenerator:
                     raise MDError, _('error in must be able to write to metadata dir:\n  -> %s') % filepath
 
                 if self.conf.checkts:
-                    timestamp = os.path.getctime(filepath)
-                    if timestamp > self.conf.mdtimestamp:
-                        self.conf.mdtimestamp = timestamp
+                    # checking for repodata/repomd.xml - not just the data dir
+                    rxml = filepath + '/repomd.xml'
+                    if os.path.exists(rxml):
+                        timestamp = os.path.getctime(rxml)
+                        if timestamp > self.conf.mdtimestamp:
+                            self.conf.mdtimestamp = timestamp
 
         if self.conf.groupfile:
             a = self.conf.groupfile
