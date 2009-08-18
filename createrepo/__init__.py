@@ -1199,7 +1199,7 @@ class MetaDataSqlite(object):
 
     def create_filelists_db(self):
         schema = [
-            """PRAGMA synchronous="0FF";""",
+            """PRAGMA synchronous="OFF";""",
             """pragma locking_mode="EXCLUSIVE";""",
             """CREATE TABLE db_info (dbversion INTEGER, checksum TEXT);""",
             """CREATE TABLE filelist (  pkgKey INTEGER,  dirname TEXT,  filenames TEXT,  filetypes TEXT);""",
