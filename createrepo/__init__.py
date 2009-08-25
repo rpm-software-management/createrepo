@@ -362,9 +362,12 @@ class MetaDataGenerator:
         if not isinstance(packages, MetaSack):
             packages = self.trimRpms(packages)
         self.pkgcount = len(packages)
-        self.openMetadataDocs()
-        self.writeMetadataDocs(packages)
-        self.closeMetadataDocs()
+        try:
+            self.openMetadataDocs()
+            self.writeMetadataDocs(packages)
+            self.closeMetadataDocs()
+        except (IOError, OSError), e:
+            raise MDError, _('Cannot access/write repodata files: %s') % e
 
     def openMetadataDocs(self):
         if self.conf.database_only:
@@ -1133,14 +1136,17 @@ class SplitMetaDataGenerator(MetaDataGenerator):
         mediano = 1
         self.current_pkg = 0
         self.conf.baseurl = self._getFragmentUrl(self.conf.baseurl, mediano)
-        self.openMetadataDocs()
-        original_basedir = self.conf.basedir
-        for mydir in self.conf.directories:
-            self.conf.baseurl = self._getFragmentUrl(self.conf.baseurl, mediano)
-            self.writeMetadataDocs(filematrix[mydir], mydir)
-            mediano += 1
-        self.conf.baseurl = self._getFragmentUrl(self.conf.baseurl, 1)
-        self.closeMetadataDocs()
+        try:
+            self.openMetadataDocs()
+            original_basedir = self.conf.basedir
+            for mydir in self.conf.directories:
+                self.conf.baseurl = self._getFragmentUrl(self.conf.baseurl, mediano)
+                self.writeMetadataDocs(filematrix[mydir], mydir)
+                mediano += 1
+            self.conf.baseurl = self._getFragmentUrl(self.conf.baseurl, 1)
+            self.closeMetadataDocs()
+        except (IOError, OSError), e:
+            raise MDError, _('Cannot access/write repodata files: %s') % e
 
 
 
