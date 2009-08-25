@@ -84,6 +84,8 @@ def parse_args(args, conf):
     parser.add_option("-i", "--pkglist", default=None, 
         help="use only the files listed in this file from the" \
              "directory specified")
+    parser.add_option("-n", "--includepkg", default=[], action="append",
+        help="add this pkg to the list - can be specified multiple times")
     parser.add_option("-o", "--outputdir", default=None,
         help="<dir> = optional directory to output to")
     parser.add_option("-S", "--skip-symlinks", dest="skip_symlinks",
@@ -168,6 +170,9 @@ def parse_args(args, conf):
             
     conf.pkglist = lst
 
+    if conf.includepkg:
+        conf.pkglist.extend(conf.includepkg)
+        
     if conf.changelog_limit: # make sure it is an int, not a string
         conf.changelog_limit = int(conf.changelog_limit)
         
