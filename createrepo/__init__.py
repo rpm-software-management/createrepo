@@ -48,7 +48,7 @@ from utils import _gzipOpen, bzipFile, checkAndMakeDir, GzipFile, \
                   checksum_and_rename
 import deltarpms
 
-__version__ = '0.9.7'
+__version__ = '0.9.8'
 
 
 class MetaDataConfig(object):
