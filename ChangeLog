@@ -1,3 +1,191 @@
+2009-08-28  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo.spec, createrepo/__init__.py: mark as 0.9.8
+
+2009-08-28  Seth Vidal <skvidal@fedoraproject.org>
+
+	* docs/createrepo.8: add man page entry for -n/--includepkg
+
+2009-08-25  Seth Vidal <skvidal@fedoraproject.org>
+
+	* genpkgmetadata.py: add -n, --includepkg option to allow users to
+	specify urls to pkgs to include in the repo on the cli - like a
+	fully cli version of --pkglist/-i
+
+2009-08-25  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: capture ioerror/oserrors on handling
+	metadata files and emit a proper MDError fixes rh bug:
+	https://bugzilla.redhat.com/show_bug.cgi?id=514995
+
+2009-08-18  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: commit obviously broken pragma setting fix
+	from mikeb@redhat.com
+
+2009-07-21  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: fix for
+	https://bugzilla.redhat.com/show_bug.cgi?id=512610 take timestamp of
+	repomd.xml - not of repodata dir - just in case repodata dir is
+	empty, for some bizarre reason
+
+2009-06-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: remove extra 0 from max_delta_rpm_size
+
+2009-06-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: more/better output about makedeltarpm
+	timing
+
+2009-06-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: output how long it took to make the drpm
+	file
+
+2009-06-16  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: - prestodelta.xml file generation is now roughly 60X faster than it
+	was before   - python unicode string concatenation sucks, a lot. -
+	add a delta xml generation profile output - get rid of some
+	incorrect output about db files and delta metadata - get rid of some
+	old not-useful comments in the code
+
+2009-05-14  James Antill <james@and.org>
+
+	* genpkgmetadata.py: Make the UI for --checksum a bit nicer
+
+2009-05-14  James Antill <james@and.org>
+
+	* docs/createrepo.8: Fix -profile in man page, to be --profile
+
+2009-05-14  James Antill <james@and.org>
+
+	* docs/createrepo.8: Add some more documentation about --checksum
+
+2009-05-13  James Antill <james@and.org>
+
+	* createrepo/__init__.py: Add open-size and size fo *_db MD. Fix
+	file to stat for *.xml.gz size
+
+2009-05-13  James Antill <james@and.org>
+
+	Merge branch 'master' of
+	ssh://yum.baseurl.org/srv/projects/createrepo/git/createrepo  *
+	'master' of
+	ssh://yum.baseurl.org/srv/projects/createrepo/git/createrepo:   if
+	our deltarpm dir doesn't exist, don't go looking for it - and
+	definitely
+
+2009-05-08  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: if our deltarpm dir doesn't exist, don't
+	go looking for it - and definitely don't traceback
+
+2009-05-05  James Antill <james@and.org>
+
+	Merge branch 'size-in-repomd.xml'  * size-in-repomd.xml:   Add
+	size to the repomd.xml output
+
+2009-04-24  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: pylint fixes for __init__ - lots of line
+	cleanups and a couple of potential bugs.
+
+2009-04-24  Seth Vidal <skvidal@fedoraproject.org>
+
+	* modifyrepo.py: pylint clean up on modifyrepo
+
+2009-04-24  Seth Vidal <skvidal@fedoraproject.org>
+
+	* genpkgmetadata.py: genpkgmetadata.py pylint cleanup.
+
+2009-04-22  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: if we've not enabled the deltas, don't try
+	to do them. silly, but harmless in this case
+
+2009-04-21  Tim Lauridsen <timlau@fedoraproject.org>
+
+	* createrepo/__init__.py: pylint: fixed Uses of a deprecated module
+	'string'
+
+2009-04-21  Tim Lauridsen <timlau@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/utils.py: pylint: fixed
+	Redefining built-in
+
+2009-04-21  Tim Lauridsen <timlau@fedoraproject.org>
+
+	* createrepo/deltarpms.py, createrepo/yumbased.py: pylint: fixed
+	unused imports
+
+2009-04-21  Tim Lauridsen <timlau@fedoraproject.org>
+
+	* createrepo/readMetadata.py: pylint: fixed Bad indentation
+
+2009-04-21  Tim Lauridsen <timlau@fedoraproject.org>
+
+	* Makefile: Added the pylint basic and disabled the warning we dont
+	care about
+
+2009-04-18  James Antill <james@and.org>
+
+	* createrepo/__init__.py: Fix copy and paste error on message
+
+2009-04-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/yumbased.py: make sure our
+	sumtype specified propagates down to the pkg checksums, too
+
+2009-04-17  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: set a max size option so we don't kill
+	systems with < memory than deltarpm likes to use.
+
+2009-04-17  James Antill <james@and.org>
+
+	* createrepo/yumbased.py: Use the same checksum type for the key, as
+	for the data in the key
+
+2009-04-16  Seth Vidal <skvidal@fedoraproject.org>
+
+	* genpkgmetadata.py: remove the deprecation notice since: 1. it
+	works fine 2. there is a legit use for it
+
+2009-04-16  Seth Vidal <skvidal@fedoraproject.org>
+
+	* docs/createrepo.8: document the deltarpm options
+
+2009-04-15  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: it helps to have the right order of items
+	in the pkgtup :(
+
+2009-04-15  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: quiet down output
+
+2009-04-15  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: make sure we don't try to sqlite the
+	prestodelta xml, yet.
+
+2009-04-15  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: add missing '>'
+
+2009-04-13  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/utils.py, modifyrepo.py: make
+	sure the checksum type we use is being used everywhere. closes
+	rhbug: https://bugzilla.redhat.com/show_bug.cgi?id=494951
+
+2009-03-24  Seth Vidal <skvidal@fedoraproject.org>
+
+	* ChangeLog: changelog merge
+
 2009-03-24  Seth Vidal <skvidal@fedoraproject.org>
 
 	* createrepo.spec, createrepo/__init__.py: 0.9.7 require yum 3.2.22
@@ -193,6 +381,10 @@
 
 	* createrepo/__init__.py, createrepo/yumbased.py, genpkgmetadata.py: 
 	remove most of the yumbased code, disable database-only for now
+
+2008-08-08  James Antill <james@and.org>
+
+	* createrepo/__init__.py: Add size to the repomd.xml output
 
 2008-08-08  Seth Vidal <skvidal@fedoraproject.org>
 
