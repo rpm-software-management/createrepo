@@ -298,8 +298,8 @@ class MetaDataGenerator:
                     self.callback.errorlog(_('cannot get to file: %s') % fn)
                 if os.path.getctime(fn) > self.conf.mdtimestamp:
                     return False
-                else:
-                    return True
+            
+            return True
                 
         return False
 
