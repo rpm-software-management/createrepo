@@ -543,6 +543,17 @@ class MetaDataGenerator:
                                       (othernode, self.otherfile)):
                     if node is None:
                         break
+
+                    if self.conf.baseurl:
+                        anode = node.children
+                        while anode is not None:
+                            if anode.type != "element":
+                                anode = anode.next
+                                continue
+                            if anode.name == "location":
+                                anode.setProp('xml:base', self.conf.baseurl)
+                            anode = anode.next
+
                     output = node.serialize('UTF-8', self.conf.pretty)
                     if output:
                         outfile.write(output)
