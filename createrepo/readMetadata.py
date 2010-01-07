@@ -132,7 +132,7 @@ class MetadataIndex(object):
                 #ignore non files
                 return
             #check size and mtime
-            if st.st_size != size:
+            if int(st.st_size) != size:
                 if self.opts.get('verbose'):
                     print _("Size (%i -> %i) changed for file %s") % (size,st.st_size,filepath)
                 return
