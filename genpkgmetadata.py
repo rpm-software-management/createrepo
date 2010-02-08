@@ -62,7 +62,7 @@ def parse_args(args, conf):
     parser.add_option("-c", "--cachedir", default=None,
         help="set path to cache dir")
     parser.add_option("-C", "--checkts", default=False, action="store_true",
-        help="check timestamps on files vs the metadata to see" \
+        help="check timestamps on files vs the metadata to see " \
            "if we need to update")
     parser.add_option("-d", "--database", default=False, action="store_true",
         help="create sqlite database files")
