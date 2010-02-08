@@ -94,6 +94,9 @@ def parse_args(args, conf):
         default=None, help="only import the last N changelog entries")
     parser.add_option("--unique-md-filenames", dest="unique_md_filenames",
         help="include the file's checksum in the filename,helps with proxies",
+        default=True, action="store_true")
+    parser.add_option("--simple-md-filenames", dest="simple_md_filenames",
+        help="do not include the file's checksum in the filename,helps with proxies",
         default=False, action="store_true")
     parser.add_option("--distro", default=[], action="append",
         help="distro tag and optional cpeid: --distro" "'cpeid,textname'")
@@ -135,7 +138,9 @@ def parse_args(args, conf):
         errorprint(_('--split and --checkts options are mutually exclusive'))
         sys.exit(1)
 
-
+    if opts.simple_md_filenames:
+        opts.unique_md_filenames = False
+        
     # let's switch over to using the conf object - put all the opts into it
     for opt in parser.option_list:
         if opt.dest is None: # this is fairly silly

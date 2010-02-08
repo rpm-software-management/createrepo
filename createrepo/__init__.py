@@ -95,7 +95,7 @@ class MetaDataConfig(object):
         self.directory = None
         self.directories = []
         self.changelog_limit = None # needs to be an int or None
-        self.unique_md_filenames = False
+        self.unique_md_filenames = True
         self.additional_metadata = {} # dict of 'type':'filename'
         self.revision = str(int(time.time()))
         self.content_tags = [] # flat list of strings (like web 2.0 tags)
