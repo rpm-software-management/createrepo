@@ -111,7 +111,7 @@ maintainer-clean:
 
 changelog:
 	git log --pretty --numstat --summary | git2cl  > ChangeLog
-	
+
 dist:
 	olddir=`pwd`; \
 	distdir=$(PKGNAME)-$(VERSION); \
@@ -148,8 +148,8 @@ dailyfiles:
 	$(srcdir)/*.py \
 	$(srcdir)/Makefile \
 	$(srcdir)/ChangeLog \
-	$(srcdir)/COPYING \	
-	$(srcdir)/COPYING.lib \		
+	$(srcdir)/COPYING \
+	$(srcdir)/COPYING.lib \
 	$(srcdir)/README \
 	$(srcdir)/$(PKGNAME).spec \
 	$(top_srcdir)/.disttmp/$$distdir
