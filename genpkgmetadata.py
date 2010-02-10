@@ -110,7 +110,8 @@ def parse_args(args, conf):
         action="append", help="paths to look for older pkgs to delta against")
     parser.add_option("--num-deltas", default=1, dest='num_deltas', type='int',
         help="the number of older versions to make deltas against")
-
+    parser.add_option("--read-pkgs-list", default=None, dest='read_pkgs_list',
+        help="output the paths to the pkgs actually read useful with --update")
 
     (opts, argsleft) = parser.parse_args(args)
     if len(argsleft) > 1 and not opts.split:

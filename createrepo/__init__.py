@@ -100,7 +100,9 @@ class MetaDataConfig(object):
         self.revision = str(int(time.time()))
         self.content_tags = [] # flat list of strings (like web 2.0 tags)
         self.distro_tags = []# [(cpeid(None allowed), human-readable-string)]
-
+        self.read_pkgs_list = None # filepath/name to write out list of pkgs
+                                   # read in this run of createrepo
+        
 class SimpleMDCallBack(object):
     def errorlog(self, thing):
         print >> sys.stderr, thing
@@ -130,6 +132,7 @@ class MetaDataGenerator:
         self.current_pkg = 0
         self.files = []
         self.rpmlib_reqs = {}
+        self.read_pkgs = []
                 
         if not self.conf.directory and not self.conf.directories:
             raise MDError, "No directory given on which to run."
@@ -368,7 +371,8 @@ class MetaDataGenerator:
             self.closeMetadataDocs()
         except (IOError, OSError), e:
             raise MDError, _('Cannot access/write repodata files: %s') % e
-
+        
+        
     def openMetadataDocs(self):
         if self.conf.database_only:
             self.setup_sqlite_dbs()
@@ -520,10 +524,12 @@ class MetaDataGenerator:
                     # we can use deltas:
                     if self.conf.deltas:
                         self._do_delta_rpm_package(po)
-
+                    self.read_pkgs.append(pkg)
+                    
                 else:
                     po = pkg
-
+                    self.read_pkgs.append(po.localpath)
+                    
                 if self.conf.database_only:
                     pass # disabled right now for sanity reasons (mine)
                     #po.do_sqlite_dump(self.md_sqlite)
@@ -1075,6 +1081,18 @@ class MetaDataGenerator:
                           % self.conf.olddir)
             self.errorlog(_('Error was %s') % e)
             self.errorlog(_('Please clean up this directory manually.'))
+        
+        # write out the read_pkgs_list file with self.read_pkgs
+        if self.conf.read_pkgs_list:
+            try:
+                fo = open(self.conf.read_pkgs_list, 'w')
+                fo.write('\n'.join(self.read_pkgs))
+                fo.flush()
+                fo.close()
+            except (OSError, IOError), e:
+                self.errorlog(_('Could not write out readpkgs list: %s') 
+                              % self.conf.read_pkgs_list)
+                self.errorlog(_('Error was %s') % e)
 
     def setup_sqlite_dbs(self, initdb=True):
         """sets up the sqlite dbs w/table schemas and db_infos"""
