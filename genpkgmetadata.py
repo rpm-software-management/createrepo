@@ -76,13 +76,13 @@ def parse_args(args, conf):
         help="use the existing repodata  for --update from this path")
     parser.add_option("--skip-stat", dest='skip_stat', default=False, 
         help="skip the stat() call on a --update, assumes if the file" \
-             "name is the same then the file is still the same" \
+             "name is the same then the file is still the same " \
              "(only use this if you're fairly trusting or gullible)",
         action="store_true")
     parser.add_option("--split", default=False, action="store_true",
         help="generate split media")
     parser.add_option("-i", "--pkglist", default=None, 
-        help="use only the files listed in this file from the" \
+        help="use only the files listed in this file from the " \
              "directory specified")
     parser.add_option("-n", "--includepkg", default=[], action="append",
         help="add this pkg to the list - can be specified multiple times")
@@ -93,10 +93,10 @@ def parse_args(args, conf):
     parser.add_option("--changelog-limit", dest="changelog_limit",
         default=None, help="only import the last N changelog entries")
     parser.add_option("--unique-md-filenames", dest="unique_md_filenames",
-        help="include the file's checksum in the filename,helps with proxies",
+        help="include the file's checksum in the filename, helps with proxies",
         default=True, action="store_true")
     parser.add_option("--simple-md-filenames", dest="simple_md_filenames",
-        help="do not include the file's checksum in the filename,helps with proxies",
+        help="do not include the file's checksum in the filename, helps with proxies",
         default=False, action="store_true")
     parser.add_option("--distro", default=[], action="append",
         help="distro tag and optional cpeid: --distro" "'cpeid,textname'")
