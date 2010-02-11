@@ -112,7 +112,9 @@ def parse_args(args, conf):
         help="the number of older versions to make deltas against")
     parser.add_option("--read-pkgs-list", default=None, dest='read_pkgs_list',
         help="output the paths to the pkgs actually read useful with --update")
-
+    parser.add_option("--max-delta-rpm-size", default=100000000, 
+        dest='max_delta_rpm_size', type='int', 
+        help="max size of an rpm that to run deltarpm against (in bytes)")
     (opts, argsleft) = parser.parse_args(args)
     if len(argsleft) > 1 and not opts.split:
         errorprint(_('Error: Only one directory allowed per run.'))
