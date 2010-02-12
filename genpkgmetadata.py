@@ -16,7 +16,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # Copyright 2004 Duke University
-# Portions Copyright 2009  Red Hat, Inc - 
+# Portions Copyright 2009  Red Hat, Inc -
 # written by seth vidal skvidal at fedoraproject.org
 
 import os
@@ -36,7 +36,7 @@ def parse_args(args, conf):
        Parse the command line args. return a config object.
        Sanity check all the things being passed in.
     """
-    
+
     _def   = yum.misc._default_checksums[0]
     _avail = yum.misc._available_checksums
     parser = OptionParser(version = "createrepo %s" % createrepo.__version__)
@@ -67,21 +67,21 @@ def parse_args(args, conf):
     parser.add_option("-d", "--database", default=False, action="store_true",
         help="create sqlite database files")
     # temporarily disabled
-    #parser.add_option("--database-only", default=False, action="store_true", 
+    #parser.add_option("--database-only", default=False, action="store_true",
     #  dest='database_only',
     #  help="Only make the sqlite databases - does not work with --update, yet")
     parser.add_option("--update", default=False, action="store_true",
         help="use the existing repodata to speed up creation of new")
     parser.add_option("--update-md-path", default=None, dest='update_md_path',
         help="use the existing repodata  for --update from this path")
-    parser.add_option("--skip-stat", dest='skip_stat', default=False, 
+    parser.add_option("--skip-stat", dest='skip_stat', default=False,
         help="skip the stat() call on a --update, assumes if the file" \
              "name is the same then the file is still the same " \
              "(only use this if you're fairly trusting or gullible)",
         action="store_true")
     parser.add_option("--split", default=False, action="store_true",
         help="generate split media")
-    parser.add_option("-i", "--pkglist", default=None, 
+    parser.add_option("-i", "--pkglist", default=None,
         help="use only the files listed in this file from the " \
              "directory specified")
     parser.add_option("-n", "--includepkg", default=[], action="append",
@@ -100,35 +100,35 @@ def parse_args(args, conf):
         default=False, action="store_true")
     parser.add_option("--distro", default=[], action="append",
         help="distro tag and optional cpeid: --distro" "'cpeid,textname'")
-    parser.add_option("--content", default=[], dest='content_tags', 
+    parser.add_option("--content", default=[], dest='content_tags',
         action="append", help="tags for the content in the repository")
     parser.add_option("--revision", default=None,
         help="user-specified revision for this repository")
     parser.add_option("--deltas", default=False, action="store_true",
         help="create delta rpms and metadata")
-    parser.add_option("--oldpackagedirs", default=[], dest="oldpackage_paths", 
+    parser.add_option("--oldpackagedirs", default=[], dest="oldpackage_paths",
         action="append", help="paths to look for older pkgs to delta against")
     parser.add_option("--num-deltas", default=1, dest='num_deltas', type='int',
         help="the number of older versions to make deltas against")
     parser.add_option("--read-pkgs-list", default=None, dest='read_pkgs_list',
         help="output the paths to the pkgs actually read useful with --update")
-    parser.add_option("--max-delta-rpm-size", default=100000000, 
-        dest='max_delta_rpm_size', type='int', 
+    parser.add_option("--max-delta-rpm-size", default=100000000,
+        dest='max_delta_rpm_size', type='int',
         help="max size of an rpm that to run deltarpm against (in bytes)")
     (opts, argsleft) = parser.parse_args(args)
     if len(argsleft) > 1 and not opts.split:
         errorprint(_('Error: Only one directory allowed per run.'))
         parser.print_usage()
         sys.exit(1)
-        
+
     elif len(argsleft) == 0:
         errorprint(_('Error: Must specify a directory to index.'))
         parser.print_usage()
         sys.exit(1)
-        
+
     else:
         directories = argsleft
-    
+
     if opts.sumtype == 'sha1':
         errorprint(_('Warning: It is more compatible to use sha instead of sha1'))
 
@@ -143,7 +143,7 @@ def parse_args(args, conf):
 
     if opts.simple_md_filenames:
         opts.unique_md_filenames = False
-        
+
     # let's switch over to using the conf object - put all the opts into it
     for opt in parser.option_list:
         if opt.dest is None: # this is fairly silly
@@ -152,7 +152,7 @@ def parse_args(args, conf):
         if getattr(opts, opt.dest) is None:
             continue
         setattr(conf, opt.dest, getattr(opts, opt.dest))
-    
+
     directory = directories[0]
     conf.directory = directory
     conf.directories = directories
@@ -175,15 +175,15 @@ def parse_args(args, conf):
                 continue
             lst.append(line)
         pfo.close()
-            
+
     conf.pkglist = lst
 
     if conf.includepkg:
         conf.pkglist.extend(conf.includepkg)
-        
+
     if conf.changelog_limit: # make sure it is an int, not a string
         conf.changelog_limit = int(conf.changelog_limit)
-        
+
     return conf
 
 class MDCallBack(object):
@@ -191,18 +191,18 @@ class MDCallBack(object):
     def errorlog(self, thing):
         """error log output"""
         print >> sys.stderr, thing
-        
+
     def log(self, thing):
         """log output"""
         print thing
-    
+
     def progress(self, item, current, total):
         """progress bar"""
         beg = "%*d/%d - " % (len(str(total)), current, total)
         left = 80 - len(beg)
         sys.stdout.write("\r%s%-*.*s" % (beg, left, left, item))
         sys.stdout.flush()
-        
+
 def main(args):
     """createrepo from cli main flow"""
     start_st = time.time()
@@ -211,13 +211,13 @@ def main(args):
     if conf.profile:
         print ('start time: %0.3f' % (time.time() - start_st))
 
-    mid_st = time.time()       
+    mid_st = time.time()
     try:
         if conf.split:
-            mdgen = createrepo.SplitMetaDataGenerator(config_obj=conf, 
+            mdgen = createrepo.SplitMetaDataGenerator(config_obj=conf,
                                                       callback=MDCallBack())
         else:
-            mdgen = createrepo.MetaDataGenerator(config_obj=conf, 
+            mdgen = createrepo.MetaDataGenerator(config_obj=conf,
                                                  callback=MDCallBack())
             if mdgen.checkTimeStamps():
                 if mdgen.conf.verbose:
@@ -226,7 +226,7 @@ def main(args):
 
         if conf.profile:
             print ('mid time: %0.3f' % (time.time() - mid_st))
-                
+
         pm_st = time.time()
         mdgen.doPkgMetadata()
         if conf.profile:
@@ -239,8 +239,8 @@ def main(args):
         mdgen.doFinalMove()
         if conf.profile:
             print ('fm time: %0.3f' % (time.time() - fm_st))
-        
-        
+
+
     except MDError, errormsg:
         errorprint(_('%s') % errormsg)
         sys.exit(1)

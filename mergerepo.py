@@ -30,9 +30,9 @@ def parse_args(args):
     """Parse our opts/args"""
     usage = """
     mergerepo: take 2 or more repositories and merge their metadata into a new repo
-              
+
     mergerepo --repo=url --repo=url --outputdir=/some/path"""
-    
+
     parser = OptionParser(version = "mergerepo 0.1", usage=usage)
     # query options
     parser.add_option("-r", "--repo", dest='repos', default=[], action="append",
@@ -40,7 +40,7 @@ def parse_args(args):
     parser.add_option("-a", "--archlist", default=[], action="append",
                       help="Defaults to all arches - otherwise specify arches")
     parser.add_option("-d", "--database", default=False, action="store_true")
-    parser.add_option("-o", "--outputdir", default=None, 
+    parser.add_option("-o", "--outputdir", default=None,
                       help="Location to create the repository")
     parser.add_option("", "--nogroups", default=False, action="store_true",
                       help="Do not merge group(comps) metadata")
@@ -52,16 +52,16 @@ def parse_args(args):
         parser.print_usage()
         sys.exit(1)
 
-    # sort out the comma-separated crap we somehow inherited.    
+    # sort out the comma-separated crap we somehow inherited.
     archlist = []
     for archs in opts.archlist:
         for arch in archs.split(','):
             archlist.append(arch)
 
     opts.archlist = archlist
-    
+
     return opts
-    
+
 def main(args):
     """main"""
     opts = parse_args(args)

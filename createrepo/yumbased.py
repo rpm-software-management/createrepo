@@ -46,13 +46,13 @@ class CreateRepoPackage(YumLocalPackage):
         # not using the cachedir
         if not self._cachedir:
             self._checksum = misc.checksum(self.checksum_type, self.localpath)
-            self._checksums = [(self.checksum_type, self._checksum, 1)]            
+            self._checksums = [(self.checksum_type, self._checksum, 1)]
             return self._checksum
 
 
         t = []
         if type(self.hdr[rpm.RPMTAG_SIGGPG]) is not types.NoneType:
-            t.append("".join(self.hdr[rpm.RPMTAG_SIGGPG]))   
+            t.append("".join(self.hdr[rpm.RPMTAG_SIGGPG]))
         if type(self.hdr[rpm.RPMTAG_SIGPGP]) is not types.NoneType:
             t.append("".join(self.hdr[rpm.RPMTAG_SIGPGP]))
         if type(self.hdr[rpm.RPMTAG_HDRID]) is not types.NoneType:
@@ -61,7 +61,7 @@ class CreateRepoPackage(YumLocalPackage):
         kcsum = misc.Checksums(checksums=[self.checksum_type])
         kcsum.update("".join(t))
         key = kcsum.hexdigest()
-                                                
+
         csumtag = '%s-%s-%s-%s' % (os.path.basename(self.localpath),
                                    key, self.size, self.filetime)
         csumfile = '%s/%s' % (self._cachedir, csumtag)
@@ -70,7 +70,7 @@ class CreateRepoPackage(YumLocalPackage):
             csumo = open(csumfile, 'r')
             checksum = csumo.readline()
             csumo.close()
-             
+
         else:
             checksum = misc.checksum(self.checksum_type, self.localpath)
 
@@ -84,19 +84,19 @@ class CreateRepoPackage(YumLocalPackage):
                 os.rename(tmpfilename, csumfile)
             except:
                 pass
-        
+
         self._checksum = checksum
         self._checksums = [(self.checksum_type, checksum, 1)]
 
         return self._checksum
-    
+
     # sqlite-direct dump code below here :-/
 
     def _sqlite_null(self, item):
         if not item:
             return None
         return item
-            
+
     def do_primary_sqlite_dump(self, cur):
         """insert primary data in place, this assumes the tables exist"""
         if self.crp_reldir and self.localpath.startswith(self.crp_reldir):
@@ -106,38 +106,38 @@ class CreateRepoPackage(YumLocalPackage):
             relpath = self.localpath
 
         p = (self.crp_packagenumber, self.checksum, self.name, self.arch,
-            self.version, self.epoch, self.release, self.summary.strip(), 
-            self.description.strip(), self._sqlite_null(self.url), self.filetime, 
-            self.buildtime, self._sqlite_null(self.license), 
-            self._sqlite_null(self.vendor), self._sqlite_null(self.group), 
-            self._sqlite_null(self.buildhost), self._sqlite_null(self.sourcerpm), 
-            self.hdrstart, self.hdrend, self._sqlite_null(self.packager), 
-            self.packagesize, self.size, self.archivesize, relpath, 
+            self.version, self.epoch, self.release, self.summary.strip(),
+            self.description.strip(), self._sqlite_null(self.url), self.filetime,
+            self.buildtime, self._sqlite_null(self.license),
+            self._sqlite_null(self.vendor), self._sqlite_null(self.group),
+            self._sqlite_null(self.buildhost), self._sqlite_null(self.sourcerpm),
+            self.hdrstart, self.hdrend, self._sqlite_null(self.packager),
+            self.packagesize, self.size, self.archivesize, relpath,
             self.crp_baseurl, self.checksum_type)
-                
+
         q = """insert into packages values (?, ?, ?, ?, ?, ?,
-               ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, 
+               ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?,
                ?, ?, ?)"""
-        
-        # write out all of do_primary_sqlite as an executescript - work on the 
+
+        # write out all of do_primary_sqlite as an executescript - work on the
         # quoting for pretty much any contingency - take from sqlutils.py
-        # 
+        #
         # e
         #p = None
         #q = """insert into packages values (%s, %s, %s, %s, """
-        
+
         cur.execute(q, p)
 
-        # provides, obsoletes, conflicts        
+        # provides, obsoletes, conflicts
         for pco in ('obsoletes', 'provides', 'conflicts'):
             thispco = []
             for (name, flag, (epoch, ver, rel)) in getattr(self, pco):
                 thispco.append((name, flag, epoch, ver, rel, self.crp_packagenumber))
 
-            q = "insert into %s values (?, ?, ?, ?, ?, ?)" % pco                     
+            q = "insert into %s values (?, ?, ?, ?, ?, ?)" % pco
             cur.executemany(q, thispco)
 
-        # requires        
+        # requires
         reqs = []
         for (name, flag, (epoch, ver, rel), pre) in self._requires_with_pre():
             if name.startswith('rpmlib('):
@@ -146,18 +146,18 @@ class CreateRepoPackage(YumLocalPackage):
             if pre == 1:
                 pre_bool = 'TRUE'
             reqs.append((name, flag, epoch, ver,rel, self.crp_packagenumber, pre_bool))
-        q = "insert into requires values (?, ?, ?, ?, ?, ?, ?)" 
+        q = "insert into requires values (?, ?, ?, ?, ?, ?, ?)"
         cur.executemany(q, reqs)
 
         # files
         p = []
         for f in self._return_primary_files():
             p.append((f,))
-        
+
         if p:
             q = "insert into files values (?, 'file', %s)" % self.crp_packagenumber
             cur.executemany(q, p)
-            
+
         # dirs
         p = []
         for f in self._return_primary_dirs():
@@ -165,8 +165,8 @@ class CreateRepoPackage(YumLocalPackage):
         if p:
             q = "insert into files values (?, 'dir', %s)" % self.crp_packagenumber
             cur.executemany(q, p)
-        
-       
+
+
         # ghosts
         p = []
         for f in self._return_primary_files(list_of_files = self.returnFileEntries('ghost')):
@@ -174,17 +174,17 @@ class CreateRepoPackage(YumLocalPackage):
         if p:
             q = "insert into files values (?, 'ghost', %s)" % self.crp_packagenumber
             cur.executemany(q, p)
-        
-        
+
+
 
     def do_filelists_sqlite_dump(self, cur):
         """inserts filelists data in place, this assumes the tables exist"""
         # insert packagenumber + checksum into 'packages' table
         q = 'insert into packages values (?, ?)'
         p = (self.crp_packagenumber, self.checksum)
-        
+
         cur.execute(q, p)
-        
+
         # break up filelists and encode them
         dirs = {}
         for (filetype, files) in [('file', self.filelist), ('dir', self.dirlist),
@@ -199,27 +199,27 @@ class CreateRepoPackage(YumLocalPackage):
         # insert packagenumber|dir|files|types into files table
         p = []
         for (dirname,direc) in dirs.items():
-            p.append((self.crp_packagenumber, dirname, 
+            p.append((self.crp_packagenumber, dirname,
                  utils.encodefilenamelist(direc['files']),
                  utils.encodefiletypelist(direc['types'])))
         if p:
             q = 'insert into filelist values (?, ?, ?, ?)'
             cur.executemany(q, p)
-        
-        
+
+
     def do_other_sqlite_dump(self, cur):
-        """inserts changelog data in place, this assumes the tables exist"""    
+        """inserts changelog data in place, this assumes the tables exist"""
         # insert packagenumber + checksum into 'packages' table
         q = 'insert into packages values (?, ?)'
         p = (self.crp_packagenumber, self.checksum)
-        
+
         cur.execute(q, p)
 
         if self.changelog:
             q = 'insert into changelog ("pkgKey", "date", "author", "changelog") values (%s, ?, ?, ?)' % self.crp_packagenumber
             cur.executemany(q, self.changelog)
 
-       
+
     def do_sqlite_dump(self, md_sqlite):
         """write the metadata out to the sqlite dbs"""
         self.do_primary_sqlite_dump(md_sqlite.primary_cursor)
@@ -228,8 +228,3 @@ class CreateRepoPackage(YumLocalPackage):
         md_sqlite.file_cx.commit()
         self.do_other_sqlite_dump(md_sqlite.other_cursor)
         md_sqlite.other_cx.commit()
-
-        
-        
-        
-
