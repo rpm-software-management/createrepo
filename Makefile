@@ -33,7 +33,8 @@ pkgincludedir = $(includedir)/$(PKGNAME)
 top_builddir = 
 
 # all dirs
-DIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(sysconfdir) $(DESTDIR)$(pkgdatadir) $(DESTDIR)$(mandir)
+DIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(sysconfdir)/bash_completion.d \
+	$(DESTDIR)$(pkgdatadir) $(DESTDIR)$(mandir)
 
 
 # INSTALL scripts 
@@ -63,6 +64,7 @@ check:
 
 install: all installdirs
 	$(INSTALL_MODULES) $(srcdir)/$(MODULES) $(DESTDIR)$(pkgdatadir)
+	$(INSTALL_DATA) $(PKGNAME).bash $(DESTDIR)$(sysconfdir)/bash_completion.d
 	for subdir in $(SUBDIRS) ; do \
 	  $(MAKE) -C $$subdir install VERSION=$(VERSION) PKGNAME=$(PKGNAME); \
 	done
@@ -152,6 +154,7 @@ dailyfiles:
 	$(srcdir)/COPYING.lib \
 	$(srcdir)/README \
 	$(srcdir)/$(PKGNAME).spec \
+	$(srcdir)/$(PKGNAME).bash \
 	$(top_srcdir)/.disttmp/$$distdir
 	for subdir in $(SUBDIRS) ; do \
 	  $(MAKE) -C $$subdir dailyfiles VERSION=$(VERSION) PKGNAME=$(PKGNAME); \
@@ -167,6 +170,7 @@ distfiles:
 	$(srcdir)/COPYING.lib \
 	$(srcdir)/README \
 	$(srcdir)/$(PKGNAME).spec \
+	$(srcdir)/$(PKGNAME).bash \
 	$(top_srcdir)/.disttmp/$$distdir
 	for subdir in $(SUBDIRS) ; do \
 	  $(MAKE) -C $$subdir distfiles VERSION=$(VERSION) PKGNAME=$(PKGNAME); \

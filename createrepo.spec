@@ -22,7 +22,7 @@ rpm packages
 
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
-make DESTDIR=$RPM_BUILD_ROOT install
+make DESTDIR=$RPM_BUILD_ROOT sysconfdir=%{_sysconfdir} install
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
@@ -32,6 +32,7 @@ make DESTDIR=$RPM_BUILD_ROOT install
 %defattr(-, root, root)
 %dir %{_datadir}/%{name}
 %doc ChangeLog README COPYING COPYING.lib
+%{_sysconfdir}/bash_completion.d/
 %{_datadir}/%{name}/*
 %{_bindir}/%{name}
 %{_bindir}/modifyrepo
