@@ -100,6 +100,7 @@ class MetaDataConfig(object):
         self.revision = str(int(time.time()))
         self.content_tags = [] # flat list of strings (like web 2.0 tags)
         self.distro_tags = []# [(cpeid(None allowed), human-readable-string)]
+        self.repo_tags = []# strings, forwhatever they are worth
         self.read_pkgs_list = None # filepath/name to write out list of pkgs
                                    # read in this run of createrepo
         
@@ -807,10 +808,12 @@ class MetaDataGenerator:
         repofilepath = os.path.join(repopath, self.conf.repomdfile)
         
         revision = reporoot.newChild(None, 'revision', self.conf.revision)
-        if self.conf.content_tags or self.conf.distro_tags:
+        if self.conf.content_tags or self.conf.distro_tags or self.conf.repo_tags:
             tags = reporoot.newChild(None, 'tags', None)
             for item in self.conf.content_tags:
                 c_tags = tags.newChild(None, 'content', item)
+            for item in self.conf.repo_tags:
+                c_tags = tags.newChild(None, 'repo', item)
             for (cpeid, item) in self.conf.distro_tags:
                 d_tags = tags.newChild(None, 'distro', item)
                 if cpeid:

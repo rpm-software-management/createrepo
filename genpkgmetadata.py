@@ -102,6 +102,8 @@ def parse_args(args, conf):
         help="distro tag and optional cpeid: --distro" "'cpeid,textname'")
     parser.add_option("--content", default=[], dest='content_tags', 
         action="append", help="tags for the content in the repository")
+    parser.add_option("--repo", default=[], dest='repo_tags', 
+        action="append", help="tags to describe the repository itself")
     parser.add_option("--revision", default=None,
         help="user-specified revision for this repository")
     parser.add_option("--deltas", default=False, action="store_true",
