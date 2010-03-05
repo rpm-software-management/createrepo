@@ -42,7 +42,7 @@ class MetadataIndex(object):
             otherfile = os.path.join(self.outputdir, o)
         else:
             basefile = filelistfile = otherfile = ""
-            
+
         self.files = {'base' : basefile,
                       'filelist' : filelistfile,
                       'other' : otherfile}
@@ -95,7 +95,7 @@ class MetadataIndex(object):
         mtime = None
         size = None
         relpath = None
-        do_stat = self.opts.get('do_stat', True)         
+        do_stat = self.opts.get('do_stat', True)
         while node is not None:
             if node.type != "element":
                 node = node.next
@@ -121,7 +121,7 @@ class MetadataIndex(object):
         if size is None:
             print _("size missing for %s") % relpath
             return
-        if do_stat: 
+        if do_stat:
             filepath = os.path.join(self.opts['pkgdir'], relpath)
             try:
                 st = os.stat(filepath)
@@ -205,9 +205,9 @@ class MetadataIndex(object):
 
 if __name__ == "__main__":
     cwd = os.getcwd()
-    opts = {'verbose':1, 
+    opts = {'verbose':1,
             'pkgdir': cwd}
-            
+
     idx = MetadataIndex(cwd, opts)
     for fn in idx.basenodes.keys():
         a,b,c, = idx.getNodes(fn)
@@ -215,5 +215,3 @@ if __name__ == "__main__":
         b.serialize()
         c.serialize()
         idx.freeNodes(fn)
-
-                            

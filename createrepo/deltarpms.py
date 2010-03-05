@@ -47,7 +47,7 @@ class DeltaRPMPackage:
         del fo
         del fd
         self._getDRPMInfo(os.path.join(basedir, filename))
-                    
+
     def _stringToNEVR(self, string):
         i = string.rfind("-", 0, string.rfind("-")-1)
         name = string[:i]
@@ -60,13 +60,13 @@ class DeltaRPMPackage:
             length = length * 256
             length += ord(val)
         return length
-        
+
     def _getDRPMInfo(self, filename):
         d = deltarpm.readDeltaRPM(filename)
         self.oldnevrstring = d['old_nevr']
         self.oldnevr = self._stringToNEVR(d['old_nevr'])
         self.sequence = d['seq']
-        
+
     def _stringToVersion(self, strng):
         i = strng.find(':')
         if i != -1:
@@ -89,7 +89,7 @@ class DeltaRPMPackage:
         return (epoch, version, release)
 
     def xml_dump_metadata(self):
-        """takes an xml doc object and a package metadata entry node, populates a 
+        """takes an xml doc object and a package metadata entry node, populates a
            package node with the md information"""
 
         (oldname, oldepoch, oldver, oldrel) = self.oldnevr
@@ -120,8 +120,5 @@ def create_drpm(old_pkg, new_pkg, destdir):
         if code:
             print "Error genDeltaRPM for %s: exitcode was %s - Reported Error: %s" % (old_pkg.name, code, out)
             return None
-    
+
     return delta_rpm_path
-
-
-    

@@ -53,21 +53,21 @@ class GzipFile(gzip.GzipFile):
 
 def _gzipOpen(filename, mode="rb", compresslevel=9):
     return GzipFile(filename, mode, compresslevel)
-    
+
 def bzipFile(source, dest):
-    
+
     s_fn = open(source, 'rb')
     destination = bz2.BZ2File(dest, 'w', compresslevel=9)
 
     while True:
         data = s_fn.read(1024000)
-        
+
         if not data: break
         destination.write(data)
 
     destination.close()
     s_fn.close()
-    
+
 
 def returnFD(filename):
     try:

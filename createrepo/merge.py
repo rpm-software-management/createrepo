@@ -70,7 +70,7 @@ class RepoMergeBase:
         for repo in repos:
             for pkg in repo.sack:
                 others = self.yumbase.pkgSack.searchNevra(name=pkg.name, arch=pkg.arch)
-                # NOTE the above is definitely going to catch other versions which may 
+                # NOTE the above is definitely going to catch other versions which may
                 # be an invalid comparison
                 if len(others) > 1:
                     for thatpkg in others:
@@ -95,7 +95,7 @@ class RepoMergeBase:
         myrepos = self.yumbase.repos.listEnabled()
 
         self.sort_func(myrepos)
-            
+
 
     def write_metadata(self, outputdir=None):
         mytempdir = tempfile.mkdtemp()
@@ -105,7 +105,7 @@ class RepoMergeBase:
             compsfile.write(self.yumbase.comps.xml())
             compsfile.close()
             self.mdconf.groupfile=comps_fn
-        
+
         if self.updateinfo:
             ui_fn = mytempdir + '/updateinfo.xml'
             uifile = open(ui_fn, 'w')
@@ -114,7 +114,7 @@ class RepoMergeBase:
                 try: # attempt to grab the updateinfo.xml.gz from the repodata
                     umd.add(repo)
                 except yum.Errors.RepoMDError:
-                    continue 
+                    continue
             umd.xml(fileobj=uifile)
             uifile.close()
             self.mdconf.additional_metadata['updateinfo'] = ui_fn

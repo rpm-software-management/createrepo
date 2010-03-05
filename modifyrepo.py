@@ -93,7 +93,7 @@ class RepoMetadata:
 
         csum, destmd = checksum_and_rename(destmd, self.checksum_type)
         base_destmd = os.path.basename(destmd)
-        
+
 
         ## Remove any stale metadata
         for elem in self.doc.getElementsByTagName('data'):
@@ -109,21 +109,21 @@ class RepoMetadata:
         self._insert_element(data, 'location',
                              attrs={ 'href' : 'repodata/' + base_destmd })
         data.appendChild(self.doc.createTextNode("\n    "))
-        self._insert_element(data, 'checksum', 
-                             attrs={ 'type' : self.checksum_type }, 
+        self._insert_element(data, 'checksum',
+                             attrs={ 'type' : self.checksum_type },
                              text=csum)
         data.appendChild(self.doc.createTextNode("\n    "))
         self._insert_element(data, 'timestamp',
                              text=str(os.stat(destmd).st_mtime))
         data.appendChild(self.doc.createTextNode("\n    "))
-        self._insert_element(data, 'open-checksum', 
+        self._insert_element(data, 'open-checksum',
                              attrs={ 'type' : self.checksum_type },
                              text=open_csum)
 
         data.appendChild(self.doc.createTextNode("\n  "))
         root.appendChild(self.doc.createTextNode("\n"))
 
-        print "           type =", mdtype 
+        print "           type =", mdtype
         print "       location =", 'repodata/' + mdname
         print "       checksum =", csum
         print "      timestamp =", str(os.stat(destmd).st_mtime)
@@ -151,4 +151,3 @@ if __name__ == '__main__':
     except MDError, e:
         print "Could not add metadata from file %s: %s" % (sys.argv[1], str(e))
         sys.exit(1)
-

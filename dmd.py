@@ -89,7 +89,7 @@ class MdType(object):
 
         additions = deltatree.find(self.deltasns + 'additions').getchildren()
         removals = deltatree.find(self.deltasns + 'removals').getchildren()
-        
+
         for pkg in additions:
             pkgid = self.get_pkg_id(pkg)
             if oldpkgshash.has_key(pkgid):
@@ -106,7 +106,7 @@ class MdType(object):
 
         oldcount = int(oldroot.get('packages'))
         newcount = oldcount + len(additions) - len(removals)
-        oldroot.set('packages', str(newcount)) 
+        oldroot.set('packages', str(newcount))
         print tostring(oldtree, pretty_print=True)
 
 
