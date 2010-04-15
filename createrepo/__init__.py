@@ -29,7 +29,7 @@ import stat
 from yum import misc, Errors, to_unicode
 from yum.sqlutils import executeSQL
 from yum.packageSack import MetaSack
-from yum.packages import YumAvailablePackage
+from yum.packages import YumAvailablePackage, YumLocalPackage
 
 import rpmUtils.transaction
 from utils import _, errorprint, MDError
@@ -529,7 +529,8 @@ class MetaDataGenerator:
 
                 else:
                     po = pkg
-                    self.read_pkgs.append(po.localpath)
+                    if isinstance(pkg, YumLocalPackage):
+                        self.read_pkgs.append(po.localpath)
 
                 if self.conf.database_only:
                     pass # disabled right now for sanity reasons (mine)
@@ -1046,6 +1047,11 @@ class MetaDataGenerator:
                     'Could not remove old metadata file: %s: %s') % (oldfile, e)
 
         # Move everything else back from olddir (eg. repoview files)
+        try:
+            old_contents = os.listdir(output_old_dir)
+        except (OSError, IOError), e:
+            old_contents = []
+            
         for f in os.listdir(output_old_dir):
             oldfile = os.path.join(output_old_dir, f)
             finalfile = os.path.join(output_final_dir, f)
