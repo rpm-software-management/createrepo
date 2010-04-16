@@ -190,6 +190,9 @@ def parse_args(args, conf):
 
 class MDCallBack(object):
     """cli callback object for createrepo"""
+    def __init__(self):
+        self.__show_progress = os.isatty(1)
+
     def errorlog(self, thing):
         """error log output"""
         print >> sys.stderr, thing
@@ -200,6 +203,9 @@ class MDCallBack(object):
 
     def progress(self, item, current, total):
         """progress bar"""
+        
+        if not self.__show_progress:
+            return
         beg = "%*d/%d - " % (len(str(total)), current, total)
         left = 80 - len(beg)
         sys.stdout.write("\r%s%-*.*s" % (beg, left, left, item))
