@@ -337,7 +337,11 @@ class MetaDataGenerator:
                 opts['do_stat'] = False
 
             if self.conf.update_md_path:
-                old_repo_path = os.path.normpath(self.conf.update_md_path)
+                norm_u_md_path = os.path.normpath(self.conf.update_md_path)
+                if not os.path.exists(norm_u_md_path):
+                    msg = _('Warning: could not open update_md_path: %s') %  norm_u_md_path
+                    self.callback.errorlog(msg)
+                old_repo_path = os.path.normpath(norm_u_md_path)
             else:
                 old_repo_path = self.conf.outputdir
 
