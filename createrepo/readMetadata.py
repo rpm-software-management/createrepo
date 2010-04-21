@@ -59,7 +59,7 @@ class MetadataIndex(object):
         for fn in self.files.values():
             if not os.path.exists(fn):
                 #cannot scan
-                errorprint(_("Previous repo file missing: %s") % fn)
+                errorprint(_("Warning: Old repodata file missing: %s") % fn)
                 return
         root = libxml2.parseFile(self.files['base']).getRootElement()
         self._scanPackageNodes(root, self._handleBase)

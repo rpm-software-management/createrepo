@@ -338,8 +338,9 @@ class MetaDataGenerator:
 
             if self.conf.update_md_path:
                 norm_u_md_path = os.path.normpath(self.conf.update_md_path)
-                if not os.path.exists(norm_u_md_path):
-                    msg = _('Warning: could not open update_md_path: %s') %  norm_u_md_path
+                u_md_repodata_path  = norm_u_md_path + '/repodata'
+                if not os.path.exists(u_md_repodata_path):
+                    msg = _('Warning: could not open update_md_path: %s') %  u_md_repodata_path
                     self.callback.errorlog(msg)
                 old_repo_path = os.path.normpath(norm_u_md_path)
             else:
