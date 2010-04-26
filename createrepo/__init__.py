@@ -847,6 +847,7 @@ class MetaDataGenerator:
                 dbversion = str(sqlitecachec.DBVERSION)
             except AttributeError:
                 dbversion = '9'
+            #FIXME - in theory some sort of try/except  here
             rp = sqlitecachec.RepodataParserSqlite(repopath, repoid, None)
 
         for (rpm_file, ftype) in workfiles:
@@ -873,12 +874,16 @@ class MetaDataGenerator:
                                                                   time.ctime()))
 
                 if ftype == 'primary':
+                    #FIXME - in theory some sort of try/except  here
+                    # TypeError appears to be raised, sometimes :(
                     rp.getPrimary(complete_path, csum)
 
                 elif ftype == 'filelists':
+                    #FIXME and here
                     rp.getFilelists(complete_path, csum)
 
                 elif ftype == 'other':
+                    #FIXME and here
                     rp.getOtherdata(complete_path, csum)
 
                 if ftype in ['primary', 'filelists', 'other']:
