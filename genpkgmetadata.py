@@ -64,8 +64,10 @@ def parse_args(args, conf):
     parser.add_option("-C", "--checkts", default=False, action="store_true",
         help="check timestamps on files vs the metadata to see " \
            "if we need to update")
-    parser.add_option("-d", "--database", default=False, action="store_true",
-        help="create sqlite database files")
+    parser.add_option("-d", "--database", default=True, action="store_true",
+        help="create sqlite database files: now default, see --no-database to disable")
+    parser.add_option("--no-database", default=False, dest="nodatabase", action="store_true",
+        help="do not create sqlite dbs of metadata")
     # temporarily disabled
     #parser.add_option("--database-only", default=False, action="store_true",
     #  dest='database_only',
@@ -145,7 +147,10 @@ def parse_args(args, conf):
 
     if opts.simple_md_filenames:
         opts.unique_md_filenames = False
-
+    
+    if opts.nodatabase:
+        opts.database = False
+        
     # let's switch over to using the conf object - put all the opts into it
     for opt in parser.option_list:
         if opt.dest is None: # this is fairly silly

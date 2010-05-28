@@ -77,7 +77,7 @@ class MetaDataConfig(object):
         self.max_delta_rpm_size = 100000000
         self.update_md_path = None
         self.skip_stat = False
-        self.database = False
+        self.database = True
         self.outputdir = None
         self.file_patterns = ['.*bin\/.*', '^\/etc\/.*', '^\/usr\/lib\/sendmail$']
         self.dir_patterns = ['.*bin\/.*', '^\/etc\/.*']
