@@ -39,7 +39,7 @@ _cr_createrepo()
     if [[ $2 == -* ]] ; then
         COMPREPLY=( $( compgen -W '--version --help --quiet --verbose --profile
             --excludes --basedir --baseurl --groupfile --checksum --pretty
-            --cachedir --checkts --database --update --update-md-path
+            --cachedir --checkts --no-database --update --update-md-path
             --skip-stat --split --pkglist --includepkg --outputdir
             --skip-symlinks --changelog-limit --unique-md-filenames
             --simple-md-filenames --distro --content --repo --revision --deltas
