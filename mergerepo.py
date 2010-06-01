@@ -39,7 +39,8 @@ def parse_args(args):
                       help="repo url")
     parser.add_option("-a", "--archlist", default=[], action="append",
                       help="Defaults to all arches - otherwise specify arches")
-    parser.add_option("-d", "--database", default=False, action="store_true")
+    parser.add_option("-d", "--database", default=True, action="store_true")
+    parser.add_option( "--no-database", default=True, action="store_true", dest="nodatabase")
     parser.add_option("-o", "--outputdir", default=None,
                       help="Location to create the repository")
     parser.add_option("", "--nogroups", default=False, action="store_true",
@@ -70,8 +71,8 @@ def main(args):
         rmbase.archlist = opts.archlist
     if opts.outputdir:
         rmbase.outputdir = opts.outputdir
-    if opts.database:
-        rmbase.mdconf.database = True
+    if opts.nodatabase:
+        rmbase.mdconf.database = False
     if opts.nogroups:
         rmbase.groups = False
     if opts.noupdateinfo:
