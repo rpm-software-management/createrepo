@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # This tools is used to insert arbitrary metadata into an RPM repository.
 # Example:
 #           ./modifyrepo.py updateinfo.xml myrepo/repodata
