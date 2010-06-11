@@ -103,6 +103,7 @@ class MetaDataConfig(object):
         self.repo_tags = []# strings, forwhatever they are worth
         self.read_pkgs_list = None # filepath/name to write out list of pkgs
                                    # read in this run of createrepo
+        self.collapse_glibc_requires = True
 
 class SimpleMDCallBack(object):
     def errorlog(self, thing):
@@ -472,6 +473,7 @@ class MetaDataGenerator:
         po._baseurl = baseurl
         po._reldir = reldir
         po._packagenumber = self.current_pkg
+        po._collapse_libc_requires = self.conf.collapse_glibc_requires
         for r in po.requires_print:
             if r.startswith('rpmlib('):
                 self.rpmlib_reqs[r] = 1
