@@ -65,7 +65,7 @@ _cr_mergerepo()
             ;;
     esac
 
-    COMPREPLY=( $( compgen -W '--version --help --repo --archlist --database
+    COMPREPLY=( $( compgen -W '--version --help --repo --archlist --no-database
         --outputdir --nogroups --noupdateinfo' -- "$2" ) )
 } &&
 complete -F _cr_mergerepo -o filenames mergerepo mergerepo.py
