@@ -11,7 +11,7 @@ URL: http://createrepo.baseurl.org/
 BuildRoot: %{_tmppath}/%{name}-%{version}root
 BuildArchitectures: noarch
 Requires: python >= 2.1, rpm-python, rpm >= 0:4.1.1, libxml2-python
-Requires: yum-metadata-parser, yum >= 3.2.23, python-deltarpm
+Requires: yum-metadata-parser, yum >= 3.2.28, python-deltarpm
 
 %description
 This utility will generate a common metadata repository from a directory of
@@ -43,6 +43,9 @@ make DESTDIR=$RPM_BUILD_ROOT sysconfdir=%{_sysconfdir} install
 %{python_sitelib}/createrepo
 
 %changelog
+* Thu Aug 19 2010 Seth Vidal <skvidal at fedoraproject.org>
+- increase yum requirement for the modifyrepo use of RepoMD, RepoData and RepoMDError
+
 * Fri Aug 28 2009 Seth Vidal <skvidal at fedoraproject.org>
 - 0.9.8
 
