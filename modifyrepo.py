@@ -23,11 +23,13 @@
 
 import os
 import sys
-
+from createrepo import __version__
 from createrepo.utils import checksum_and_rename, GzipFile, MDError
 from yum.misc import checksum
 
+from yum.repoMDObject import RepoMD, RepoMDError, RepoData
 from xml.dom import minidom
+from optparse import OptionParser
 
 
 class RepoMetadata:
@@ -37,23 +39,18 @@ class RepoMetadata:
         self.repodir = os.path.abspath(repo)
         self.repomdxml = os.path.join(self.repodir, 'repomd.xml')
         self.checksum_type = 'sha256'
+
         if not os.path.exists(self.repomdxml):
             raise MDError, '%s not found' % self.repomdxml
-        self.doc = minidom.parse(self.repomdxml)
 
-    def _insert_element(self, parent, name, attrs=None, text=None):
-        child = self.doc.createElement(name)
-        if not attrs:
-            attrs = {}
-        for item in attrs.items():
-            child.setAttribute(item[0], item[1])
-        if text:
-            txtnode = self.doc.createTextNode(text)
-            child.appendChild(txtnode)
-        parent.appendChild(child)
-        return child
+        try:
+            self.repoobj = RepoMD(self.repodir)
+            self.repoobj.parse(self.repomdxml)
+        except RepoMDError, e:
+            raise MDError, 'Could not parse %s' % self.repomdxml
 
-    def add(self, metadata):
+
+    def add(self, metadata, mdtype=None):
         """ Insert arbitrary metadata into this repository.
             metadata can be either an xml.dom.minidom.Document object, or
             a filename.
@@ -81,7 +78,9 @@ class RepoMetadata:
         ## Compress the metadata and move it into the repodata
         if not mdname.endswith('.gz'):
             mdname += '.gz'
-        mdtype = mdname.split('.')[0]
+        if not mdtype:
+            mdtype = mdname.split('.')[0]
+            
         destmd = os.path.join(self.repodir, mdname)
         newmd = GzipFile(filename=destmd, mode='wb')
         newmd.write(md)
@@ -89,65 +88,60 @@ class RepoMetadata:
         print "Wrote:", destmd
 
         open_csum = checksum(self.checksum_type, metadata)
-
-
         csum, destmd = checksum_and_rename(destmd, self.checksum_type)
         base_destmd = os.path.basename(destmd)
 
 
         ## Remove any stale metadata
-        for elem in self.doc.getElementsByTagName('data'):
-            if elem.attributes['type'].value == mdtype:
-                self.doc.firstChild.removeChild(elem)
+        if mdtype in self.repoobj.repoData:
+            del self.repoobj.repoData[mdtype]
+            
 
-        ## Build the metadata
-        root = self.doc.firstChild
-        root.appendChild(self.doc.createTextNode("  "))
-        data = self._insert_element(root, 'data', attrs={ 'type' : mdtype })
-        data.appendChild(self.doc.createTextNode("\n    "))
-
-        self._insert_element(data, 'location',
-                             attrs={ 'href' : 'repodata/' + base_destmd })
-        data.appendChild(self.doc.createTextNode("\n    "))
-        self._insert_element(data, 'checksum',
-                             attrs={ 'type' : self.checksum_type },
-                             text=csum)
-        data.appendChild(self.doc.createTextNode("\n    "))
-        self._insert_element(data, 'timestamp',
-                             text=str(os.stat(destmd).st_mtime))
-        data.appendChild(self.doc.createTextNode("\n    "))
-        self._insert_element(data, 'open-checksum',
-                             attrs={ 'type' : self.checksum_type },
-                             text=open_csum)
-
-        data.appendChild(self.doc.createTextNode("\n  "))
-        root.appendChild(self.doc.createTextNode("\n"))
-
-        print "           type =", mdtype
-        print "       location =", 'repodata/' + mdname
-        print "       checksum =", csum
-        print "      timestamp =", str(os.stat(destmd).st_mtime)
-        print "  open-checksum =", open_csum
+        new_rd = RepoData()
+        new_rd.type = mdtype
+        new_rd.location = (None, 'repodata/' + base_destmd)
+        new_rd.checksum = (self.checksum_type, csum)
+        new_rd.openchecksum = (self.checksum_type, open_csum)
+        new_rd.size = str(os.stat(destmd).st_size)
+        new_rd.timestamp = str(os.stat(destmd).st_mtime)
+        self.repoobj.repoData[new_rd.type] = new_rd
+        
+        print "           type =", new_rd.type
+        print "       location =", new_rd.location[1]
+        print "       checksum =", new_rd.checksum[1]
+        print "      timestamp =", new_rd.timestamp
+        print "  open-checksum =", new_rd.openchecksum[1]
 
         ## Write the updated repomd.xml
         outmd = file(self.repomdxml, 'w')
-        self.doc.writexml(outmd)
-        outmd.write("\n")
+        outmd.write(self.repoobj.dump_xml())
         outmd.close()
         print "Wrote:", self.repomdxml
 
 
-if __name__ == '__main__':
-    if len(sys.argv) != 3 or '-h' in sys.argv:
+def main(args):
+    parser = OptionParser(version='modifyrepo version %s' % __version__)
+    # query options
+    parser.add_option("--mdtype", dest='mdtype',
+                      help="specific datatype of the metadata, will be derived from the filename if not specified")
+    
+    (opts, argsleft) = parser.parse_args(args)
+    if len(argsleft) != 2:
         print "Usage: %s <input metadata> <output repodata>" % sys.argv[0]
-        sys.exit()
+        return 0
+    metadata = argsleft[0]
+    repodir = argsleft[1]
     try:
-        repomd = RepoMetadata(sys.argv[2])
+        repomd = RepoMetadata(repodir)
     except MDError, e:
         print "Could not access repository: %s" % str(e)
-        sys.exit(1)
+        return 1
     try:
-        repomd.add(sys.argv[1])
+        repomd.add(metadata, mdtype=opts.mdtype)
     except MDError, e:
-        print "Could not add metadata from file %s: %s" % (sys.argv[1], str(e))
-        sys.exit(1)
+        print "Could not add metadata from file %s: %s" % (metadata, str(e))
+        return 1
+
+if __name__ == '__main__':
+    ret = main(sys.argv[1:])
+    sys.exit(ret)
