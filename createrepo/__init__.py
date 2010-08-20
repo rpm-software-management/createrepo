@@ -25,6 +25,8 @@ from  bz2 import BZ2File
 from urlgrabber import grabber
 import tempfile
 import stat
+import fcntl
+
 
 from yum import misc, Errors, to_unicode
 from yum.sqlutils import executeSQL
@@ -197,6 +199,18 @@ class MetaDataGenerator:
         if not checkAndMakeDir(temp_final):
             raise MDError, _('Cannot create/verify %s') % temp_final
 
+        if self.conf.database:
+            # do flock test on temp_final, temp_output
+            # if it fails raise MDError
+            for direc in [temp_final, temp_output]:
+                f = open(direc + '/locktest', 'w')
+                try:
+                    fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+                except (OSError, IOError), e:
+                    raise MDError, _("Could not create exclusive lock in %s and sqlite database generation enabled. Is this path on nfs? Is your lockd running?") % direc
+                else:
+                    os.unlink(direc + '/locktest')
+                
         if self.conf.deltas:
             temp_delta = os.path.join(self.conf.outputdir,
                                       self.conf.delta_relative)
