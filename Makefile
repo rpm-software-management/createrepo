@@ -47,7 +47,8 @@ RM              = rm -f
 
 MODULES = $(srcdir)/genpkgmetadata.py \
 	$(srcdir)/modifyrepo.py \
-	$(srcdir)/mergerepo.py	
+	$(srcdir)/mergerepo.py	\
+	$(srcdir)/worker.py
 
 .SUFFIXES: .py .pyc
 .py.pyc: 

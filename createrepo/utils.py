@@ -123,6 +123,15 @@ def encodefiletypelist(filetypelist):
         result += ftl[x]
     return result
 
+def split_list_into_equal_chunks(seq, num_chunks):
+    avg = len(seq) / float(num_chunks)
+    out = []
+    last = 0.0
+    while last < len(seq):
+        out.append(seq[int(last):int(last + avg)])
+        last += avg
+
+    return out
 
 
 class MDError(Exception):

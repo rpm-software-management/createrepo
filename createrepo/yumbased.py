@@ -26,10 +26,15 @@ import utils
 import tempfile
 
 class CreateRepoPackage(YumLocalPackage):
-    def __init__(self, ts, package, sumtype=None):
+    def __init__(self, ts, package, sumtype=None, external_data={}):
         YumLocalPackage.__init__(self, ts, package)
         if sumtype:
             self.checksum_type = sumtype
+        
+        if external_data:
+            for (key, val) in external_data.items():
+                setattr(self, key, val)
+                
 
     def _do_checksum(self):
         """return a checksum for a package:
@@ -44,7 +49,7 @@ class CreateRepoPackage(YumLocalPackage):
             return self._checksum
 
         # not using the cachedir
-        if not self._cachedir:
+        if not hasattr(self, '_cachedir') or not self._cachedir:
             self._checksum = misc.checksum(self.checksum_type, self.localpath)
             self._checksums = [(self.checksum_type, self._checksum, 1)]
             return self._checksum
