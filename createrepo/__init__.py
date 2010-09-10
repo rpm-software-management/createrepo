@@ -580,77 +580,106 @@ class MetaDataGenerator:
         # filter out those pkgs which are not files - but are pkgobjects
         pkgfiles = []
         for pkg in newpkgs:
+            po = None
             if isinstance(pkg, YumAvailablePackage):
                 po = pkg
                 self.read_pkgs.append(po.localpath)
+
+            # if we're dealing with remote pkgs - pitch it over to doing
+            # them one at a time, for now. 
+            elif pkg.find('://') != -1:
+                po = self.read_in_package(pkgfile, pkgpath=pkgpath, reldir=reldir)
+                self.read_pkgs.append(pkg)
+            
+            if po:
                 self.primaryfile.write(po.xml_dump_primary_metadata())
                 self.flfile.write(po.xml_dump_filelists_metadata())
                 self.otherfile.write(po.xml_dump_other_metadata(
                                      clog_limit=self.conf.changelog_limit))
                 continue
-            
                 
             pkgfiles.append(pkg)
             
        
-        # divide that list by the number of workers and fork off that many
-       
-        # workers to tmpdirs
-        # waitfor the workers to finish and as each one comes in
-        # open the files they created and write them out to our metadata
-        # add up the total pkg counts and return that value
-        worker_tmp_path = tempfile.mkdtemp()
-        worker_chunks = utils.split_list_into_equal_chunks(pkgfiles,  self.conf.workers)
-        worker_cmd_dict = {}
-        worker_jobs = []
-        base_worker_cmdline = [self.conf.worker_cmd, 
-                '--pkgoptions=_reldir=%s' % reldir,
-                '--pkgoptions=_collapse_libc_requires=%s' % self.conf.collapse_glibc_requires, 
-                '--pkgoptions=_cachedir=%s' % self.conf.cachedir,
-                '--pkgoptions=_baseurl=%s' % self.conf.baseurl,]
-                               
-                               
-        for worker_num in range(self.conf.workers):
-            # make the worker directory
-            workercmdline = []
-            workercmdline.extend(base_worker_cmdline)
-            thisdir = worker_tmp_path + '/' + str(worker_num)
-            if checkAndMakeDir(thisdir):
-                workercmdline.append('--tmpmdpath=%s' % thisdir)
-            else:
-                raise MDError, "Unable to create worker path: %s" % thisdir
-            workercmdline.extend(worker_chunks[worker_num])
-            worker_cmd_dict[worker_num] = workercmdline
-        
+        if pkgfiles:
+            # divide that list by the number of workers and fork off that many
+            # workers to tmpdirs
+            # waitfor the workers to finish and as each one comes in
+            # open the files they created and write them out to our metadata
+            # add up the total pkg counts and return that value
+            worker_tmp_path = tempfile.mkdtemp()
+            worker_chunks = utils.split_list_into_equal_chunks(pkgfiles,  self.conf.workers)
+            worker_cmd_dict = {}
+            worker_jobs = {}
+            base_worker_cmdline = [self.conf.worker_cmd, 
+                    '--pkgoptions=_reldir=%s' % reldir,
+                    '--pkgoptions=_collapse_libc_requires=%s' % self.conf.collapse_glibc_requires, 
+                    '--pkgoptions=_cachedir=%s' % self.conf.cachedir,
+                    '--pkgoptions=_baseurl=%s' % self.conf.baseurl,
+                    '--globalopts=clog_limit=%s' % self.conf.changelog_limit,]
             
-
-        for (num, cmdline) in worker_cmd_dict.items():
-            self.callback.log("Spawning worker %s with %s pkgs" % (num, len(worker_chunks[num])))
-            job = subprocess.Popen(cmdline) # fixme - add stdout/stderr PIPES here,
-            worker_jobs.append(job)
-        
-        for job in worker_jobs:
-            # fixme - need 'communicate' to see about getting info back
-            os.waitpid(job.pid, 0)
-        
-        self.callback.log("Workers Finished")
-        # finished with workers
-        # go to their dirs and add the contents
-        self.callback.log("Gathering worker results")
-        for num in range(self.conf.workers):
-            for (fn, fo) in (('primary.xml', self.primaryfile), 
-                       ('filelists.xml', self.flfile),
-                       ('other.xml', self.otherfile)):
-                fnpath = worker_tmp_path + '/' + str(num) + '/' + fn
-                if os.path.exists(fnpath):
-                    fo.write(open(fnpath, 'r').read())
-
+            if self.conf.quiet:
+                base_worker_cmdline.append('--quiet')
+            
+            if self.conf.verbose:
+                base_worker_cmdline.append('--verbose')
                 
-        for pkgfile in pkgfiles:
-            if self.conf.deltas:
-                po = self.read_in_package(pkgfile, pkgpath=pkgpath, reldir=reldir)
-                self._do_delta_rpm_package(po)
-            self.read_pkgs.append(pkgfile)
+            for worker_num in range(self.conf.workers):
+                # make the worker directory
+                workercmdline = []
+                workercmdline.extend(base_worker_cmdline)
+                thisdir = worker_tmp_path + '/' + str(worker_num)
+                if checkAndMakeDir(thisdir):
+                    workercmdline.append('--tmpmdpath=%s' % thisdir)
+                else:
+                    raise MDError, "Unable to create worker path: %s" % thisdir
+                workercmdline.extend(worker_chunks[worker_num])
+                worker_cmd_dict[worker_num] = workercmdline
+            
+                
+
+            for (num, cmdline) in worker_cmd_dict.items():
+                if not self.conf.quiet:
+                    self.callback.log("Spawning worker %s with %s pkgs" % (num, 
+                                                      len(worker_chunks[num])))
+                job = subprocess.Popen(cmdline, stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE)
+                worker_jobs[num] = job
+            
+            gimmebreak = 0
+            while gimmebreak != len(worker_jobs.keys()):
+                gimmebreak = 0
+                for (num,job) in worker_jobs.items():
+                    if job.poll() is not None:
+                        gimmebreak+=1
+                    line = job.stdout.readline()
+                    if line:
+                        self.callback.log('Worker %s: %s' % (num, line.rstrip()))
+                    line = job.stderr.readline()
+                    if line:
+                        self.callback.errorlog('Worker %s: %s' % (num, line.rstrip()))
+                    
+                
+            if not self.conf.quiet:
+                self.callback.log("Workers Finished")
+            # finished with workers
+            # go to their dirs and add the contents
+            if not self.conf.quiet:
+                self.callback.log("Gathering worker results")
+            for num in range(self.conf.workers):
+                for (fn, fo) in (('primary.xml', self.primaryfile), 
+                           ('filelists.xml', self.flfile),
+                           ('other.xml', self.otherfile)):
+                    fnpath = worker_tmp_path + '/' + str(num) + '/' + fn
+                    if os.path.exists(fnpath):
+                        fo.write(open(fnpath, 'r').read())
+
+                    
+            for pkgfile in pkgfiles:
+                if self.conf.deltas:
+                    po = self.read_in_package(pkgfile, pkgpath=pkgpath, reldir=reldir)
+                    self._do_delta_rpm_package(po)
+                self.read_pkgs.append(pkgfile)
 
         return self.current_pkg
 

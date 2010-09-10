@@ -25,13 +25,21 @@ def main(args):
                 help="path where the outputs should be dumped for this worker")
     parser.add_option("--pkgoptions", default=[], action='append',
                 help="pkgoptions in the format of key=value")
+    parser.add_option("--quiet", default=False, action='store_true',
+                help="only output errors and a total")
+    parser.add_option("--verbose", default=False, action='store_true',
+                help="output errors and a total")
+    parser.add_option("--globalopts", default=[], action='append',
+                help="general options in the format of key=value")
 
     
     opts, pkgs = parser.parse_args(args)
-    external_data = {'_packagenumber': 0}
+    external_data = {'_packagenumber': 1}
+    globalopts = {}
     if not opts.tmpmdpath:
         print >> sys.stderr, "tmpmdpath required for destination files"
         sys.exit(1)
+    
     
     for strs in opts.pkgoptions:
         k,v = strs.split('=')
@@ -43,6 +51,16 @@ def main(args):
             v = None
         external_data[k] = v
 
+    for strs in opts.globalopts:
+        k,v = strs.split('=')
+        if v in ['True', 'true', 'yes', '1', 1]:
+            v = True
+        elif v in ['False', 'false', 'no', '0', 0]:
+            v = False
+        elif v in ['None', 'none', '']:
+            v = None
+        globalopts[k] = v
+
     
     reldir = external_data['_reldir']
     ts = rpmUtils.transaction.initReadOnlyTransaction()
@@ -50,17 +68,23 @@ def main(args):
     fl = open(opts.tmpmdpath  + '/filelists.xml' , 'w')
     other = open(opts.tmpmdpath  + '/other.xml' , 'w')
     
+    
     for pkgfile in pkgs:
         pkgpath = reldir + '/' + pkgfile
         if not os.path.exists(pkgpath):
+            print >> sys.stderr, "File not found: %s" % pkgpath
             continue
 
         try:
+            if not opts.quiet and opts.verbose:
+                print "reading %s" % (pkgfile)
+
             pkg = createrepo.yumbased.CreateRepoPackage(ts, package=pkgpath, 
                                                         external_data=external_data)
             pri.write(pkg.xml_dump_primary_metadata())
             fl.write(pkg.xml_dump_filelists_metadata())
-            other.write(pkg.xml_dump_other_metadata())
+            other.write(pkg.xml_dump_other_metadata(clog_limit=
+                                            globalopts.get('clog_limit', None)))
         except yum.Errors.YumBaseError, e:
             print >> sys.stderr, "Error: %s" % e
             continue
@@ -70,7 +94,6 @@ def main(args):
     pri.close()
     fl.close()
     other.close()
-    print external_data['_packagenumber']
     
 if __name__ == "__main__":
     main(sys.argv[1:])
