@@ -29,6 +29,7 @@ import fcntl
 import subprocess
 
 from yum import misc, Errors, to_unicode
+from yum.repoMDObject import RepoMD, RepoMDError, RepoData
 from yum.sqlutils import executeSQL
 from yum.packageSack import MetaSack
 from yum.packages import YumAvailablePackage, YumLocalPackage
@@ -831,13 +832,11 @@ class MetaDataGenerator:
 
         return ' '.join(results)
 
-    def addArbitraryMetadata(self, mdfile, mdtype, xml_node, compress=True,
-                                             compress_type='gzip', attribs={}):
-        """add random metadata to the repodata dir and repomd.xml
+    def _createRepoDataObject(self, mdfile, mdtype, compress=True, 
+                              compress_type='gzip', attribs={}):
+        """return random metadata as RepoData object to be  added to RepoMD
            mdfile = complete path to file
            mdtype = the metadata type to use
-           xml_node = the node of the repomd xml object to append this
-                      data onto
            compress = compress the file before including it
         """
         # copy the file over here
@@ -873,67 +872,49 @@ class MetaDataGenerator:
             else:
                 csum = open_csum
 
-        timest = os.stat(outfn)[8]
-
-        # add all this garbage into the xml node like:
-        data = xml_node.newChild(None, 'data', None)
-        data.newProp('type', mdtype)
-        location = data.newChild(None, 'location', None)
-        if self.conf.baseurl is not None:
-            location.newProp('xml:base', self.conf.baseurl)
-        location.newProp('href', os.path.join(self.conf.finaldir, sfile))
-        checksum = data.newChild(None, 'checksum', csum)
-        checksum.newProp('type', self.conf.sumtype)
+        thisdata = RepoData()
+        thisdata.type = mdtype
+        baseloc = None
+        thisdata.location = (self.conf.baseurl, os.path.join(self.conf.finaldir, sfile))
+        thisdata.checksum = (self.conf.sumtype, csum)
         if compress:
-            opencsum = data.newChild(None, 'open-checksum', open_csum)
-            opencsum.newProp('type', self.conf.sumtype)
-
-        timestamp = data.newChild(None, 'timestamp', str(timest))
-
-        # add the random stuff
+            thisdata.openchecksum  = (self.conf.sumtype, open_csum)
+        
+        thisdata.size = str(os.stat(outfn).st_size)
+        thisdata.timestamp = str(os.stat(outfn).st_mtime)
         for (k, v) in attribs.items():
-            data.newChild(None, k, str(v))
-
+            setattr(thisdata, k, str(v))
+        
+        return thisdata
+        
 
     def doRepoMetadata(self):
         """wrapper to generate the repomd.xml file that stores the info
            on the other files"""
-        repodoc = libxml2.newDoc("1.0")
-        reporoot = repodoc.newChild(None, "repomd", None)
-        repons = reporoot.newNs('http://linux.duke.edu/metadata/repo', None)
-        reporoot.setNs(repons)
-        rpmns = reporoot.newNs("http://linux.duke.edu/metadata/rpm", 'rpm')
+        
+        repomd = RepoMD('repoid')
+        repomd.revision = self.conf.revision
+
         repopath = os.path.join(self.conf.outputdir, self.conf.tempdir)
         repofilepath = os.path.join(repopath, self.conf.repomdfile)
 
-        revision = reporoot.newChild(None, 'revision', self.conf.revision)
-        if self.conf.content_tags or self.conf.distro_tags or self.conf.repo_tags:
-            tags = reporoot.newChild(None, 'tags', None)
-            for item in self.conf.content_tags:
-                c_tags = tags.newChild(None, 'content', item)
-            for item in self.conf.repo_tags:
-                c_tags = tags.newChild(None, 'repo', item)
-            for (cpeid, item) in self.conf.distro_tags:
-                d_tags = tags.newChild(None, 'distro', item)
-                if cpeid:
-                    d_tags.newProp('cpeid', cpeid)
+        if self.conf.content_tags:
+            repomd.tags['content'] = self.conf.content_tags
+        if self.conf.distro_tags:
+            repomd.tags['distro'] = self.conf.distro_tags
+            # NOTE - test out the cpeid silliness here
+        if self.conf.repo_tags:
+            repomd.tags['repo'] = self.conf.repo_tags
+            
 
         sumtype = self.conf.sumtype
-        if self.conf.database_only:
-            workfiles = []
-            db_workfiles = [(self.md_sqlite.pri_sqlite_file, 'primary_db'),
-                            (self.md_sqlite.file_sqlite_file, 'filelists_db'),
-                            (self.md_sqlite.other_sqlite_file, 'other_db')]
-            dbversion = '10'
-        else:
-            workfiles = [(self.conf.otherfile, 'other',),
-                         (self.conf.filelistsfile, 'filelists'),
-                         (self.conf.primaryfile, 'primary')]
-            db_workfiles = []
-            repoid = 'garbageid'
+        workfiles = [(self.conf.otherfile, 'other',),
+                     (self.conf.filelistsfile, 'filelists'),
+                     (self.conf.primaryfile, 'primary')]
 
         if self.conf.deltas:
             workfiles.append((self.conf.deltafile, 'prestodelta'))
+        
         if self.conf.database:
             if not self.conf.quiet: self.callback.log('Generating sqlite DBs')
             try:
@@ -941,7 +922,7 @@ class MetaDataGenerator:
             except AttributeError:
                 dbversion = '9'
             #FIXME - in theory some sort of try/except  here
-            rp = sqlitecachec.RepodataParserSqlite(repopath, repoid, None)
+            rp = sqlitecachec.RepodataParserSqlite(repopath, repomd.repoid, None)
 
         for (rpm_file, ftype) in workfiles:
             complete_path = os.path.join(repopath, rpm_file)
@@ -1015,82 +996,60 @@ class MetaDataGenerator:
 
                     # add this data as a section to the repomdxml
                     db_data_type = '%s_db' % ftype
-                    data = reporoot.newChild(None, 'data', None)
-                    data.newProp('type', db_data_type)
-                    location = data.newChild(None, 'location', None)
-
-                    if self.conf.baseurl is not None:
-                        location.newProp('xml:base', self.conf.baseurl)
-
-                    location.newProp('href', os.path.join(self.conf.finaldir,
-                                                               compressed_name))
-                    checksum = data.newChild(None, 'checksum',
-                                                    db_compressed_sums[ftype])
-                    checksum.newProp('type', sumtype)
-                    db_tstamp = data.newChild(None, 'timestamp',
-                                                    str(db_stat.st_mtime))
-                    data.newChild(None, 'size', str(db_stat.st_size))
-                    data.newChild(None, 'open-size', str(un_stat.st_size))
-                    unchecksum = data.newChild(None, 'open-checksum',
-                                                    db_csums[ftype])
-                    unchecksum.newProp('type', sumtype)
-                    database_version = data.newChild(None, 'database_version',
-                                                     dbversion)
+                    data = RepoData()
+                    data.type = db_data_type
+                    data.location = (self.conf.baseurl, 
+                              os.path.join(self.conf.finaldir, compressed_name))
+                    data.checksum = (sumtype, db_compressed_sums[ftype])
+                    data.timestamp = str(db_stat.st_mtime)
+                    data.size = str(db_stat.st_size)
+                    data.opensize = str(un_stat.st_size)
+                    data.openchecksum = (sumtype, db_csums[ftype])
+                    data.dbversion = dbversion
                     if self.conf.verbose:
                         self.callback.log("Ending %s db creation: %s" % (ftype,
                                                                   time.ctime()))
+                    repomd.repoData[data.type] = data
+                    
+            data = RepoData()
+            data.type = ftype
+            data.checksum = (sumtype, csum)
+            data.timestamp = str(timestamp)
+            data.size = str(os.stat(os.path.join(repopath, rpm_file)).st_size)
+            data.opensize = str(unsize)
+            data.openchecksum = (sumtype, uncsum)
 
-
-
-            data = reporoot.newChild(None, 'data', None)
-            data.newProp('type', ftype)
-
-            checksum = data.newChild(None, 'checksum', csum)
-            checksum.newProp('type', sumtype)
-            timestamp = data.newChild(None, 'timestamp', str(timestamp))
-            size = os.stat(os.path.join(repopath, rpm_file))
-            data.newChild(None, 'size', str(size.st_size))
-            data.newChild(None, 'open-size', str(unsize))
-            unchecksum = data.newChild(None, 'open-checksum', uncsum)
-            unchecksum.newProp('type', sumtype)
-            location = data.newChild(None, 'location', None)
-            if self.conf.baseurl is not None:
-                location.newProp('xml:base', self.conf.baseurl)
             if self.conf.unique_md_filenames:
                 res_file = '%s-%s.xml.gz' % (csum, ftype)
                 orig_file = os.path.join(repopath, rpm_file)
                 dest_file = os.path.join(repopath, res_file)
                 os.rename(orig_file, dest_file)
-
             else:
                 res_file = rpm_file
-
             rpm_file = res_file
+            href = os.path.join(self.conf.finaldir, rpm_file)
 
-            location.newProp('href', os.path.join(self.conf.finaldir, rpm_file))
-
+            data.location = (self.conf.baseurl, href)
+            repomd.repoData[data.type] = data
 
         if not self.conf.quiet and self.conf.database:
             self.callback.log('Sqlite DBs complete')
 
-        for (fn, ftype) in db_workfiles:
-            attribs = {'database_version':dbversion}
-            self.addArbitraryMetadata(fn, ftype, reporoot, compress=True,
-                                      compress_type='bzip2', attribs=attribs)
-            try:
-                os.unlink(fn)
-            except (IOError, OSError), e:
-                pass
-
 
         if self.conf.groupfile is not None:
-            self.addArbitraryMetadata(self.conf.groupfile, 'group_gz', reporoot)
-            self.addArbitraryMetadata(self.conf.groupfile, 'group', reporoot,
-                                      compress=False)
+            mdcontent = self._createRepoDataObject(self.conf.groupfile, 'group_gz')
+            repomd.repoData[mdcontent.type] = mdcontent
+            
+            mdcontent = self._createRepoDataObject(self.conf.groupfile, 'group',
+                              compress=False)
+            repomd.repoData[mdcontent.type] = mdcontent
+            
 
         if self.conf.additional_metadata:
             for md_type, mdfile in self.conf.additional_metadata.items():
-                self.addArbitraryMetadata(mdfile, md_type, reporoot)
+                mdcontent = self._createRepoDataObject(md_file, md_type)
+                repomd.repoData[mdcontent.type] = mdcontent
+                
 
         # FIXME - disabled until we decide how best to use this
         #if self.rpmlib_reqs:
@@ -1101,14 +1060,16 @@ class MetaDataGenerator:
 
         # save it down
         try:
-            repodoc.saveFormatFileEnc(repofilepath, 'UTF-8', 1)
-        except:
+            fo = open(repofilepath, 'w')
+            fo.write(repomd.dump_xml())
+            fo.close()
+        except (IOError, OSError, TypeError), e:
             self.callback.errorlog(
                   _('Error saving temp file for repomd.xml: %s') % repofilepath)
+            self.callback.errorlog('Error was: %s') % str(e)
+            fo.close()
             raise MDError, 'Could not save temp file: %s' % repofilepath
-
-        del repodoc
-
+            
 
     def doFinalMove(self):
         """move the just-created repodata from .repodata to repodata
