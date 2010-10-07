@@ -16,7 +16,6 @@
 
 import os
 import sys
-import libxml2
 import fnmatch
 import time
 import yumbased
