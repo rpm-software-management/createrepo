@@ -124,10 +124,11 @@ def main(args):
     # query options
     parser.add_option("--mdtype", dest='mdtype',
                       help="specific datatype of the metadata, will be derived from the filename if not specified")
+    parser.usage = "modifyrepo [options] <input_metadata> <output repodata>"
     
     (opts, argsleft) = parser.parse_args(args)
     if len(argsleft) != 2:
-        print "Usage: %s <input metadata> <output repodata>" % sys.argv[0]
+        parser.print_usage()
         return 0
     metadata = argsleft[0]
     repodir = argsleft[1]
