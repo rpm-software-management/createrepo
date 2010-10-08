@@ -107,8 +107,9 @@ class MetaDataConfig(object):
                                    # read in this run of createrepo
         self.collapse_glibc_requires = True
         self.workers = 1 # number of workers to fork off to grab metadata from the pkgs
-        #self.worker_cmd = '/usr/share/createrepo_worker.py'
-        self.worker_cmd = './worker.py' # fixme - need a nice way to make this be the right place :(
+        self.worker_cmd = '/usr/share/createrepo/worker.py'
+        
+        #self.worker_cmd = './worker.py' # helpful when testing
         
 class SimpleMDCallBack(object):
     def errorlog(self, thing):
