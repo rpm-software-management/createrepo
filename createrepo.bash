@@ -5,7 +5,7 @@ _cr_createrepo()
     COMPREPLY=()
 
     case $3 in
-        --version|-h|--help|-u|--baseurl|--distro|--content|--repo|\
+        --version|-h|--help|-u|--baseurl|--distro|--content|--repo|--workers|\
         --revision|-x|--excludes|--changelog-limit|--max-delta-rpm-size)
             return 0
             ;;
@@ -44,7 +44,7 @@ _cr_createrepo()
             --skip-symlinks --changelog-limit --unique-md-filenames
             --simple-md-filenames --distro --content --repo --revision --deltas
             --oldpackagedirs --num-deltas --read-pkgs-list
-            --max-delta-rpm-size' -- "$2" ) )
+            --max-delta-rpm-size --workers' -- "$2" ) )
     else
         COMPREPLY=( $( compgen -d -- "$2" ) )
     fi
