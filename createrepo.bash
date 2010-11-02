@@ -74,7 +74,26 @@ _cr_modifyrepo()
 {
     COMPREPLY=()
 
-    case $COMP_CWORD in
+    case $3 in
+        --version|-h|--help|--mdtype)
+            return 0
+            ;;
+    esac
+
+    if [[ $2 == -* ]] ; then
+        COMPREPLY=( $( compgen -W '--version --help --mdtype' -- "$2" ) )
+        return 0
+    fi
+
+    local i argnum=1
+    for (( i=1; i < ${#COMP_WORDS[@]}-1; i++ )) ; do
+        if [[ ${COMP_WORDS[i]} != -* &&
+                    ${COMP_WORDS[i-1]} != @(=|--mdtype) ]]; then
+            argnum=$(( argnum+1 ))
+        fi
+    done
+
+    case $argnum in
         1)
             COMPREPLY=( $( compgen -f -o plusdirs -- "$2" ) )
             return 0
