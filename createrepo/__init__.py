@@ -786,7 +786,7 @@ class MetaDataGenerator:
         self._old_package_dict = {}
         opl = []
         for d in self.conf.oldpackage_paths:
-            for f in self.getFileList(d, 'rpm'):
+            for f in self.getFileList(d, '.rpm'):
                 fp = d + '/' + f
                 fpstat = os.stat(fp)
                 if int(fpstat[stat.ST_SIZE]) > self.conf.max_delta_rpm_size:
@@ -809,7 +809,7 @@ class MetaDataGenerator:
         # tag
         targets = {}
         results = []
-        for drpm_fn in self.getFileList(self.conf.deltadir, 'drpm'):
+        for drpm_fn in self.getFileList(self.conf.deltadir, '.drpm'):
             drpm_rel_fn = os.path.normpath(self.conf.delta_relative +
                                            '/' + drpm_fn) # this is annoying
             drpm_po = yumbased.CreateRepoPackage(self.ts,
