@@ -86,7 +86,9 @@ class RepoMergeBase:
         for r in self.repolist:
             count +=1
             rid = 'repo%s' % count
-            n = self.yumbase.add_enable_repo(rid, baseurls=[r])
+            n = self.yumbase.add_enable_repo(rid, baseurls=[r],
+                                             metadata_expire=0,
+                                             timestamp_check=False)
             n._merge_rank = count
 
         #setup our sacks
