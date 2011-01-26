@@ -2,7 +2,7 @@
 
 Summary: Creates a common metadata repository
 Name: createrepo
-Version: 0.9.8
+Version: 0.9.9
 Release: 1
 License: GPL
 Group: System Environment/Base
@@ -43,6 +43,10 @@ make DESTDIR=$RPM_BUILD_ROOT sysconfdir=%{_sysconfdir} install
 %{python_sitelib}/createrepo
 
 %changelog
+* Wed Jan 26 2011 Seth Vidal <skvidal at fedoraproject.org>
+- bump to 0.9.9
+- add worker.py
+
 * Thu Aug 19 2010 Seth Vidal <skvidal at fedoraproject.org>
 - increase yum requirement for the modifyrepo use of RepoMD, RepoData and RepoMDError
 
