@@ -1,3 +1,310 @@
+2011-01-26  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo.spec, createrepo/__init__.py: mark as 0.9.9
+
+2011-01-26  Seth Vidal <skvidal@fedoraproject.org>
+
+	Merge branch 'master' of
+	ssh://createrepo.baseurl.org/srv/projects/createrepo/git/createrepo
+	* 'master' of
+	ssh://createrepo.baseurl.org/srv/projects/createrepo/git/createrepo:
+	Override timestamp check on repos. for mergerepo (like repodiff).
+	Add createrepo --workers (non)completion.   Add modifyrepo option
+	completion.
+
+2011-01-21  James Antill <james@and.org>
+
+	* createrepo/merge.py: Override timestamp check on repos. for
+	mergerepo (like repodiff).
+
+2011-01-03  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: make sure when we want to look for rpms we
+	say .rpm not rpm b/c with the latter we catch .drpm files, too. :(
+
+2010-11-02  Ville Skyttä <ville.skytta@iki.fi>
+
+	* createrepo.bash: Add createrepo --workers (non)completion.
+
+2010-11-02  Ville Skyttä <ville.skytta@iki.fi>
+
+	* createrepo.bash: Add modifyrepo option completion.
+
+2010-10-08  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo.spec, createrepo/__init__.py: - add yum 3.2.29 requirement b/c of the small change I needed to
+	repoMDObject.py -  set it to use /usr/share/createrepo/worker.py
+
+2010-10-07  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: remove libxml2 import from __init__.py :)
+
+
+2010-10-07  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: make createrepo use the repomd/repodata
+	mechanism from yum for making a repomd.xml which simplifies the code
+	dramatically since we don't have to mess with xml in here.
+
+2010-10-07  Seth Vidal <skvidal@fedoraproject.org>
+
+	* modifyrepo.py: fix up the usage output for modifyrepo
+
+2010-09-10  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, worker.py: - make sure we handle remote_url pkgs correctly until we get the
+	worker hooked up to handle them - if there are no pkgs to handle,
+	don't launch workers with nothing to do. - give better output from
+	the workers and have them obey -v/-q - everyone loves callbacks!
+
+2010-09-09  Seth Vidal <skvidal@fedoraproject.org>
+
+	* Makefile, createrepo/__init__.py, createrepo/utils.py,
+	createrepo/yumbased.py, genpkgmetadata.py, worker.py: create a
+	worker script for createrepo so createrepo can fork off N processes
+	to handle the md gathering from pkgs. This should speed up results
+	on systems which have been cpubound on the createrepo process.  If
+	you're io bound it won't help you at all, and MAY make it worse.
+	many misc issues to iron out here - not the least of which is the
+	callback output and gathering stdout/stderr from the workers
+
+2010-08-20  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: handle broken locking on nfs target dirs
+	better if database is true.  - sqlite dbs don't like being made on
+	locations without locking available. - if we know we're going to be
+	creating dbs then we should attempt to lock before doing   anything
+	else and bail out nicely if we can't get an exclusive lock
+
+2010-08-19  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo.spec: require yum 3.2.28 due to the imports in
+	modifyrepo
+
+2010-08-19  Seth Vidal <skvidal@fedoraproject.org>
+
+	* docs/modifyrepo.1: document --mdtype option
+
+2010-08-19  Seth Vidal <skvidal@fedoraproject.org>
+
+	* modifyrepo.py: - add option parsing for --mdtype - use the yum repomd objects to
+	read/write the repomd.xml - add mdtype option to RepoMetadata.add()
+	method
+
+2010-06-11  Seth Vidal <skvidal@fedoraproject.org>
+
+	Merge branch 'master' of
+	ssh://createrepo.baseurl.org/srv/projects/createrepo/git/createrepo
+	* 'master' of
+	ssh://createrepo.baseurl.org/srv/projects/createrepo/git/createrepo:
+	Don't use /usr/bin/env ... it's evil   --database is now the default
+	for mergerepo too, have --no-database in completions instead.
+
+2010-06-11  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: - add option to createrepo config to collapse libc.so.6 requires -
+	this will only work with yum 3.2.28 and beyond
+
+2010-06-03  James Antill <james@and.org>
+
+	* modifyrepo.py: Don't use /usr/bin/env ... it's evil
+
+2010-06-02  Ville Skyttä <ville.skytta@iki.fi>
+
+	* createrepo.bash: --database is now the default for mergerepo too,
+	have --no-database in completions instead.
+
+2010-06-01  Seth Vidal <skvidal@fedoraproject.org>
+
+	* mergerepo.py: whoops - no-database shouldn't default to true!
+
+2010-06-01  Seth Vidal <skvidal@fedoraproject.org>
+
+	* mergerepo.py: add --no-database to mergrepo, too
+
+2010-05-31  Ville Skyttä <ville.skytta@iki.fi>
+
+	* createrepo.bash: --database is now the default, have --no-database
+	in completions instead.
+
+2010-05-28  Seth Vidal <skvidal@fedoraproject.org>
+
+	* docs/createrepo.8: update the docs for --no-database
+
+2010-05-28  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, genpkgmetadata.py: make -d/--database  the
+	default  add --no-database in case someone somewhere needs to do
+	that
+
+2010-04-26  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: fixme comments about try/excepting the
+	database creation calls due to a weird issue with locks not working
+	on a nfs mount and createreepo tracing back with a TypeError of all
+	things
+
+2010-04-21  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, createrepo/readMetadata.py: if we cannot
+	find one of the old repodata files make the warning look more dire
+	make sure we look for the 'repodata' subdir inside update_md_path
+
+2010-04-21  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: when the update_md_path doesn't exist -
+	emit a warning of some kind - rather than a somewhat quieter message
+	from MetadataIndex()  this is mostly to help jesse b/c he asked
+	nicely
+
+2010-04-16  Colin Walters <walters@fedoraproject.org>
+
+	* genpkgmetadata.py: if we're not a tty, don't use the progress
+	output
+
+2010-04-15  Seth Vidal <skvidal@fedoraproject.org>
+
+	Merge branch 'master' of
+	ssh://createrepo.baseurl.org/srv/projects/createrepo/git/createrepo
+	* 'master' of
+	ssh://createrepo.baseurl.org/srv/projects/createrepo/git/createrepo:
+	Tell git to ignore tarballs.   Document --repo in man page.   Add
+	bash completion.
+
+2010-04-15  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: - catch errors when moving the olddir out/back - if we get a
+	yumLocalPackage object in our pkglist we should record we read it.
+
+2010-03-05  Ville Skyttä <ville.skytta@iki.fi>
+
+	* .gitignore: Tell git to ignore tarballs.
+
+2010-03-05  Ville Skyttä <ville.skytta@iki.fi>
+
+	* docs/createrepo.8: Document --repo in man page.
+
+2010-02-19  Ville Skyttä <ville.skytta@iki.fi>
+
+	* Makefile, createrepo.bash, createrepo.spec: Add bash completion.
+
+2010-03-05  Seth Vidal <skvidal@fedoraproject.org>
+
+	Merge branch 'master' of
+	ssh://createrepo.baseurl.org/srv/projects/createrepo/git/createrepo
+	* 'master' of
+	ssh://createrepo.baseurl.org/srv/projects/createrepo/git/createrepo:
+	Trim trailing whitespace.
+
+2010-03-05  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, genpkgmetadata.py: add repo tags and
+	--repo option to describe the repo itself. request from suse.
+
+2010-02-12  Ville Skyttä <ville.skytta@iki.fi>
+
+	* createrepo/__init__.py, createrepo/deltarpms.py,
+	createrepo/merge.py, createrepo/readMetadata.py,
+	createrepo/utils.py, createrepo/yumbased.py, dmd.py,
+	genpkgmetadata.py, mergerepo.py, modifyrepo.py: Trim trailing
+	whitespace.
+
+2010-02-11  Seth Vidal <skvidal@fedoraproject.org>
+
+	* genpkgmetadata.py: add option for setting max-delta-rpm-size for
+	pkgs which are too large to be delta'd.
+
+2010-02-10  Seth Vidal <skvidal@fedoraproject.org>
+
+	Merge branch 'master' of
+	ssh://createrepo.baseurl.org/srv/projects/createrepo/git/createrepo
+	* 'master' of
+	ssh://createrepo.baseurl.org/srv/projects/createrepo/git/createrepo:
+	Make *Emacs unsuspicious about trailing whitespace.   Fix --exclude
+	-> --excludes typo.   Add missing spaces in various help strings.
+
+2010-02-10  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, genpkgmetadata.py: add --read-pkgs-list
+	option to output list of pkgs actually read.  completely optional
+	and only really useful with --update or a --cachedir for what pkgs
+	DID get read/parsed.
+
+2010-02-09  Ville Skyttä <ville.skytta@iki.fi>
+
+	* Makefile: Make *Emacs unsuspicious about trailing whitespace.
+
+2010-02-09  Ville Skyttä <ville.skytta@iki.fi>
+
+	* docs/createrepo.8: Fix --exclude -> --excludes typo.
+
+2010-02-09  Ville Skyttä <ville.skytta@iki.fi>
+
+	* genpkgmetadata.py: Add missing spaces in various help strings.
+
+2010-02-08  Seth Vidal <skvidal@fedoraproject.org>
+
+	Merge branch 'master' of
+	ssh://createrepo.baseurl.org/srv/projects/createrepo/git/createrepo
+	* 'master' of
+	ssh://createrepo.baseurl.org/srv/projects/createrepo/git/createrepo:
+	Add missing space in --checkts help string.   Ignore *.py[co].
+	Remove outdated comment about --baseurl.
+
+2010-02-08  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py, docs/createrepo.8, genpkgmetadata.py: - make --unique-md-filenames the default - add simple-md-filenames
+	to be able to disable the above if desired
+
+2010-01-18  Ville Skyttä <ville.skytta@iki.fi>
+
+	* genpkgmetadata.py: Add missing space in --checkts help string.
+
+2009-09-25  Ville Skyttä <ville.skytta@iki.fi>
+
+	* .gitignore: Ignore *.py[co].
+
+2009-01-26  Ville Skyttä <ville.skytta@iki.fi>
+
+	* docs/createrepo.8: Remove outdated comment about --baseurl.  At
+	least yum uses it nowadays.
+
+2010-01-07  Dennis Gregorovic <dgregor@redhat.com>
+
+	* createrepo/readMetadata.py: Fixed, convert stat mtime to int so
+	comparison can work, --update, BZ 553030
+
+2010-01-07  Dennis Gregorovic <dgregor@redhat.com>
+
+	* createrepo/readMetadata.py: Convert stat mtime to int so
+	comparison can work, --update, BZ 553030
+
+2010-01-06  Dennis Gregorovic <dgregor@redhat.com>
+
+	* createrepo/__init__.py: Change baseurl of "old" packages on
+	update, when baseurl specified
+
+2009-10-05  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo/__init__.py: apply fix for
+	https://bugzilla.redhat.com/show_bug.cgi?id=527259  make sure we're
+	not only testing the first pkg. Test all of them until we find one
+	that is newer.
+
+2009-09-14  Seth Vidal <skvidal@fedoraproject.org>
+
+	* createrepo.spec: add requirement on python-deltarpm for new patch
+	from Bill.
+
+2009-09-14  Bill Nottingham <notting@redhat.com>
+
+	* createrepo/deltarpms.py: createrepo patch to use the new deltarpm
+	python bindings
+
+2009-08-28  Seth Vidal <skvidal@fedoraproject.org>
+
+	* ChangeLog: changelog merge
+
 2009-08-28  Seth Vidal <skvidal@fedoraproject.org>
 
 	* createrepo.spec, createrepo/__init__.py: mark as 0.9.8
