@@ -660,7 +660,12 @@ class MetaDataGenerator:
                     if line:
                         self.callback.errorlog('Worker %s: %s' % (num, line.rstrip()))
                     
-                
+            for (num, job) in worker_jobs.items():
+                if job.returncode != 0:
+                    msg = "Worker exited with non-zero value: %s. Fatal." % job.returncode
+                    self.callback.errorlog(msg)
+                    raise MDError, msg
+                    
             if not self.conf.quiet:
                 self.callback.log("Workers Finished")
             # finished with workers
