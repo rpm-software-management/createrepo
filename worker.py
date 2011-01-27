@@ -83,8 +83,10 @@ def main(args):
                                                         external_data=external_data)
             pri.write(pkg.xml_dump_primary_metadata())
             fl.write(pkg.xml_dump_filelists_metadata())
-            other.write(pkg.xml_dump_other_metadata(clog_limit=
-                                            globalopts.get('clog_limit', None)))
+            clog_limit=globalopts.get('clog_limit', None)
+            if clog_limit is not None:
+                 clog_limit = int(clog_limit)
+            other.write(pkg.xml_dump_other_metadata(clog_limit=clog_limit))
         except yum.Errors.YumBaseError, e:
             print >> sys.stderr, "Error: %s" % e
             continue
