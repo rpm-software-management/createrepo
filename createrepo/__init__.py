@@ -789,7 +789,6 @@ class MetaDataGenerator:
             return self._old_package_dict
 
         self._old_package_dict = {}
-        opl = []
         for d in self.conf.oldpackage_paths:
             for f in self.getFileList(d, '.rpm'):
                 fp = d + '/' + f
@@ -879,7 +878,6 @@ class MetaDataGenerator:
 
         thisdata = RepoData()
         thisdata.type = mdtype
-        baseloc = None
         thisdata.location = (self.conf.baseurl, os.path.join(self.conf.finaldir, sfile))
         thisdata.checksum = (self.conf.sumtype, csum)
         if compress:
@@ -1115,12 +1113,6 @@ class MetaDataGenerator:
                     raise MDError, _(
                     'Could not remove old metadata file: %s: %s') % (oldfile, e)
 
-        # Move everything else back from olddir (eg. repoview files)
-        try:
-            old_contents = os.listdir(output_old_dir)
-        except (OSError, IOError), e:
-            old_contents = []
-            
         for f in os.listdir(output_old_dir):
             oldfile = os.path.join(output_old_dir, f)
             finalfile = os.path.join(output_final_dir, f)
@@ -1245,7 +1237,6 @@ class SplitMetaDataGenerator(MetaDataGenerator):
         self.conf.baseurl = self._getFragmentUrl(self.conf.baseurl, mediano)
         try:
             self.openMetadataDocs()
-            original_basedir = self.conf.basedir
             for mydir in self.conf.directories:
                 self.conf.baseurl = self._getFragmentUrl(self.conf.baseurl, mediano)
                 self.writeMetadataDocs(filematrix[mydir], mydir)
