@@ -27,11 +27,11 @@ import stat
 import fcntl
 import subprocess
 
-from yum import misc, Errors, to_unicode
-from yum.repoMDObject import RepoMD, RepoMDError, RepoData
+from yum import misc, Errors
+from yum.repoMDObject import RepoMD, RepoData
 from yum.sqlutils import executeSQL
 from yum.packageSack import MetaSack
-from yum.packages import YumAvailablePackage, YumLocalPackage
+from yum.packages import YumAvailablePackage
 
 import rpmUtils.transaction
 from utils import _, errorprint, MDError
@@ -609,7 +609,7 @@ class MetaDataGenerator:
             # open the files they created and write them out to our metadata
             # add up the total pkg counts and return that value
             worker_tmp_path = tempfile.mkdtemp()
-            worker_chunks = utils.split_list_into_equal_chunks(pkgfiles,  self.conf.workers)
+            worker_chunks = split_list_into_equal_chunks(pkgfiles, self.conf.workers)
             worker_cmd_dict = {}
             worker_jobs = {}
             base_worker_cmdline = [self.conf.worker_cmd, 
