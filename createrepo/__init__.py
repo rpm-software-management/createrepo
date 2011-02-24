@@ -584,7 +584,7 @@ class MetaDataGenerator:
             po = None
             if isinstance(pkg, YumAvailablePackage):
                 po = pkg
-                self.read_pkgs.append(po.localpath)
+                self.read_pkgs.append(po.localPkg())
 
             # if we're dealing with remote pkgs - pitch it over to doing
             # them one at a time, for now. 
