@@ -1049,7 +1049,7 @@ class MetaDataGenerator:
             
 
         if self.conf.additional_metadata:
-            for md_type, mdfile in self.conf.additional_metadata.items():
+            for md_type, md_file in self.conf.additional_metadata.items():
                 mdcontent = self._createRepoDataObject(md_file, md_type)
                 repomd.repoData[mdcontent.type] = mdcontent
                 
