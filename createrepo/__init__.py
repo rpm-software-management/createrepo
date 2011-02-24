@@ -589,7 +589,7 @@ class MetaDataGenerator:
             # if we're dealing with remote pkgs - pitch it over to doing
             # them one at a time, for now. 
             elif pkg.find('://') != -1:
-                po = self.read_in_package(pkgfile, pkgpath=pkgpath, reldir=reldir)
+                po = self.read_in_package(pkg, pkgpath=pkgpath, reldir=reldir)
                 self.read_pkgs.append(pkg)
             
             if po:
