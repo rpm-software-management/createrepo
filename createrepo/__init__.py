@@ -617,7 +617,8 @@ class MetaDataGenerator:
                     '--pkgoptions=_collapse_libc_requires=%s' % self.conf.collapse_glibc_requires, 
                     '--pkgoptions=_cachedir=%s' % self.conf.cachedir,
                     '--pkgoptions=_baseurl=%s' % self.conf.baseurl,
-                    '--globalopts=clog_limit=%s' % self.conf.changelog_limit,]
+                    '--globalopts=clog_limit=%s' % self.conf.changelog_limit,
+                    '--globalopts=sumtype=%s' % self.conf.sumtype, ]
             
             if self.conf.quiet:
                 base_worker_cmdline.append('--quiet')

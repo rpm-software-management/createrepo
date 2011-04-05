@@ -80,7 +80,8 @@ def main(args):
                 print "reading %s" % (pkgfile)
 
             pkg = createrepo.yumbased.CreateRepoPackage(ts, package=pkgpath, 
-                                                        external_data=external_data)
+                                sumtype=globalopts.get('sumtype', None), 
+                                external_data=external_data)
             pri.write(pkg.xml_dump_primary_metadata())
             fl.write(pkg.xml_dump_filelists_metadata())
             clog_limit=globalopts.get('clog_limit', None)
