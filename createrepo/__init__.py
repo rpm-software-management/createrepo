@@ -530,39 +530,19 @@ class MetaDataGenerator:
                 old_pkg = pkg
                 if pkg.find("://") != -1:
                     old_pkg = os.path.basename(pkg)
-                nodes = self.oldData.getNodes(old_pkg)
-                if nodes is not None: # we have a match in the old metadata
+                old_po = self.oldData.getNodes(old_pkg)
+                if old_po: # we have a match in the old metadata
                     if self.conf.verbose:
                         self.callback.log(_("Using data from old metadata for %s")
                                             % pkg)
-                    (primarynode, filenode, othernode) = nodes
 
-                    for node, outfile in ((primarynode, self.primaryfile),
-                                          (filenode, self.flfile),
-                                          (othernode, self.otherfile)):
-                        if node is None:
-                            break
+                    if self.conf.baseurl: # if we have a baseurl set, reset the one
+                                          # in the old pkg
+                        old_po.basepath = self.conf.baseurl
+                    self.primaryfile.write(old_po.xml_dump_primary_metadata())
+                    self.flfile.write(old_po.xml_dump_filelists_metadata())
+                    self.otherfile.write(old_po.xml_dump_other_metadata())
 
-                        if self.conf.baseurl:
-                            anode = node.children
-                            while anode is not None:
-                                if anode.type != "element":
-                                    anode = anode.next
-                                    continue
-                                if anode.name == "location":
-                                    anode.setProp('xml:base', self.conf.baseurl)
-                                anode = anode.next
-
-                        output = node.serialize('UTF-8', self.conf.pretty)
-                        if output:
-                            outfile.write(output)
-                        else:
-                            if self.conf.verbose:
-                                self.callback.log(_("empty serialize on write to" \
-                                                    "%s in %s") % (outfile, pkg))
-                        outfile.write('\n')
-
-                    self.oldData.freeNodes(pkg)
                     #FIXME - if we're in update and we have deltas enabled
                     # check the presto data for this pkg and write its info back out
                     # to our deltafile
