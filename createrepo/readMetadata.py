@@ -21,8 +21,8 @@ from utils import errorprint, _
 
 import yum
 from yum import misc
-
-
+from yum.Errors import YumBaseError
+import tempfile
 class CreaterepoPkgOld(yum.sqlitesack.YumAvailablePackageSqlite):
     # special for special people like us.
     def _return_remote_location(self):
@@ -48,13 +48,16 @@ class MetadataIndex(object):
         repodatadir = self.outputdir + '/repodata'
         self._repo = yum.yumRepo.YumRepository('garbageid')
         self._repo.baseurl = 'file://' + realpath
-        self._repo.basecachedir = misc.getCacheDir()
+        self._repo.basecachedir = tempfile.mkdtemp(dir='/var/tmp', prefix="createrepo")
         self._repo.metadata_expire = 1
         self._repo.gpgcheck = 0
         self._repo.repo_gpgcheck = 0
         self._repo._sack = yum.sqlitesack.YumSqlitePackageSack(CreaterepoPkgOld)
         self.pkg_tups_by_path = {}
-        self.scan()
+        try:
+            self.scan()
+        except YumBaseError, e:
+            print "Could not find valid repo at: %s" % self.outputdir
         
 
     def scan(self):
