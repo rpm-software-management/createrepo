@@ -100,6 +100,8 @@ def parse_args(args, conf):
     parser.add_option("--simple-md-filenames", dest="simple_md_filenames",
         help="do not include the file's checksum in the filename, helps with proxies",
         default=False, action="store_true")
+    parser.add_option("--retain-old-md", default=0, type='int', dest='retain_old_md',
+        help="keep around the latest (by timestamp) N copies of the old repodata")
     parser.add_option("--distro", default=[], action="append",
         help="distro tag and optional cpeid: --distro" "'cpeid,textname'")
     parser.add_option("--content", default=[], dest='content_tags',

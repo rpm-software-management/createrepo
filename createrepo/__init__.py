@@ -107,9 +107,10 @@ class MetaDataConfig(object):
                                    # read in this run of createrepo
         self.collapse_glibc_requires = True
         self.workers = 1 # number of workers to fork off to grab metadata from the pkgs
-        self.worker_cmd = '/usr/share/createrepo/worker.py'
+        #self.worker_cmd = '/usr/share/createrepo/worker.py'
         
-        #self.worker_cmd = './worker.py' # helpful when testing
+        self.worker_cmd = './worker.py' # helpful when testing
+        self.retain_old_md = 0
         
 class SimpleMDCallBack(object):
     def errorlog(self, thing):
@@ -1094,17 +1095,42 @@ class MetaDataGenerator:
                     raise MDError, _(
                     'Could not remove old metadata file: %s: %s') % (oldfile, e)
 
+        old_to_remove = []
+        old_pr = []
+        old_fl = []
+        old_ot = []
+        old_pr_db = []
+        old_fl_db = []
+        old_ot_db = []
         for f in os.listdir(output_old_dir):
             oldfile = os.path.join(output_old_dir, f)
             finalfile = os.path.join(output_final_dir, f)
-            if f.find('-') != -1 and f.split('-')[1] in ('primary.sqlite.bz2',
-                    'filelists.sqlite.bz2', 'primary.xml.gz','other.sqlite.bz2',
-                    'other.xml.gz','filelists.xml.gz'):
-                os.remove(oldfile) # kill off the old ones
-                continue
+
+            for (end,lst) in (('-primary.sqlite.bz2', old_pr_db), ('-primary.xml.gz', old_pr),
+                           ('-filelists.sqlite.bz2', old_fl_db), ('-filelists.xml.gz', old_fl),
+                           ('-other.sqlite.bz2', old_ot_db), ('-other.xml.gz', old_ot)):
+                if f.endswith(end):
+                    lst.append(oldfile)
+                    break
+
+        # make a list of the old metadata files we don't want to remove.
+        for lst in (old_pr, old_fl, old_ot, old_pr_db, old_fl_db, old_ot_db):
+            sortlst = sorted(lst, key=lambda x: os.path.getmtime(x),
+                             reverse=True)
+            for thisf in sortlst[self.conf.retain_old_md:]:
+                old_to_remove.append(thisf)
+
+        for f in os.listdir(output_old_dir):
+            oldfile = os.path.join(output_old_dir, f)
+            finalfile = os.path.join(output_final_dir, f)
+                
             if f in ('filelists.sqlite.bz2', 'other.sqlite.bz2',
-                     'primary.sqlite.bz2'):
-                os.remove(oldfile)
+                     'primary.sqlite.bz2') or oldfile in old_to_remove:
+                try:
+                    os.remove(oldfile)
+                except (OSError, IOError), e:
+                    raise MDError, _(
+                    'Could not remove old metadata file: %s: %s') % (oldfile, e)
                 continue
 
             if os.path.exists(finalfile):
