@@ -107,9 +107,9 @@ class MetaDataConfig(object):
                                    # read in this run of createrepo
         self.collapse_glibc_requires = True
         self.workers = 1 # number of workers to fork off to grab metadata from the pkgs
-        #self.worker_cmd = '/usr/share/createrepo/worker.py'
+        self.worker_cmd = '/usr/share/createrepo/worker.py'
         
-        self.worker_cmd = './worker.py' # helpful when testing
+        #self.worker_cmd = './worker.py' # helpful when testing
         self.retain_old_md = 0
         
 class SimpleMDCallBack(object):
