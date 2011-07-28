@@ -242,6 +242,7 @@ def main(args):
             if mdgen.checkTimeStamps():
                 if mdgen.conf.verbose:
                     print _('repo is up to date')
+                mdgen._cleanup_tmp_repodata_dir()
                 sys.exit(0)
 
         if conf.profile:
