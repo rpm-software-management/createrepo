@@ -24,6 +24,7 @@ from yum.misc import unique, getCacheDir
 import yum.update_md
 import rpmUtils.arch
 import operator
+from utils import MDError
 import createrepo
 import tempfile
 
@@ -84,6 +85,8 @@ class RepoMergeBase:
         # in the repolist
         count = 0
         for r in self.repolist:
+            if r[0] == '/':
+                r = 'file://' + r # just fix the file repos, this is silly.
             count +=1
             rid = 'repo%s' % count
             n = self.yumbase.add_enable_repo(rid, baseurls=[r],
@@ -92,7 +95,10 @@ class RepoMergeBase:
             n._merge_rank = count
 
         #setup our sacks
-        self.yumbase._getSacks(archlist=self.archlist)
+        try:
+            self.yumbase._getSacks(archlist=self.archlist)
+        except yum.Errors.RepoError, e:
+            raise MDError, "Could not setup merge repo pkgsack: %s" % e
 
         myrepos = self.yumbase.repos.listEnabled()
 
@@ -102,11 +108,16 @@ class RepoMergeBase:
     def write_metadata(self, outputdir=None):
         mytempdir = tempfile.mkdtemp()
         if self.groups:
-            comps_fn = mytempdir + '/groups.xml'
-            compsfile = open(comps_fn, 'w')
-            compsfile.write(self.yumbase.comps.xml())
-            compsfile.close()
-            self.mdconf.groupfile=comps_fn
+            try:
+                comps_fn = mytempdir + '/groups.xml'
+                compsfile = open(comps_fn, 'w')
+                compsfile.write(self.yumbase.comps.xml())
+                compsfile.close()
+            except yum.Errors.GroupsError, e:
+                # groups not being available shouldn't be a fatal error
+                pass
+            else:
+                self.mdconf.groupfile=comps_fn
 
         if self.updateinfo:
             ui_fn = mytempdir + '/updateinfo.xml'

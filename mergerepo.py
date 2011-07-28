@@ -18,6 +18,7 @@
 
 import sys
 import createrepo.merge
+from createrepo.utils import MDError
 from optparse import OptionParser
 
 #TODO:
@@ -77,9 +78,12 @@ def main(args):
         rmbase.groups = False
     if opts.noupdateinfo:
         rmbase.updateinfo = False
-
-    rmbase.merge_repos()
-    rmbase.write_metadata()
-
+    try:
+        rmbase.merge_repos()
+        rmbase.write_metadata()
+    except MDError, e:
+        print >> sys.stderr, "Could not merge repos: %s" % e
+        sys.exit(1)
+        
 if __name__ == "__main__":
     main(sys.argv[1:])
