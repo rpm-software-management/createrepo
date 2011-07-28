@@ -53,7 +53,8 @@ gullible).
 Don't generate repo metadata, if their timestamps are newer than its rpms.
 This option decreases the processing time drastically again, if you happen
 to run it on an unmodified repo, but it is (currently) mutual exclusive
-with the --split option.
+with the --split option. NOTE: This command will not notice when 
+packages have been removed from repo. Use --update to handle that.
 .br
 .IP "\fB\--split\fP"
 Run in split media mode. Rather than pass a single directory, take a set of
