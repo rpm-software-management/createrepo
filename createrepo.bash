@@ -30,6 +30,10 @@ _cr_createrepo()
             COMPREPLY=( $( compgen -f -o plusdirs -X '!*.rpm' -- "$2" ) )
             return 0
             ;;
+        --retain-old-md)
+            COMPREPLY=( $( compgen -W '0 1 2 3 4 5 6 7 8 9' -- "$2" ) )
+            return 0
+            ;;
         --num-deltas)
             COMPREPLY=( $( compgen -W '1 2 3 4 5 6 7 8 9' -- "$2" ) )
             return 0
@@ -42,8 +46,8 @@ _cr_createrepo()
             --cachedir --checkts --no-database --update --update-md-path
             --skip-stat --split --pkglist --includepkg --outputdir
             --skip-symlinks --changelog-limit --unique-md-filenames
-            --simple-md-filenames --distro --content --repo --revision --deltas
-            --oldpackagedirs --num-deltas --read-pkgs-list
+            --simple-md-filenames --retain-old-md --distro --content --repo
+            --revision --deltas --oldpackagedirs --num-deltas --read-pkgs-list
             --max-delta-rpm-size --workers' -- "$2" ) )
     else
         COMPREPLY=( $( compgen -d -- "$2" ) )
