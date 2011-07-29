@@ -85,7 +85,8 @@ _cr_modifyrepo()
     esac
 
     if [[ $2 == -* ]] ; then
-        COMPREPLY=( $( compgen -W '--version --help --mdtype' -- "$2" ) )
+        COMPREPLY=( $( compgen -W '--version --help --mdtype --remove' \
+            -- "$2" ) )
         return 0
     fi
 
