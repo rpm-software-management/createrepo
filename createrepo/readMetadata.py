@@ -49,6 +49,7 @@ class MetadataIndex(object):
         self._repo = yum.yumRepo.YumRepository('garbageid')
         self._repo.baseurl = 'file://' + realpath
         self._repo.basecachedir = tempfile.mkdtemp(dir='/var/tmp', prefix="createrepo")
+        self._repo.base_persistdir = tempfile.mkdtemp(dir='/var/tmp', prefix="createrepo-p")
         self._repo.metadata_expire = 1
         self._repo.gpgcheck = 0
         self._repo.repo_gpgcheck = 0
