@@ -1152,9 +1152,17 @@ class MetaDataGenerator:
                     raise MDError, msg
 
         self._cleanup_tmp_repodata_dir()
+        self._cleanup_update_tmp_dir()        
         self._write_out_read_pkgs_list()
 
 
+    def _cleanup_update_tmp_dir(self):
+        if not self.conf.update:
+            return
+        
+        shutil.rmtree(self.oldData._repo.basecachedir, ignore_errors=True)
+        shutil.rmtree(self.oldData._repo.base_persistdir, ignore_errors=True)
+        
     def _write_out_read_pkgs_list(self):
         # write out the read_pkgs_list file with self.read_pkgs
         if self.conf.read_pkgs_list:
