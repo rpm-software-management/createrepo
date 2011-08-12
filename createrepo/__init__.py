@@ -589,7 +589,7 @@ class MetaDataGenerator:
             # waitfor the workers to finish and as each one comes in
             # open the files they created and write them out to our metadata
             # add up the total pkg counts and return that value
-            worker_tmp_path = tempfile.mkdtemp()
+            self._worker_tmp_path = tempfile.mkdtemp() # setting this in the base object so we can clean it up later
             worker_chunks = split_list_into_equal_chunks(pkgfiles, self.conf.workers)
             worker_cmd_dict = {}
             worker_jobs = {}
@@ -611,7 +611,7 @@ class MetaDataGenerator:
                 # make the worker directory
                 workercmdline = []
                 workercmdline.extend(base_worker_cmdline)
-                thisdir = worker_tmp_path + '/' + str(worker_num)
+                thisdir = self._worker_tmp_path + '/' + str(worker_num)
                 if checkAndMakeDir(thisdir):
                     workercmdline.append('--tmpmdpath=%s' % thisdir)
                 else:
@@ -658,7 +658,7 @@ class MetaDataGenerator:
                 for (fn, fo) in (('primary.xml', self.primaryfile), 
                            ('filelists.xml', self.flfile),
                            ('other.xml', self.otherfile)):
-                    fnpath = worker_tmp_path + '/' + str(num) + '/' + fn
+                    fnpath = self._worker_tmp_path + '/' + str(num) + '/' + fn
                     if os.path.exists(fnpath):
                         fo.write(open(fnpath, 'r').read())
 
@@ -1189,6 +1189,9 @@ class MetaDataGenerator:
                                   % dirbase)
                     self.errorlog(_('Error was %s') % e)
                     self.errorlog(_('Please clean up this directory manually.'))
+        # our worker tmp path
+        if hasattr(self, '_worker_tmp_path') and os.path.exists(self._worker_tmp_path):
+            shutil.rmtree(self._worker_tmp_path, ignore_errors=True)
         
     def setup_sqlite_dbs(self, initdb=True):
         """sets up the sqlite dbs w/table schemas and db_infos"""
