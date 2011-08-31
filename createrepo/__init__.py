@@ -608,6 +608,12 @@ class MetaDataGenerator:
                 base_worker_cmdline.append('--verbose')
                 
             for worker_num in range(self.conf.workers):
+                pkl = self._worker_tmp_path + '/pkglist-%s' % worker_num
+                print pkl
+                f = open(pkl, 'w') 
+                f.write('\n'.join(worker_chunks[worker_num]))
+                f.close()
+                
                 # make the worker directory
                 workercmdline = []
                 workercmdline.extend(base_worker_cmdline)
@@ -616,7 +622,7 @@ class MetaDataGenerator:
                     workercmdline.append('--tmpmdpath=%s' % thisdir)
                 else:
                     raise MDError, "Unable to create worker path: %s" % thisdir
-                workercmdline.extend(worker_chunks[worker_num])
+                workercmdline.append('--pkglist=%s/pkglist-%s' % (self._worker_tmp_path, worker_num))
                 worker_cmd_dict[worker_num] = workercmdline
             
                 

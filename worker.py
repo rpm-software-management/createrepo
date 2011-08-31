@@ -5,6 +5,7 @@ import yum
 import createrepo
 import os
 import rpmUtils
+import re
 from optparse import OptionParser
 
 
@@ -23,6 +24,8 @@ def main(args):
     parser = OptionParser()
     parser.add_option('--tmpmdpath', default=None, 
                 help="path where the outputs should be dumped for this worker")
+    parser.add_option('--pkglist', default=None, 
+                help="file to read the pkglist from in lieu of all of them on the cli")
     parser.add_option("--pkgoptions", default=[], action='append',
                 help="pkgoptions in the format of key=value")
     parser.add_option("--quiet", default=False, action='store_true',
@@ -68,7 +71,13 @@ def main(args):
     fl = open(opts.tmpmdpath  + '/filelists.xml' , 'w')
     other = open(opts.tmpmdpath  + '/other.xml' , 'w')
     
-    
+    if opts.pkglist:
+        for line in open(opts.pkglist,'r').readlines():
+            line = line.strip()
+            if re.match('^\s*\#.*', line) or re.match('^\s*$', line):
+                continue
+            pkgs.append(line)
+
     for pkgfile in pkgs:
         pkgpath = reldir + '/' + pkgfile
         if not os.path.exists(pkgpath):
