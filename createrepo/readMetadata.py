@@ -107,9 +107,7 @@ class MetadataIndex(object):
         if relpath in self.pkg_tups_by_path:
             pkgtup = self.pkg_tups_by_path[relpath]
             return self._repo.sack.searchPkgTuple(pkgtup)[0]
-        else:
-            print _("No pkg found for: %s") % relpath
-            return None
+        return None
 
     
 
