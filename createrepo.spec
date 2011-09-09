@@ -11,7 +11,7 @@ URL: http://createrepo.baseurl.org/
 BuildRoot: %{_tmppath}/%{name}-%{version}root
 BuildArchitectures: noarch
 Requires: python >= 2.1, rpm-python, rpm >= 0:4.1.1, libxml2-python
-Requires: yum-metadata-parser, yum >= 3.2.29, python-deltarpm
+Requires: yum-metadata-parser, yum >= 3.2.29, python-deltarpm, pyliblzma
 
 %description
 This utility will generate a common metadata repository from a directory of
@@ -43,6 +43,9 @@ make DESTDIR=$RPM_BUILD_ROOT sysconfdir=%{_sysconfdir} install
 %{python_sitelib}/createrepo
 
 %changelog
+* Fri Sep  9 2011 Seth Vidal <skvidal at fedoraproject.org>
+- add lzma dep
+
 * Wed Jan 26 2011 Seth Vidal <skvidal at fedoraproject.org>
 - bump to 0.9.9
 - add worker.py
