@@ -23,6 +23,12 @@ import bz2
 import gzip
 from gzip import write32u, FNAME
 from yum import misc
+_available_compression = ['gz', 'bz2']
+try:
+    import lzma
+    _available_compression.append('xz')
+except ImportError:
+    lzma = None
 
 def errorprint(stuff):
     print >> sys.stderr, stuff
@@ -68,6 +74,22 @@ def bzipFile(source, dest):
     destination.close()
     s_fn.close()
 
+
+def xzFile(source, dest):
+    if not 'xz' in _available_compression:
+        raise MDError, "Cannot use xz for compression, library/module is not available"
+        
+    s_fn = open(source, 'rb')
+    destination = lzma.LZMAFile(dest, 'w')
+
+    while True:
+        data = s_fn.read(1024000)
+
+        if not data: break
+        destination.write(data)
+
+    destination.close()
+    s_fn.close()
 
 def returnFD(filename):
     try:

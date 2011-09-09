@@ -121,10 +121,12 @@ def parse_args(args, conf):
     parser.add_option("--max-delta-rpm-size", default=100000000,
         dest='max_delta_rpm_size', type='int',
         help="max size of an rpm that to run deltarpm against (in bytes)")
-
     parser.add_option("--workers", default=1,
         dest='workers', type='int',
         help="number of workers to spawn to read rpms")
+    parser.add_option("--xz", default=False,
+        action="store_true",
+        help="use xz for repodata compression")
     
     (opts, argsleft) = parser.parse_args(args)
     if len(argsleft) > 1 and not opts.split:

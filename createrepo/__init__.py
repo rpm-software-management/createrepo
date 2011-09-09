@@ -34,7 +34,7 @@ from yum.packageSack import MetaSack
 from yum.packages import YumAvailablePackage
 
 import rpmUtils.transaction
-from utils import _, errorprint, MDError
+from utils import _, errorprint, MDError, lzma
 import readMetadata
 try:
     import sqlite3 as sqlite
@@ -46,7 +46,7 @@ try:
 except ImportError:
     pass
 
-from utils import _gzipOpen, bzipFile, checkAndMakeDir, GzipFile, \
+from utils import _gzipOpen, bzipFile, xzFile, checkAndMakeDir, GzipFile, \
                   checksum_and_rename, split_list_into_equal_chunks
 import deltarpms
 
@@ -108,9 +108,9 @@ class MetaDataConfig(object):
         self.collapse_glibc_requires = True
         self.workers = 1 # number of workers to fork off to grab metadata from the pkgs
         self.worker_cmd = '/usr/share/createrepo/worker.py'
-        
         #self.worker_cmd = './worker.py' # helpful when testing
         self.retain_old_md = 0
+        self.xz = False # use xz for compression
         
 class SimpleMDCallBack(object):
     def errorlog(self, thing):
@@ -146,6 +146,9 @@ class MetaDataGenerator:
         if not self.conf.directory and not self.conf.directories:
             raise MDError, "No directory given on which to run."
 
+        if self.conf.xz and not utils.lzma:
+            raise MDError, "XZ compression requested but lzma/xz module not available."
+            
         if not self.conf.directories: # just makes things easier later
             self.conf.directories = [self.conf.directory]
         if not self.conf.directory: # ensure we have both in the config object
@@ -844,6 +847,11 @@ class MetaDataGenerator:
                 sfile = '%s.bz2' % sfile
                 outfn = os.path.join(outdir, sfile)
                 output = BZ2File(filename = outfn, mode='wb')
+            elif compress_type == 'xz':
+                sfile = '%s.xz' % sfile
+                outfn = os.path.join(outdir, sfile)
+                output = utils.lzma.LZMAFile(outfn, mode='wb')
+                
         else:
             outfn  = os.path.join(outdir, sfile)
             output = open(outfn, 'w')
@@ -959,12 +967,17 @@ class MetaDataGenerator:
 
                     # rename from silly name to not silly name
                     os.rename(tmp_result_path, resultpath)
-                    compressed_name = '%s.bz2' % good_name
+                    ext = 'bz2'
+                    compress_func = bzipFile
+                    if self.conf.xz:
+                        ext = 'xz'
+                        compress_func = xzFile
+                    compressed_name = '%s.%s' % (good_name, ext)
                     result_compressed = os.path.join(repopath, compressed_name)
                     db_csums[ftype] = misc.checksum(sumtype, resultpath)
 
                     # compress the files
-                    bzipFile(resultpath, result_compressed)
+                    compress_func(resultpath, result_compressed)
                     # csum the compressed file
                     db_compressed_sums[ftype] = misc.checksum(sumtype,
                                                              result_compressed)
@@ -974,8 +987,8 @@ class MetaDataGenerator:
                     os.unlink(resultpath)
 
                     if self.conf.unique_md_filenames:
-                        csum_compressed_name = '%s-%s.bz2' % (
-                                           db_compressed_sums[ftype], good_name)
+                        csum_compressed_name = '%s-%s.%s' % (
+                                           db_compressed_sums[ftype], good_name, ext)
                         csum_result_compressed =  os.path.join(repopath,
                                                            csum_compressed_name)
                         os.rename(result_compressed, csum_result_compressed)
@@ -1038,7 +1051,7 @@ class MetaDataGenerator:
 
         if self.conf.additional_metadata:
             for md_type, md_file in self.conf.additional_metadata.items():
-                mdcontent = self._createRepoDataObject(md_file, md_type)
+                mdcontent = self._createRepoDataObject(md_file, md_type, compress_type='xz')
                 repomd.repoData[mdcontent.type] = mdcontent
                 
 
@@ -1112,10 +1125,11 @@ class MetaDataGenerator:
             oldfile = os.path.join(output_old_dir, f)
             finalfile = os.path.join(output_final_dir, f)
 
-            for (end,lst) in (('-primary.sqlite.bz2', old_pr_db), ('-primary.xml.gz', old_pr),
-                           ('-filelists.sqlite.bz2', old_fl_db), ('-filelists.xml.gz', old_fl),
-                           ('-other.sqlite.bz2', old_ot_db), ('-other.xml.gz', old_ot)):
-                if f.endswith(end):
+            for (end,lst) in (('-primary.sqlite', old_pr_db), ('-primary.xml', old_pr),
+                           ('-filelists.sqlite', old_fl_db), ('-filelists.xml', old_fl),
+                           ('-other.sqlite', old_ot_db), ('-other.xml', old_ot)):
+                fn = '.'.join(f.split('.')[:-1])
+                if fn.endswith(end):
                     lst.append(oldfile)
                     break
 
@@ -1129,9 +1143,9 @@ class MetaDataGenerator:
         for f in os.listdir(output_old_dir):
             oldfile = os.path.join(output_old_dir, f)
             finalfile = os.path.join(output_final_dir, f)
-                
-            if f in ('filelists.sqlite.bz2', 'other.sqlite.bz2',
-                     'primary.sqlite.bz2') or oldfile in old_to_remove:
+            fn = '.'.join(f.split('.')[:-1])
+            if fn in ('filelists.sqlite', 'other.sqlite.',
+                     'primary.sqlite') or oldfile in old_to_remove:
                 try:
                     os.remove(oldfile)
                 except (OSError, IOError), e:

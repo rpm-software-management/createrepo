@@ -105,7 +105,15 @@ Tells createrepo to generate deltarpms and the delta metadata
 paths to look for older pkgs to delta against. Can be specified multiple times
 .IP "\fB\--num-deltas\fP int"
 the number of older versions to make deltas against. Defaults to 1
-
+.IP "\fB\--read-pkgs-list\fP READ_PKGS_LIST
+output the paths to the pkgs actually read useful with  --update
+.IP "\fB\--max-delta-rpm-size\fP MAX_DELTA_RPM_SIZE
+max size of an rpm that to run deltarpm against (in bytes)
+.IP "\fB\--workers\fP WORKERS
+number of workers to spawn to read rpms
+.IP "\fB\--xz\fP
+use xz for repodata compression
+.IP
 
 .SH "EXAMPLES"
 Here is an example of a repository with a groups file. Note that the
