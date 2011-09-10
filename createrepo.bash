@@ -48,7 +48,7 @@ _cr_createrepo()
             --skip-symlinks --changelog-limit --unique-md-filenames
             --simple-md-filenames --retain-old-md --distro --content --repo
             --revision --deltas --oldpackagedirs --num-deltas --read-pkgs-list
-            --max-delta-rpm-size --workers' -- "$2" ) )
+            --max-delta-rpm-size --workers --xz' -- "$2" ) )
     else
         COMPREPLY=( $( compgen -d -- "$2" ) )
     fi
@@ -70,7 +70,7 @@ _cr_mergerepo()
     esac
 
     COMPREPLY=( $( compgen -W '--version --help --repo --archlist --no-database
-        --outputdir --nogroups --noupdateinfo' -- "$2" ) )
+        --outputdir --nogroups --noupdateinfo --xz' -- "$2" ) )
 } &&
 complete -F _cr_mergerepo -o filenames mergerepo mergerepo.py
 
