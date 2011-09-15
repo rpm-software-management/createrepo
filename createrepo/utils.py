@@ -91,6 +91,49 @@ def xzFile(source, dest):
     destination.close()
     s_fn.close()
 
+def gzFile(source, dest):
+        
+    s_fn = open(source, 'rb')
+    destination = GzipFile(dest, 'w')
+
+    while True:
+        data = s_fn.read(1024000)
+
+        if not data: break
+        destination.write(data)
+
+    destination.close()
+    s_fn.close()
+
+
+
+def compressFile(source, dest, compress_type):
+    """Compress an existing file using any compression type from source to dest"""
+    
+    if compress_type == 'xz':
+        xzFile(source, dest)
+    elif compress_type == 'bz2':
+        bzipFile(source, dest)
+    elif compress_type == 'gz':
+        gzFile(source, dest)
+    else:
+        raise MDError, "Unknown compression type %s" % compress_type
+    
+def compressOpen(fn, mode='rb', compress_type=None):
+    
+    if not compress_type:
+        # we are readonly and we don't give a compress_type - then guess based on the file extension
+        compress_type = fn.split('.')[-1]
+            
+    if compress_type == 'xz':
+        return lzma.LZMAFile(fn, mode)
+    elif compress_type == 'bz2':
+        return bz2.BZ2File(fn, mode)
+    elif compress_type == 'gz':
+        return _gzipOpen(fn, mode)
+    else:
+        raise MDError, "Unknown compression type %s" % compress_type
+    
 def returnFD(filename):
     try:
         fdno = os.open(filename, os.O_RDONLY)

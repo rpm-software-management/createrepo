@@ -29,7 +29,7 @@
 import os
 import sys
 from createrepo import __version__
-from createrepo.utils import checksum_and_rename, GzipFile, MDError
+from createrepo.utils import checksum_and_rename, compressOpen, MDError
 from yum.misc import checksum
 
 from yum.repoMDObject import RepoMD, RepoMDError, RepoData
@@ -44,6 +44,8 @@ class RepoMetadata:
         self.repodir = os.path.abspath(repo)
         self.repomdxml = os.path.join(self.repodir, 'repomd.xml')
         self.checksum_type = 'sha256'
+        self.compress = False
+        self.compress_type='xz'
 
         if not os.path.exists(self.repomdxml):
             raise MDError, '%s not found' % self.repomdxml
@@ -97,8 +99,8 @@ class RepoMetadata:
             mdname = 'updateinfo.xml'
         elif isinstance(metadata, str):
             if os.path.exists(metadata):
-                if metadata.endswith('.gz'):
-                    oldmd = GzipFile(filename=metadata, mode='rb')
+                if metadata.split('.')[-1] in ('gz', 'bz2', 'xz'):
+                    oldmd = compressOpen(metadata, mode='rb')
                 else:
                     oldmd = file(metadata, 'r')
                 md = oldmd.read()
@@ -109,13 +111,19 @@ class RepoMetadata:
         else:
             raise MDError, 'invalid metadata type'
 
+        do_compress = False
         ## Compress the metadata and move it into the repodata
-        if not mdname.endswith('.gz'):
-            mdname += '.gz'
+        if self.compress or not mdname.split('.')[-1] in ('gz', 'bz2', 'xz'):
+            do_compress = True
+            mdname += '.' + self.compress_type
         mdtype = self._get_mdtype(mdname, mdtype)
 
         destmd = os.path.join(self.repodir, mdname)
-        newmd = GzipFile(filename=destmd, mode='wb')
+        if do_compress:
+            newmd = compressOpen(destmd, mode='wb', compress_type=self.compress_type)
+        else:
+            newmd = open(destmd, 'wb')
+            
         newmd.write(md)
         newmd.close()
         print "Wrote:", destmd
@@ -166,6 +174,10 @@ def main(args):
                       help="specific datatype of the metadata, will be derived from the filename if not specified")
     parser.add_option("--remove", action="store_true",
                       help="remove specified file from repodata")
+    parser.add_option("--compress", action="store_true", default=False,
+                      help="compress the new repodata before adding it to the repo")
+    parser.add_option("--compress-type", dest='compress_type', default='xz',
+                      help="compression format to use")
     parser.usage = "modifyrepo [options] [--remove] <input_metadata> <output repodata>"
     
     (opts, argsleft) = parser.parse_args(args)
@@ -179,6 +191,10 @@ def main(args):
     except MDError, e:
         print "Could not access repository: %s" % str(e)
         return 1
+
+
+    repomd.compress = opts.compress
+    repomd.compress_type = opts.compress_type
 
     # remove
     if opts.remove:
@@ -195,6 +211,7 @@ def main(args):
     except MDError, e:
         print "Could not add metadata from file %s: %s" % (metadata, str(e))
         return 1
+    
 
 if __name__ == '__main__':
     ret = main(sys.argv[1:])

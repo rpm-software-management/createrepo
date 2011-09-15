@@ -48,8 +48,8 @@ def parse_args(args):
                       help="Do not merge group(comps) metadata")
     parser.add_option("", "--noupdateinfo", default=False, action="store_true",
                       help="Do not merge updateinfo metadata")
-    parser.add_option("", "--xz", default=False, action="store_true",
-                      help="Use xz for repodata compression")
+    parser.add_option("--compress-type", default=None, dest="compress_type",
+                      help="which compression type to use")
                       
     (opts, argsleft) = parser.parse_args(args)
 
@@ -81,8 +81,8 @@ def main(args):
         rmbase.groups = False
     if opts.noupdateinfo:
         rmbase.updateinfo = False
-    if opts.xz:
-        rmbase.mdconf.xz = True
+    if opts.compress_type:
+        rmbase.mdconf.compress_type = opts.compress_type
     try:
         rmbase.merge_repos()
         rmbase.write_metadata()

@@ -34,7 +34,7 @@ from yum.packageSack import MetaSack
 from yum.packages import YumAvailablePackage
 
 import rpmUtils.transaction
-from utils import _, errorprint, MDError, lzma
+from utils import _, errorprint, MDError, lzma, _available_compression
 import readMetadata
 try:
     import sqlite3 as sqlite
@@ -46,7 +46,7 @@ try:
 except ImportError:
     pass
 
-from utils import _gzipOpen, bzipFile, xzFile, checkAndMakeDir, GzipFile, \
+from utils import _gzipOpen, compressFile, compressOpen, checkAndMakeDir, GzipFile, \
                   checksum_and_rename, split_list_into_equal_chunks
 import deltarpms
 
@@ -74,7 +74,7 @@ class MetaDataConfig(object):
         self.deltadir = None
         self.delta_relative = 'drpms/'
         self.oldpackage_paths = [] # where to look for the old packages -
-        self.deltafile = 'prestodelta.xml.gz'
+        self.deltafile = 'prestodelta.xml'
         self.num_deltas = 1 # number of older versions to delta (max)
         self.max_delta_rpm_size = 100000000
         self.update_md_path = None
@@ -86,9 +86,9 @@ class MetaDataConfig(object):
         self.skip_symlinks = False
         self.pkglist = []
         self.database_only = False
-        self.primaryfile = 'primary.xml.gz'
-        self.filelistsfile = 'filelists.xml.gz'
-        self.otherfile = 'other.xml.gz'
+        self.primaryfile = 'primary.xml'
+        self.filelistsfile = 'filelists.xml'
+        self.otherfile = 'other.xml'
         self.repomdfile = 'repomd.xml'
         self.tempdir = '.repodata'
         self.finaldir = 'repodata'
@@ -110,7 +110,8 @@ class MetaDataConfig(object):
         self.worker_cmd = '/usr/share/createrepo/worker.py'
         #self.worker_cmd = './worker.py' # helpful when testing
         self.retain_old_md = 0
-        self.xz = False # use xz for compression
+        self.compress_type = 'gz'
+
         
 class SimpleMDCallBack(object):
     def errorlog(self, thing):
@@ -146,8 +147,13 @@ class MetaDataGenerator:
         if not self.conf.directory and not self.conf.directories:
             raise MDError, "No directory given on which to run."
 
-        if self.conf.xz and not utils.lzma:
-            raise MDError, "XZ compression requested but lzma/xz module not available."
+        if not self.conf.compress_type:
+            self.conf.compress_type = 'gz'
+        
+        if self.conf.compress_type not in utils._available_compression:
+            raise MDError, "Compression %s not available: Please choose from: %s" \
+                 % (self.conf.compress_type, ', '.join(utils._available_compression))
+            
             
         if not self.conf.directories: # just makes things easier later
             self.conf.directories = [self.conf.directory]
@@ -414,9 +420,11 @@ class MetaDataGenerator:
 
     def _setupPrimary(self):
         # setup the primary metadata file
+        # FIXME - make this be  conf.compress_type once y-m-p is fixed
+        fpz = self.conf.primaryfile + '.' + 'gz'
         primaryfilepath = os.path.join(self.conf.outputdir, self.conf.tempdir,
-                                       self.conf.primaryfile)
-        fo = _gzipOpen(primaryfilepath, 'w')
+                                       fpz)
+        fo = compressOpen(primaryfilepath, 'w', 'gz')
         fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         fo.write('<metadata xmlns="http://linux.duke.edu/metadata/common"' \
             ' xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="%s">' %
@@ -425,9 +433,11 @@ class MetaDataGenerator:
 
     def _setupFilelists(self):
         # setup the filelist file
+        # FIXME - make this be  conf.compress_type once y-m-p is fixed        
+        fpz = self.conf.filelistsfile + '.' + 'gz'
         filelistpath = os.path.join(self.conf.outputdir, self.conf.tempdir,
-                                    self.conf.filelistsfile)
-        fo = _gzipOpen(filelistpath, 'w')
+                                    fpz)
+        fo = compressOpen(filelistpath, 'w', 'gz')
         fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         fo.write('<filelists xmlns="http://linux.duke.edu/metadata/filelists"' \
                  ' packages="%s">' % self.pkgcount)
@@ -435,9 +445,11 @@ class MetaDataGenerator:
 
     def _setupOther(self):
         # setup the other file
+        # FIXME - make this be  conf.compress_type once y-m-p is fixed        
+        fpz = self.conf.otherfile + '.' + 'gz'
         otherfilepath = os.path.join(self.conf.outputdir, self.conf.tempdir,
-                                     self.conf.otherfile)
-        fo = _gzipOpen(otherfilepath, 'w')
+                                     fpz)
+        fo = compressOpen(otherfilepath, 'w', 'gz')
         fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         fo.write('<otherdata xmlns="http://linux.duke.edu/metadata/other"' \
                  ' packages="%s">' %
@@ -446,9 +458,10 @@ class MetaDataGenerator:
 
     def _setupDelta(self):
         # setup the other file
+        fpz = self.conf.deltafile + '.' + self.conf.compress_type        
         deltafilepath = os.path.join(self.conf.outputdir, self.conf.tempdir,
-                                     self.conf.deltafile)
-        fo = _gzipOpen(deltafilepath, 'w')
+                                     fpz)
+        fo = compressOpen(deltafilepath, 'w', self.conf.compress_type)
         fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         fo.write('<prestodelta>\n')
         return fo
@@ -612,7 +625,6 @@ class MetaDataGenerator:
                 
             for worker_num in range(self.conf.workers):
                 pkl = self._worker_tmp_path + '/pkglist-%s' % worker_num
-                print pkl
                 f = open(pkl, 'w') 
                 f.write('\n'.join(worker_chunks[worker_num]))
                 f.close()
@@ -828,7 +840,7 @@ class MetaDataGenerator:
         return ' '.join(results)
 
     def _createRepoDataObject(self, mdfile, mdtype, compress=True, 
-                              compress_type='gzip', attribs={}):
+                              compress_type=None, attribs={}):
         """return random metadata as RepoData object to be  added to RepoMD
            mdfile = complete path to file
            mdtype = the metadata type to use
@@ -838,19 +850,12 @@ class MetaDataGenerator:
         sfile = os.path.basename(mdfile)
         fo = open(mdfile, 'r')
         outdir = os.path.join(self.conf.outputdir, self.conf.tempdir)
+        if not compress_type:
+            compress_type = self.conf.compress_type
         if compress:
-            if compress_type == 'gzip':
-                sfile = '%s.gz' % sfile
-                outfn = os.path.join(outdir, sfile)
-                output = GzipFile(filename = outfn, mode='wb')
-            elif compress_type == 'bzip2':
-                sfile = '%s.bz2' % sfile
-                outfn = os.path.join(outdir, sfile)
-                output = BZ2File(filename = outfn, mode='wb')
-            elif compress_type == 'xz':
-                sfile = '%s.xz' % sfile
-                outfn = os.path.join(outdir, sfile)
-                output = utils.lzma.LZMAFile(outfn, mode='wb')
+            sfile = '%s.%s' % (sfile, compress_type)
+            outfn = os.path.join(outdir, sfile)
+            output = compressOpen(outfn, mode='wb', compress_type=compress_type)
                 
         else:
             outfn  = os.path.join(outdir, sfile)
@@ -924,9 +929,13 @@ class MetaDataGenerator:
             rp = sqlitecachec.RepodataParserSqlite(repopath, repomd.repoid, None)
 
         for (rpm_file, ftype) in workfiles:
+            # when we fix y-m-p and non-gzipped xml files - then we can make this just add
+            # self.conf.compress_type
+            if ftype in ('other', 'filelists', 'primary'):
+                rpm_file = rpm_file + '.' + 'gz'
             complete_path = os.path.join(repopath, rpm_file)
 
-            zfo = _gzipOpen(complete_path)
+            zfo = compressOpen(complete_path)
             # This is misc.checksum() done locally so we can get the size too.
             data = misc.Checksums([sumtype])
             while data.read(zfo, 2**16):
@@ -967,17 +976,13 @@ class MetaDataGenerator:
 
                     # rename from silly name to not silly name
                     os.rename(tmp_result_path, resultpath)
-                    ext = 'bz2'
-                    compress_func = bzipFile
-                    if self.conf.xz:
-                        ext = 'xz'
-                        compress_func = xzFile
+                    ext = self.conf.compress_type
                     compressed_name = '%s.%s' % (good_name, ext)
                     result_compressed = os.path.join(repopath, compressed_name)
                     db_csums[ftype] = misc.checksum(sumtype, resultpath)
 
                     # compress the files
-                    compress_func(resultpath, result_compressed)
+                    compressFile(resultpath, result_compressed, self.conf.compress_type)
                     # csum the compressed file
                     db_compressed_sums[ftype] = misc.checksum(sumtype,
                                                              result_compressed)
@@ -1051,7 +1056,7 @@ class MetaDataGenerator:
 
         if self.conf.additional_metadata:
             for md_type, md_file in self.conf.additional_metadata.items():
-                mdcontent = self._createRepoDataObject(md_file, md_type, compress_type='xz')
+                mdcontent = self._createRepoDataObject(md_file, md_type)
                 repomd.repoData[mdcontent.type] = mdcontent
                 
 

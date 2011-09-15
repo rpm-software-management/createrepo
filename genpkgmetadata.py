@@ -127,6 +127,9 @@ def parse_args(args, conf):
     parser.add_option("--xz", default=False,
         action="store_true",
         help="use xz for repodata compression")
+    parser.add_option("--compress-type", default=None, dest="compress_type",
+        help="which compression type to use")
+        
     
     (opts, argsleft) = parser.parse_args(args)
     if len(argsleft) > 1 and not opts.split:
@@ -159,6 +162,11 @@ def parse_args(args, conf):
     
     if opts.nodatabase:
         opts.database = False
+    
+    # xz is just a shorthand for compress_type
+    if opts.xz and not opts.compress_type:
+        opts.compress_type='xz'
+        
         
     # let's switch over to using the conf object - put all the opts into it
     for opt in parser.option_list:
