@@ -1,5 +1,11 @@
 # bash completion for createrepo and friends
 
+_cr_compress_type()
+{
+    COMPREPLY=( $( compgen -W "$( ${1:-createrepo} --compress-type=FOO / 2>&1 \
+        | sed -ne 's/,/ /g' -ne 's/.*[Cc]ompression.*://p' )" -- "$2" ) )
+}
+
 _cr_createrepo()
 {
     COMPREPLY=()
@@ -44,6 +50,10 @@ _cr_createrepo()
             COMPREPLY=( $( compgen -W "{1..$max}" -- "$2" ) )
             return 0
             ;;
+        --compress-type)
+            _cr_compress_type "$1" "$2"
+            return 0
+            ;;
     esac
 
     if [[ $2 == -* ]] ; then
@@ -54,7 +64,7 @@ _cr_createrepo()
             --skip-symlinks --changelog-limit --unique-md-filenames
             --simple-md-filenames --retain-old-md --distro --content --repo
             --revision --deltas --oldpackagedirs --num-deltas --read-pkgs-list
-            --max-delta-rpm-size --workers --xz' -- "$2" ) )
+            --max-delta-rpm-size --workers --xz --compress-type' -- "$2" ) )
     else
         COMPREPLY=( $( compgen -d -- "$2" ) )
     fi
@@ -73,10 +83,14 @@ _cr_mergerepo()
             COMPREPLY=( $( compgen -d -- "$2" ) )
             return 0
             ;;
+        --compress-type)
+            _cr_compress_type "" "$2"
+            return 0
+            ;;
     esac
 
     COMPREPLY=( $( compgen -W '--version --help --repo --archlist --no-database
-        --outputdir --nogroups --noupdateinfo --xz' -- "$2" ) )
+        --outputdir --nogroups --noupdateinfo --compress-type' -- "$2" ) )
 } &&
 complete -F _cr_mergerepo -o filenames mergerepo mergerepo.py
 
@@ -88,18 +102,22 @@ _cr_modifyrepo()
         --version|-h|--help|--mdtype)
             return 0
             ;;
+        --compress-type)
+            _cr_compress_type "" "$2"
+            return 0
+            ;;
     esac
 
     if [[ $2 == -* ]] ; then
-        COMPREPLY=( $( compgen -W '--version --help --mdtype --remove' \
-            -- "$2" ) )
+        COMPREPLY=( $( compgen -W '--version --help --mdtype --remove
+            --compress --compress-type' -- "$2" ) )
         return 0
     fi
 
     local i argnum=1
     for (( i=1; i < ${#COMP_WORDS[@]}-1; i++ )) ; do
         if [[ ${COMP_WORDS[i]} != -* &&
-                    ${COMP_WORDS[i-1]} != @(=|--mdtype) ]]; then
+              ${COMP_WORDS[i-1]} != @(=|--@(md|compress-)type) ]]; then
             argnum=$(( argnum+1 ))
         fi
     done
