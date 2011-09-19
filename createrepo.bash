@@ -5,7 +5,7 @@ _cr_createrepo()
     COMPREPLY=()
 
     case $3 in
-        --version|-h|--help|-u|--baseurl|--distro|--content|--repo|--workers|\
+        --version|-h|--help|-u|--baseurl|--distro|--content|--repo|\
         --revision|-x|--excludes|--changelog-limit|--max-delta-rpm-size)
             return 0
             ;;
@@ -36,6 +36,12 @@ _cr_createrepo()
             ;;
         --num-deltas)
             COMPREPLY=( $( compgen -W '1 2 3 4 5 6 7 8 9' -- "$2" ) )
+            return 0
+            ;;
+        --workers)
+            local min=2 max=$( getconf _NPROCESSORS_ONLN 2>/dev/null )
+            [[ -z $max || $max -lt $min ]] && max=$min
+            COMPREPLY=( $( compgen -W "{1..$max}" -- "$2" ) )
             return 0
             ;;
     esac
