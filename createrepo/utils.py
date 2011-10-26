@@ -124,6 +124,8 @@ def compressOpen(fn, mode='rb', compress_type=None):
     if not compress_type:
         # we are readonly and we don't give a compress_type - then guess based on the file extension
         compress_type = fn.split('.')[-1]
+        if compress_type not in _available_compression:
+            compress_type = 'gz'
             
     if compress_type == 'xz':
         return lzma.LZMAFile(fn, mode)
