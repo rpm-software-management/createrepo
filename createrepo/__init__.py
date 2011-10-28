@@ -686,8 +686,12 @@ class MetaDataGenerator:
                     
             for pkgfile in pkgfiles:
                 if self.conf.deltas:
-                    po = self.read_in_package(pkgfile, pkgpath=pkgpath, reldir=reldir)
-                    self._do_delta_rpm_package(po)
+                    try:
+                        po = self.read_in_package(pkgfile, pkgpath=pkgpath, reldir=reldir)
+                        self._do_delta_rpm_package(po)
+                    except MDError, e:
+                        errorprint(e)
+                        continue
                 self.read_pkgs.append(pkgfile)
 
         return self.current_pkg
@@ -933,8 +937,9 @@ class MetaDataGenerator:
             # self.conf.compress_type
             if ftype in ('other', 'filelists', 'primary'):
                 rpm_file = rpm_file + '.' + 'gz'
+            elif rpm_file.find('.') != -1 and rpm_file.split('.')[-1] not in _available_compression:
+                rpm_file = rpm_file + '.' + self.conf.compress_type
             complete_path = os.path.join(repopath, rpm_file)
-
             zfo = compressOpen(complete_path)
             # This is misc.checksum() done locally so we can get the size too.
             data = misc.Checksums([sumtype])
@@ -1029,7 +1034,13 @@ class MetaDataGenerator:
             data.openchecksum = (sumtype, uncsum)
 
             if self.conf.unique_md_filenames:
-                res_file = '%s-%s.xml.gz' % (csum, ftype)
+                if ftype in ('primary', 'filelists', 'other'):
+                    compress = 'gz'
+                else:
+                    compress = self.conf.compress_type
+                
+                main_name = '.'.join(rpm_file.split('.')[:-1])
+                res_file = '%s-%s.%s' % (csum, main_name, compress)
                 orig_file = os.path.join(repopath, rpm_file)
                 dest_file = os.path.join(repopath, res_file)
                 os.rename(orig_file, dest_file)
