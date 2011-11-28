@@ -48,6 +48,7 @@ except ImportError:
 
 from utils import _gzipOpen, compressFile, compressOpen, checkAndMakeDir, GzipFile, \
                   checksum_and_rename, split_list_into_equal_chunks
+from utils import num_cpus_online
 import deltarpms
 
 __version__ = '0.9.9'
@@ -606,6 +607,8 @@ class MetaDataGenerator:
             # open the files they created and write them out to our metadata
             # add up the total pkg counts and return that value
             self._worker_tmp_path = tempfile.mkdtemp() # setting this in the base object so we can clean it up later
+            if self.conf.workers < 1:
+                self.conf.workers = num_cpus_online()
             worker_chunks = split_list_into_equal_chunks(pkgfiles, self.conf.workers)
             worker_cmd_dict = {}
             worker_jobs = {}

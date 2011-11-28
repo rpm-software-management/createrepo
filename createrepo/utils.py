@@ -200,6 +200,22 @@ def split_list_into_equal_chunks(seq, num_chunks):
 
     return out
 
+def num_cpus_online(unknown=1):
+    if not hasattr(os, "sysconf"):
+        return unknown
+
+    if not os.sysconf_names.has_key("SC_NPROCESSORS_ONLN"):
+        return unknown
+
+    ncpus = os.sysconf("SC_NPROCESSORS_ONLN")
+    try:
+        if int(ncpus) > 0:
+            return ncpus
+    except:
+        pass
+
+    return unknown
+
 
 class MDError(Exception):
     def __init__(self, value=None):
