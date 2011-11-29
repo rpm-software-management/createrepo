@@ -40,22 +40,14 @@ def _(args):
 
 class GzipFile(gzip.GzipFile):
     def _write_gzip_header(self):
+        # Generate a header that is easily reproduced with gzip -9 -n on
+        # an unix-like system
         self.fileobj.write('\037\213')             # magic header
         self.fileobj.write('\010')                 # compression method
-        if hasattr(self, 'name'):
-            fname = self.name[:-3]
-        else:
-            fname = self.filename[:-3]
-        flags = 0
-        if fname:
-            flags = FNAME
-        self.fileobj.write(chr(flags))
-        write32u(self.fileobj, long(0))
-        self.fileobj.write('\002')
-        self.fileobj.write('\377')
-        if fname:
-            self.fileobj.write(fname + '\000')
-
+        self.fileobj.write('\000')                 # flags
+        write32u(self.fileobj, long(0))            # timestamp
+        self.fileobj.write('\002')                 # max compression
+        self.fileobj.write('\003')                 # UNIX
 
 def _gzipOpen(filename, mode="rb", compresslevel=9):
     return GzipFile(filename, mode, compresslevel)
