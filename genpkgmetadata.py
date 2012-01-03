@@ -127,7 +127,7 @@ def parse_args(args, conf):
     parser.add_option("--xz", default=False,
         action="store_true",
         help="use xz for repodata compression")
-    parser.add_option("--compress-type", default=None, dest="compress_type",
+    parser.add_option("--compress-type", default='compat', dest="compress_type",
         help="which compression type to use")
         
     

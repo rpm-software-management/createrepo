@@ -111,7 +111,7 @@ class MetaDataConfig(object):
         self.worker_cmd = '/usr/share/createrepo/worker.py'
         #self.worker_cmd = './worker.py' # helpful when testing
         self.retain_old_md = 0
-        self.compress_type = 'gz'
+        self.compress_type = 'compat'
 
         
 class SimpleMDCallBack(object):
@@ -144,10 +144,15 @@ class MetaDataGenerator:
         self.files = []
         self.rpmlib_reqs = {}
         self.read_pkgs = []
+        self.compat_compress = False
 
         if not self.conf.directory and not self.conf.directories:
             raise MDError, "No directory given on which to run."
-
+        
+        if self.conf.compress_type == 'compat':
+            self.compat_compress = True
+            self.conf.compress_type = None
+            
         if not self.conf.compress_type:
             self.conf.compress_type = 'gz'
         
@@ -982,15 +987,20 @@ class MetaDataGenerator:
                     good_name = '%s.sqlite' % ftype
                     resultpath = os.path.join(repopath, good_name)
 
+                    # compat compression for rhel5 compatibility from fedora :(
+                    compress_type = self.conf.compress_type
+                    if self.compat_compress:
+                        compress_type = 'bz2'
+                        
                     # rename from silly name to not silly name
                     os.rename(tmp_result_path, resultpath)
-                    ext = self.conf.compress_type
-                    compressed_name = '%s.%s' % (good_name, ext)
+                    compressed_name = '%s.%s' % (good_name, compress_type)
                     result_compressed = os.path.join(repopath, compressed_name)
                     db_csums[ftype] = misc.checksum(sumtype, resultpath)
 
                     # compress the files
-                    compressFile(resultpath, result_compressed, self.conf.compress_type)
+
+                    compressFile(resultpath, result_compressed, compress_type)
                     # csum the compressed file
                     db_compressed_sums[ftype] = misc.checksum(sumtype,
                                                              result_compressed)
@@ -1001,7 +1011,7 @@ class MetaDataGenerator:
 
                     if self.conf.unique_md_filenames:
                         csum_compressed_name = '%s-%s.%s' % (
-                                           db_compressed_sums[ftype], good_name, ext)
+                                           db_compressed_sums[ftype], good_name, compress_type)
                         csum_result_compressed =  os.path.join(repopath,
                                                            csum_compressed_name)
                         os.rename(result_compressed, csum_result_compressed)
