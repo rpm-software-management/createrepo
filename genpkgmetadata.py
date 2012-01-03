@@ -164,7 +164,7 @@ def parse_args(args, conf):
         opts.database = False
     
     # xz is just a shorthand for compress_type
-    if opts.xz and not opts.compress_type:
+    if opts.xz and opts.compress_type == 'compat':
         opts.compress_type='xz'
         
         
