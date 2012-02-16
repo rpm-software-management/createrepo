@@ -145,6 +145,9 @@ def parse_args(args, conf):
     else:
         directories = argsleft
 
+    if opts.workers >= 128:
+        errorprint(_('Warning: More than 128 workers is a lot. Limiting.'))
+        opts.workers = 128
     if opts.sumtype == 'sha1':
         errorprint(_('Warning: It is more compatible to use sha instead of sha1'))
 
