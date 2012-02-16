@@ -183,12 +183,17 @@ def encodefiletypelist(filetypelist):
     return result
 
 def split_list_into_equal_chunks(seq, num_chunks):
+    if num_chunks <= 1:
+        return [seq[:]]
     avg = len(seq) / float(num_chunks)
     out = []
     last = 0.0
-    while last < len(seq):
+    #  Due to floating point math, we do one less than the number of chunks
+    # and then the rest. Eg. range(1,6), 9
+    while len(out) < (num_chunks - 1):
         out.append(seq[int(last):int(last + avg)])
         last += avg
+    out.append(seq[int(last):])
 
     return out
 
