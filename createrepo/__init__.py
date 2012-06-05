@@ -309,7 +309,7 @@ class MetaDataGenerator:
             for fn in names:
                 if os.path.isdir(fn):
                     continue
-                if self.conf.skip_symlinks and os.path.islink(fn):
+                if self.conf.skip_symlinks and os.path.islink(os.path.join(dirname, fn)):
                     continue
                 elif fn[-extlen:].lower() == '%s' % (ext):
                     relativepath = dirname.replace(startdir, "", 1)
