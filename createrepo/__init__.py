@@ -1173,7 +1173,7 @@ class MetaDataGenerator:
             oldfile = os.path.join(output_old_dir, f)
             finalfile = os.path.join(output_final_dir, f)
             fn = '.'.join(f.split('.')[:-1])
-            if fn in ('filelists.sqlite', 'other.sqlite.',
+            if fn in ('filelists.sqlite', 'other.sqlite',
                      'primary.sqlite') or oldfile in old_to_remove:
                 try:
                     os.remove(oldfile)
