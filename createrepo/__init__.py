@@ -1307,6 +1307,19 @@ class SplitMetaDataGenerator(MetaDataGenerator):
                     thisdir = os.path.join(self.conf.basedir, mydir)
 
             filematrix[mydir] = self.getFileList(thisdir, '.rpm')
+
+            #  pkglist is a bit different for split media, as we have to know
+            # which dir. it belongs to. So we walk the dir. and then filter.
+            # We could be faster by not walking the dir. ... but meh.
+            if self.conf.pkglist:
+                pkglist = set(self.conf.pkglist)
+                pkgs = []
+                for fname in filematrix[mydir]:
+                    if fname not in pkglist:
+                        continue
+                    pkgs.append(fname)
+                filematrix[mydir] = pkgs
+
             self.trimRpms(filematrix[mydir])
             self.pkgcount += len(filematrix[mydir])
 
