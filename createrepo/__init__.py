@@ -26,6 +26,7 @@ import tempfile
 import stat
 import fcntl
 import subprocess
+from select import select
 
 from yum import misc, Errors
 from yum.repoMDObject import RepoMD, RepoData
@@ -650,6 +651,7 @@ class MetaDataGenerator:
             
                 
 
+            fds = {}
             for (num, cmdline) in worker_cmd_dict.items():
                 if not self.conf.quiet:
                     self.callback.log("Spawning worker %s with %s pkgs" % (num, 
@@ -657,22 +659,20 @@ class MetaDataGenerator:
                 job = subprocess.Popen(cmdline, stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE)
                 worker_jobs[num] = job
+                fds[job.stdout.fileno()] = num, job.stdout, self.callback.log
+                fds[job.stderr.fileno()] = num, job.stderr, self.callback.errorlog
             
-            gimmebreak = 0
-            while gimmebreak != len(worker_jobs.keys()):
-                gimmebreak = 0
-                for (num,job) in worker_jobs.items():
-                    if job.poll() is not None:
-                        gimmebreak+=1
-                    line = job.stdout.readline()
-                    if line:
-                        self.callback.log('Worker %s: %s' % (num, line.rstrip()))
-                    line = job.stderr.readline()
-                    if line:
-                        self.callback.errorlog('Worker %s: %s' % (num, line.rstrip()))
-                    
+            while fds:
+                for fd in select(fds, [], [])[0]:
+                    num, stream, logger = fds[fd]
+                    line = stream.readline()
+                    if line == '':
+                        del fds[fd]
+                        continue
+                    logger('Worker %s: %s' % (num, line.rstrip()))
+
             for (num, job) in worker_jobs.items():
-                if job.returncode != 0:
+                if job.wait() != 0:
                     msg = "Worker exited with non-zero value: %s. Fatal." % job.returncode
                     self.callback.errorlog(msg)
                     raise MDError, msg
