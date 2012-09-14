@@ -37,6 +37,12 @@ def parse_args(args, conf):
        Sanity check all the things being passed in.
     """
 
+    def_workers = os.nice(0)
+    if def_workers > 0:
+        def_workers = 1 # We are niced, so just use a single worker.
+    else:
+        def_workers = 0 # zoooom....
+
     _def   = yum.misc._default_checksums[0]
     _avail = yum.misc._available_checksums
     parser = OptionParser(version = "createrepo %s" % createrepo.__version__)
@@ -121,7 +127,7 @@ def parse_args(args, conf):
     parser.add_option("--max-delta-rpm-size", default=100000000,
         dest='max_delta_rpm_size', type='int',
         help="max size of an rpm that to run deltarpm against (in bytes)")
-    parser.add_option("--workers", default=1,
+    parser.add_option("--workers", default=def_workers,
         dest='workers', type='int',
         help="number of workers to spawn to read rpms")
     parser.add_option("--xz", default=False,
