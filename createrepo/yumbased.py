@@ -16,6 +16,11 @@
 
 
 import os
+def _get_umask():
+   oumask = os.umask(0)
+   os.umask(oumask)
+   return oumask
+_b4rpm_oumask = _get_umask()
 import rpm
 import types
 
@@ -86,6 +91,9 @@ class CreateRepoPackage(YumLocalPackage):
                 csumo = os.fdopen(csumo, 'w', -1)
                 csumo.write(checksum)
                 csumo.close()
+                #  tempfile forces 002 ... we want to undo that, so that users
+                # can share the cache. BZ 833350.
+                os.chmod(tmpfilename, 0666 ^ _b4rpm_oumask)
                 os.rename(tmpfilename, csumfile)
             except:
                 pass
