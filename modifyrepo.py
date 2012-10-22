@@ -30,6 +30,7 @@ import os
 import sys
 from createrepo import __version__
 from createrepo.utils import checksum_and_rename, compressOpen, MDError
+from createrepo.utils import _available_compression
 from yum.misc import checksum
 
 from yum.repoMDObject import RepoMD, RepoMDError, RepoData
@@ -45,7 +46,7 @@ class RepoMetadata:
         self.repomdxml = os.path.join(self.repodir, 'repomd.xml')
         self.checksum_type = 'sha256'
         self.compress = False
-        self.compress_type='xz'
+        self.compress_type = _available_compression[-1] # best available
 
         if not os.path.exists(self.repomdxml):
             raise MDError, '%s not found' % self.repomdxml
@@ -194,7 +195,8 @@ def main(args):
 
 
     repomd.compress = opts.compress
-    repomd.compress_type = opts.compress_type
+    if opts.compress_type in _available_compression:
+        repomd.compress_type = opts.compress_type
 
     # remove
     if opts.remove:
