@@ -897,7 +897,7 @@ class MetaDataGenerator:
             thisdata.openchecksum  = (self.conf.sumtype, open_csum)
         
         thisdata.size = str(os.stat(outfn).st_size)
-        thisdata.timestamp = str(os.stat(outfn).st_mtime)
+        thisdata.timestamp = str(int(os.stat(outfn).st_mtime))
         for (k, v) in attribs.items():
             setattr(thisdata, k, str(v))
         
@@ -1028,7 +1028,7 @@ class MetaDataGenerator:
                     data.location = (self.conf.baseurl, 
                               os.path.join(self.conf.finaldir, compressed_name))
                     data.checksum = (sumtype, db_compressed_sums[ftype])
-                    data.timestamp = str(db_stat.st_mtime)
+                    data.timestamp = str(int(db_stat.st_mtime))
                     data.size = str(db_stat.st_size)
                     data.opensize = str(un_stat.st_size)
                     data.openchecksum = (sumtype, db_csums[ftype])
