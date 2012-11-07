@@ -706,10 +706,6 @@ class MetaDataGenerator:
 
 
     def closeMetadataDocs(self):
-        if not self.conf.quiet:
-            self.callback.log('')
-
-
         # save them up to the tmp locations:
         if not self.conf.quiet:
             self.callback.log(_('Saving Primary metadata'))
