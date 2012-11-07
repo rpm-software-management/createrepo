@@ -98,6 +98,10 @@ def gzFile(source, dest):
     s_fn.close()
 
 
+class Duck:
+    def __init__(self, **attr):
+        self.__dict__ = attr
+
 
 def compressFile(source, dest, compress_type):
     """Compress an existing file using any compression type from source to dest"""
@@ -120,7 +124,11 @@ def compressOpen(fn, mode='rb', compress_type=None):
             compress_type = 'gz'
             
     if compress_type == 'xz':
-        return lzma.LZMAFile(fn, mode)
+        fh = lzma.LZMAFile(fn, mode)
+        if mode == 'w':
+            fh = Duck(write=lambda s, write=fh.write: s != '' and write(s),
+                      close=fh.close)
+        return fh
     elif compress_type == 'bz2':
         return bz2.BZ2File(fn, mode)
     elif compress_type == 'gz':
