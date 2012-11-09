@@ -560,9 +560,7 @@ class MetaDataGenerator:
                         self.callback.log(_("Using data from old metadata for %s")
                                             % pkg)
 
-                    if self.conf.baseurl: # if we have a baseurl set, reset the one
-                                          # in the old pkg
-                        old_po.basepath = self.conf.baseurl
+                    old_po.basepath = self.conf.baseurl # reset baseurl in the old pkg
                     self.primaryfile.write(old_po.xml_dump_primary_metadata())
                     self.flfile.write(old_po.xml_dump_filelists_metadata())
                     self.otherfile.write(old_po.xml_dump_other_metadata())
