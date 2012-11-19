@@ -177,7 +177,7 @@ def main(args):
                       help="remove specified file from repodata")
     parser.add_option("--compress", action="store_true", default=False,
                       help="compress the new repodata before adding it to the repo")
-    parser.add_option("--compress-type", dest='compress_type', default='xz',
+    parser.add_option("--compress-type", dest='compress_type', default='gz',
                       help="compression format to use")
     parser.usage = "modifyrepo [options] [--remove] <input_metadata> <output repodata>"
     
