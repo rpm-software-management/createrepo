@@ -111,8 +111,9 @@ output the paths to the pkgs actually read useful with  --update
 max size of an rpm that to run deltarpm against (in bytes)
 .IP "\fB\--workers\fP WORKERS
 number of workers to spawn to read rpms
-.IP "\fB\--xz\fP
-use xz for repodata compression
+.IP "\fB\--compress-type\fP
+specify which compression method to use: compat (default),
+xz (may not be available), gz, bz2.
 .IP
 
 .SH "EXAMPLES"
