@@ -64,7 +64,7 @@ _cr_createrepo()
             --skip-symlinks --changelog-limit --unique-md-filenames
             --simple-md-filenames --retain-old-md --distro --content --repo
             --revision --deltas --oldpackagedirs --num-deltas --read-pkgs-list
-            --max-delta-rpm-size --workers --xz --compress-type' -- "$2" ) )
+            --max-delta-rpm-size --workers --compress-type' -- "$2" ) )
     else
         COMPREPLY=( $( compgen -d -- "$2" ) )
     fi
