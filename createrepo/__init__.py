@@ -543,6 +543,7 @@ class MetaDataGenerator:
         # go on their merry way
         
         newpkgs = []
+        keptpkgs = []
         if self.conf.update:
             # if we're in --update mode then only act on the new/changed pkgs
             for pkg in pkglist:
@@ -558,11 +559,7 @@ class MetaDataGenerator:
                     if self.conf.verbose:
                         self.callback.log(_("Using data from old metadata for %s")
                                             % pkg)
-
-                    old_po.basepath = self.conf.baseurl # reset baseurl in the old pkg
-                    self.primaryfile.write(old_po.xml_dump_primary_metadata())
-                    self.flfile.write(old_po.xml_dump_filelists_metadata())
-                    self.otherfile.write(old_po.xml_dump_other_metadata())
+                    keptpkgs.append((pkg, old_po))
 
                     #FIXME - if we're in update and we have deltas enabled
                     # check the presto data for this pkg and write its info back out
@@ -594,15 +591,25 @@ class MetaDataGenerator:
                 self.read_pkgs.append(pkg)
             
             if po:
-                self.primaryfile.write(po.xml_dump_primary_metadata())
-                self.flfile.write(po.xml_dump_filelists_metadata())
-                self.otherfile.write(po.xml_dump_other_metadata(
-                                     clog_limit=self.conf.changelog_limit))
+                keptpkgs.append((pkg, po))
                 continue
                 
             pkgfiles.append(pkg)
-            
-       
+
+        keptpkgs.sort(reverse=True)
+        # keptkgs is a list of (filename, po), pkgfiles is a list if filenames.
+        # Need to write them in sorted(filename) order.  We loop over pkgfiles,
+        # inserting keptpkgs in right spots (using the upto argument).
+        def save_keptpkgs(upto):
+            while keptpkgs and (upto is None or keptpkgs[-1][0] < upto):
+                filename, po = keptpkgs.pop()
+                # reset baseurl in the old pkg
+                po.basepath = self.conf.baseurl
+                self.primaryfile.write(po.xml_dump_primary_metadata())
+                self.flfile.write(po.xml_dump_filelists_metadata())
+                self.otherfile.write(po.xml_dump_other_metadata(
+                    clog_limit=self.conf.changelog_limit))
+
         if pkgfiles:
             # divide that list by the number of workers and fork off that many
             # workers to tmpdirs
@@ -612,6 +619,7 @@ class MetaDataGenerator:
             self._worker_tmp_path = tempfile.mkdtemp() # setting this in the base object so we can clean it up later
             if self.conf.workers < 1:
                 self.conf.workers = num_cpus_online()
+            pkgfiles.sort()
             worker_chunks = split_list_into_equal_chunks(pkgfiles, self.conf.workers)
             worker_cmd_dict = {}
             worker_jobs = {}
@@ -671,6 +679,9 @@ class MetaDataGenerator:
                         self.callback.errorlog('Worker %s: %s' % (num, line.rstrip()))
 
             for i, pkg in enumerate(pkgfiles):
+                # insert cached packages
+                save_keptpkgs(pkg)
+
                 # save output to local files
                 log_messages(i % self.conf.workers)
 
@@ -696,6 +707,7 @@ class MetaDataGenerator:
                         continue
                 self.read_pkgs.append(pkgfile)
 
+        save_keptpkgs(None) # append anything left
         return self.current_pkg
 
 
