@@ -39,10 +39,6 @@ def main(args):
     opts, pkgs = parser.parse_args(args)
     external_data = {'_packagenumber': 1}
     globalopts = {}
-    if not opts.tmpmdpath:
-        print >> sys.stderr, "tmpmdpath required for destination files"
-        sys.exit(1)
-    
     
     for strs in opts.pkgoptions:
         k,v = strs.split('=')
@@ -67,10 +63,19 @@ def main(args):
     
     reldir = external_data['_reldir']
     ts = rpmUtils.transaction.initReadOnlyTransaction()
-    pri = open(opts.tmpmdpath + '/primary.xml' , 'w')
-    fl = open(opts.tmpmdpath  + '/filelists.xml' , 'w')
-    other = open(opts.tmpmdpath  + '/other.xml' , 'w')
-    
+    if opts.tmpmdpath:
+        files = [open(opts.tmpmdpath + '/%s.xml' % i, 'w')
+                 for i in ('primary', 'filelists', 'other')]
+        def output(*xml):
+            for fh, buf in zip(files, xml):
+                fh.write(buf)
+    else:
+        def output(*xml):
+            buf = ' '.join(str(len(i)) for i in xml)
+            sys.stdout.write('*** %s\n' % buf)
+            for buf in xml:
+                sys.stdout.write(buf)
+
     if opts.pkglist:
         for line in open(opts.pkglist,'r').readlines():
             line = line.strip()
@@ -78,10 +83,14 @@ def main(args):
                 continue
             pkgs.append(line)
 
+    clog_limit=globalopts.get('clog_limit', None)
+    if clog_limit is not None:
+         clog_limit = int(clog_limit)
     for pkgfile in pkgs:
         pkgpath = reldir + '/' + pkgfile
         if not os.path.exists(pkgpath):
             print >> sys.stderr, "File not found: %s" % pkgpath
+            output()
             continue
 
         try:
@@ -91,21 +100,15 @@ def main(args):
             pkg = createrepo.yumbased.CreateRepoPackage(ts, package=pkgpath, 
                                 sumtype=globalopts.get('sumtype', None), 
                                 external_data=external_data)
-            pri.write(pkg.xml_dump_primary_metadata())
-            fl.write(pkg.xml_dump_filelists_metadata())
-            clog_limit=globalopts.get('clog_limit', None)
-            if clog_limit is not None:
-                 clog_limit = int(clog_limit)
-            other.write(pkg.xml_dump_other_metadata(clog_limit=clog_limit))
+            output(pkg.xml_dump_primary_metadata(),
+                   pkg.xml_dump_filelists_metadata(),
+                   pkg.xml_dump_other_metadata(clog_limit=clog_limit))
         except yum.Errors.YumBaseError, e:
             print >> sys.stderr, "Error: %s" % e
+            output()
             continue
         else:
             external_data['_packagenumber']+=1
         
-    pri.close()
-    fl.close()
-    other.close()
-    
 if __name__ == "__main__":
     main(sys.argv[1:])
