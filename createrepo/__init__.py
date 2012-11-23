@@ -635,20 +635,13 @@ class MetaDataGenerator:
                 f.write('\n'.join(worker_chunks[worker_num]))
                 f.close()
                 
-                # make the worker directory
                 workercmdline = []
                 workercmdline.extend(base_worker_cmdline)
-                thisdir = self._worker_tmp_path + '/' + str(worker_num)
-                if checkAndMakeDir(thisdir):
-                    workercmdline.append('--tmpmdpath=%s' % thisdir)
-                else:
-                    raise MDError, "Unable to create worker path: %s" % thisdir
                 workercmdline.append('--pkglist=%s/pkglist-%s' % (self._worker_tmp_path, worker_num))
                 worker_cmd_dict[worker_num] = workercmdline
             
                 
 
-            fds = {}
             for (num, cmdline) in worker_cmd_dict.items():
                 if not self.conf.quiet:
                     self.callback.log("Spawning worker %s with %s pkgs" % (num, 
@@ -656,19 +649,35 @@ class MetaDataGenerator:
                 job = subprocess.Popen(cmdline, stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE)
                 worker_jobs[num] = job
-                fds[job.stdout.fileno()] = num, job.stdout, self.callback.log
-                fds[job.stderr.fileno()] = num, job.stderr, self.callback.errorlog
             
-            while fds:
-                for fd in select(fds, [], [])[0]:
-                    num, stream, logger = fds[fd]
-                    line = stream.readline()
-                    if line == '':
-                        del fds[fd]
-                        continue
-                    logger('Worker %s: %s' % (num, line.rstrip()))
+            files = self.primaryfile, self.flfile, self.otherfile
+            def log_messages(num):
+                job = worker_jobs[num]
+                while True:
+                    # check stdout and stderr
+                    for stream in select((job.stdout, job.stderr), (), ())[0]:
+                        line = stream.readline()
+                        if line: break
+                    else:
+                        return # EOF, EOF
+                    if stream is job.stdout:
+                        if line.startswith('*** '):
+                            # get data, save to local files
+                            for out, size in zip(files, line[4:].split()):
+                                out.write(stream.read(int(size)))
+                            return
+                        self.callback.log('Worker %s: %s' % (num, line.rstrip()))
+                    else:
+                        self.callback.errorlog('Worker %s: %s' % (num, line.rstrip()))
+
+            for i, pkg in enumerate(pkgfiles):
+                # save output to local files
+                log_messages(i % self.conf.workers)
 
             for (num, job) in worker_jobs.items():
+                # process remaining messages on stderr
+                log_messages(num)
+
                 if job.wait() != 0:
                     msg = "Worker exited with non-zero value: %s. Fatal." % job.returncode
                     self.callback.errorlog(msg)
@@ -676,18 +685,6 @@ class MetaDataGenerator:
                     
             if not self.conf.quiet:
                 self.callback.log("Workers Finished")
-            # finished with workers
-            # go to their dirs and add the contents
-            if not self.conf.quiet:
-                self.callback.log("Gathering worker results")
-            for num in range(self.conf.workers):
-                for (fn, fo) in (('primary.xml', self.primaryfile), 
-                           ('filelists.xml', self.flfile),
-                           ('other.xml', self.otherfile)):
-                    fnpath = self._worker_tmp_path + '/' + str(num) + '/' + fn
-                    if os.path.exists(fnpath):
-                        fo.write(open(fnpath, 'r').read())
-
                     
             for pkgfile in pkgfiles:
                 if self.conf.deltas:
