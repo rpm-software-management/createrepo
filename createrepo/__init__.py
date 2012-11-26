@@ -307,14 +307,13 @@ class MetaDataGenerator:
 
         def extension_visitor(filelist, dirname, names):
             for fn in names:
+                fn = os.path.join(dirname, fn)
                 if os.path.isdir(fn):
                     continue
-                if self.conf.skip_symlinks and os.path.islink(os.path.join(dirname, fn)):
+                if self.conf.skip_symlinks and os.path.islink(fn):
                     continue
                 elif fn[-extlen:].lower() == '%s' % (ext):
-                    relativepath = dirname.replace(startdir, "", 1)
-                    relativepath = relativepath.lstrip("/")
-                    filelist.append(os.path.join(relativepath, fn))
+                    filelist.append(fn[len(startdir):])
 
         filelist = []
         startdir = directory + '/'
@@ -1262,24 +1261,6 @@ class SplitMetaDataGenerator(MetaDataGenerator):
             return url
         (scheme, netloc, path, query, fragid) = urlparse.urlsplit(url)
         return urlparse.urlunsplit((scheme, netloc, path, query, str(fragment)))
-
-    def getFileList(self, directory, ext):
-
-        extlen = len(ext)
-
-        def extension_visitor(arg, dirname, names):
-            for fn in names:
-                if os.path.isdir(fn):
-                    continue
-                elif fn[-extlen:].lower() == '%s' % (ext):
-                    reldir = os.path.basename(dirname)
-                    if reldir == os.path.basename(directory):
-                        reldir = ""
-                    arg.append(os.path.join(reldir, fn))
-
-        rpmlist = []
-        os.path.walk(directory, extension_visitor, rpmlist)
-        return rpmlist
 
     def doPkgMetadata(self):
         """all the heavy lifting for the package metadata"""
