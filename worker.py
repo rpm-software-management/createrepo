@@ -60,6 +60,8 @@ def main(args):
             v = None
         globalopts[k] = v
 
+    # turn off buffering on stdout
+    sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
     
     reldir = external_data['_reldir']
     ts = rpmUtils.transaction.initReadOnlyTransaction()
