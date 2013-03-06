@@ -142,7 +142,7 @@ class RepoMetadata:
         new_rd.checksum = (self.checksum_type, csum)
         new_rd.openchecksum = (self.checksum_type, open_csum)
         new_rd.size = str(os.stat(destmd).st_size)
-        new_rd.timestamp = str(os.stat(destmd).st_mtime)
+        new_rd.timestamp = str(int(os.stat(destmd).st_mtime))
         self.repoobj.repoData[new_rd.type] = new_rd
         self._print_repodata(new_rd)
         self._write_repomd()
