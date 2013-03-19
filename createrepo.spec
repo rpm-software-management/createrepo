@@ -1,4 +1,10 @@
 %{!?python_sitelib: %define python_sitelib %(python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
+# disable broken /usr/lib/rpm/brp-python-bytecompile
+%define __os_install_post %{nil}
+%define compdir %(pkg-config --variable=completionsdir bash-completion)
+%if "%{compdir}" == ""
+%define compdir "/etc/bash_completion.d"
+%endif
 
 Summary: Creates a common metadata repository
 Name: createrepo
@@ -10,6 +16,7 @@ Source: %{name}-%{version}.tar.gz
 URL: http://createrepo.baseurl.org/
 BuildRoot: %{_tmppath}/%{name}-%{version}root
 BuildArchitectures: noarch
+BuildRequires: bash-completion
 Requires: python >= 2.1, rpm-python, rpm >= 0:4.1.1, libxml2-python
 Requires: yum-metadata-parser, yum >= 3.2.29, python-deltarpm, pyliblzma
 
@@ -32,7 +39,7 @@ make DESTDIR=$RPM_BUILD_ROOT sysconfdir=%{_sysconfdir} install
 %defattr(-, root, root)
 %dir %{_datadir}/%{name}
 %doc ChangeLog README COPYING COPYING.lib
-%{_sysconfdir}/bash_completion.d/
+%(dirname %{compdir})
 %{_datadir}/%{name}/*
 %{_bindir}/%{name}
 %{_bindir}/modifyrepo

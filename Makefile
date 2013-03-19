@@ -1,4 +1,5 @@
 PKGNAME = createrepo
+ALIASES = mergerepo modifyrepo genpkgmetadata.py mergerepo.py modifyrepo.py
 VERSION=$(shell awk '/Version:/ { print $$2 }' ${PKGNAME}.spec)
 RELEASE=$(shell awk '/Release:/ { print $$2 }' ${PKGNAME}.spec)
 CVSTAG=createrepo-$(subst .,_,$(VERSION)-$(RELEASE))
@@ -26,6 +27,8 @@ docdir =
 includedir = ${prefix}/include
 oldincludedir = /usr/include
 mandir = ${prefix}/share/man
+compdir = $(shell pkg-config --variable=completionsdir bash-completion)
+compdir := $(or $(compdir), "/etc/bash_completion.d")
 
 pkgdatadir = $(datadir)/$(PKGNAME)
 pkglibdir = $(libdir)/$(PKGNAME)
@@ -33,7 +36,7 @@ pkgincludedir = $(includedir)/$(PKGNAME)
 top_builddir = 
 
 # all dirs
-DIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(sysconfdir)/bash_completion.d \
+DIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(compdir) \
 	$(DESTDIR)$(pkgdatadir) $(DESTDIR)$(mandir)
 
 
@@ -65,7 +68,8 @@ check:
 
 install: all installdirs
 	$(INSTALL_MODULES) $(srcdir)/$(MODULES) $(DESTDIR)$(pkgdatadir)
-	$(INSTALL_DATA) $(PKGNAME).bash $(DESTDIR)$(sysconfdir)/bash_completion.d
+	$(INSTALL_DATA) $(PKGNAME).bash $(DESTDIR)$(compdir)/$(PKGNAME)
+	(cd $(DESTDIR)$(compdir); for n in $(ALIASES); do ln -s $(PKGNAME) $$n; done)
 	for subdir in $(SUBDIRS) ; do \
 	  $(MAKE) -C $$subdir install VERSION=$(VERSION) PKGNAME=$(PKGNAME); \
 	done
