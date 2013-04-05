@@ -101,11 +101,11 @@ def parse_args(args, conf):
     parser.add_option("--changelog-limit", dest="changelog_limit",
         default=None, help="only import the last N changelog entries")
     parser.add_option("--unique-md-filenames", dest="unique_md_filenames",
-        help="include the file's checksum in the filename, helps with proxies",
+        help="include the file's checksum in the filename, helps with proxies (default)",
         default=True, action="store_true")
-    parser.add_option("--simple-md-filenames", dest="simple_md_filenames",
-        help="do not include the file's checksum in the filename, helps with proxies",
-        default=False, action="store_true")
+    parser.add_option("--simple-md-filenames", dest="unique_md_filenames",
+        help="do not include the file's checksum in the filename",
+        action="store_false")
     parser.add_option("--retain-old-md", default=0, type='int', dest='retain_old_md',
         help="keep around the latest (by timestamp) N copies of the old repodata")
     parser.add_option("--distro", default=[], action="append",
@@ -166,9 +166,6 @@ def parse_args(args, conf):
         errorprint(_('--split and --checkts options are mutually exclusive'))
         sys.exit(1)
 
-    if opts.simple_md_filenames:
-        opts.unique_md_filenames = False
-    
     if opts.nodatabase:
         opts.database = False
     
