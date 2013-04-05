@@ -6,6 +6,11 @@ _cr_compress_type()
         | sed -ne 's/,/ /g' -ne 's/.*[Cc]ompression.*://p' )" -- "$2" ) )
 }
 
+_cr_checksum_type()
+{
+    COMPREPLY=( $( compgen -W 'md5 sha1 sha256 sha512' -- "$1" ) )
+}
+
 _cr_createrepo()
 {
     COMPREPLY=()
@@ -25,7 +30,7 @@ _cr_createrepo()
             return 0
             ;;
         -s|--checksum)
-            COMPREPLY=( $( compgen -W 'md5 sha1 sha256 sha512' -- "$2" ) )
+            _cr_checksum_type "$2"
             return 0
             ;;
         -i|--pkglist|--read-pkgs-list)
@@ -106,11 +111,16 @@ _cr_modifyrepo()
             _cr_compress_type "" "$2"
             return 0
             ;;
+        -s|--checksum)
+            _cr_checksum_type "$2"
+            return 0
+            ;;
     esac
 
     if [[ $2 == -* ]] ; then
         COMPREPLY=( $( compgen -W '--version --help --mdtype --remove
-            --compress --compress-type' -- "$2" ) )
+            --compress --compress-type --checksum --unique-md-filenames
+            --simple-md-filenames' -- "$2" ) )
         return 0
     fi
 
