@@ -24,7 +24,7 @@ _cr_createrepo()
             COMPREPLY=( $( compgen -f -o plusdirs -X '!*.xml' -- "$2" ) )
             return 0
             ;;
-        -s|--sumtype)
+        -s|--checksum)
             COMPREPLY=( $( compgen -W 'md5 sha1 sha256 sha512' -- "$2" ) )
             return 0
             ;;
