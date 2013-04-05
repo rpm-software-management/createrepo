@@ -44,7 +44,6 @@ class RepoMetadata:
         """ Parses the repomd.xml file existing in the given repo directory. """
         self.repodir = os.path.abspath(repo)
         self.repomdxml = os.path.join(self.repodir, 'repomd.xml')
-        self.checksum_type = 'sha256'
         self.compress = False
         self.compress_type = _available_compression[-1] # best available
 
@@ -130,7 +129,10 @@ class RepoMetadata:
         print "Wrote:", destmd
 
         open_csum = checksum(self.checksum_type, metadata)
-        csum, destmd = checksum_and_rename(destmd, self.checksum_type)
+        if self.unique_md_filenames:
+            csum, destmd = checksum_and_rename(destmd, self.checksum_type)
+        else:
+            csum = checksum(self.checksum_type, destmd)
         base_destmd = os.path.basename(destmd)
 
         # Remove any stale metadata
@@ -179,6 +181,14 @@ def main(args):
                       help="compress the new repodata before adding it to the repo")
     parser.add_option("--compress-type", dest='compress_type', default='gz',
                       help="compression format to use")
+    parser.add_option("-s", "--checksum", default='sha256', dest='sumtype',
+        help="specify the checksum type to use (default: sha256)")
+    parser.add_option("--unique-md-filenames", dest="unique_md_filenames",
+        help="include the file's checksum in the filename, helps with proxies (default)",
+        default=True, action="store_true")
+    parser.add_option("--simple-md-filenames", dest="unique_md_filenames",
+        help="do not include the file's checksum in the filename",
+        action="store_false")
     parser.usage = "modifyrepo [options] [--remove] <input_metadata> <output repodata>"
     
     (opts, argsleft) = parser.parse_args(args)
@@ -194,6 +204,8 @@ def main(args):
         return 1
 
 
+    repomd.checksum_type = opts.sumtype
+    repomd.unique_md_filenames = opts.unique_md_filenames
     repomd.compress = opts.compress
     if opts.compress_type in _available_compression:
         repomd.compress_type = opts.compress_type
