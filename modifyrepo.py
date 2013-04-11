@@ -44,7 +44,6 @@ class RepoMetadata:
         """ Parses the repomd.xml file existing in the given repo directory. """
         self.repodir = os.path.abspath(repo)
         self.repomdxml = os.path.join(self.repodir, 'repomd.xml')
-        self.compress = False
         self.compress_type = _available_compression[-1] # best available
 
         if not os.path.exists(self.repomdxml):
@@ -113,7 +112,7 @@ class RepoMetadata:
 
         do_compress = False
         ## Compress the metadata and move it into the repodata
-        if self.compress or not mdname.split('.')[-1] in ('gz', 'bz2', 'xz'):
+        if self.compress and mdname.split('.')[-1] not in ('gz', 'bz2', 'xz'):
             do_compress = True
             mdname += '.' + self.compress_type
         mdtype = self._get_mdtype(mdname, mdtype)
@@ -177,8 +176,10 @@ def main(args):
                       help="specific datatype of the metadata, will be derived from the filename if not specified")
     parser.add_option("--remove", action="store_true",
                       help="remove specified file from repodata")
-    parser.add_option("--compress", action="store_true", default=False,
-                      help="compress the new repodata before adding it to the repo")
+    parser.add_option("--compress", action="store_true", default=True,
+                      help="compress the new repodata before adding it to the repo (default)")
+    parser.add_option("--no-compress", action="store_false", dest="compress",
+                      help="do not compress the new repodata before adding it to the repo")
     parser.add_option("--compress-type", dest='compress_type', default='gz',
                       help="compression format to use")
     parser.add_option("-s", "--checksum", default='sha256', dest='sumtype',
