@@ -119,8 +119,8 @@ _cr_modifyrepo()
 
     if [[ $2 == -* ]] ; then
         COMPREPLY=( $( compgen -W '--version --help --mdtype --remove
-            --compress --compress-type --checksum --unique-md-filenames
-            --simple-md-filenames' -- "$2" ) )
+            --compress --no-compress --compress-type --checksum
+            --unique-md-filenames --simple-md-filenames' -- "$2" ) )
         return 0
     fi
 
