@@ -208,8 +208,10 @@ def main(args):
     repomd.checksum_type = opts.sumtype
     repomd.unique_md_filenames = opts.unique_md_filenames
     repomd.compress = opts.compress
-    if opts.compress_type in _available_compression:
-        repomd.compress_type = opts.compress_type
+    if opts.compress_type not in _available_compression:
+        print "Compression %s not available: Please choose from: %s" % (opts.compress_type, ', '.join(_available_compression))
+        return 1
+    repomd.compress_type = opts.compress_type
 
     # remove
     if opts.remove:
