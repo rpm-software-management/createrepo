@@ -22,7 +22,7 @@
 import os
 import sys
 import re
-from optparse import OptionParser
+from optparse import OptionParser,SUPPRESS_HELP
 import time
 
 import createrepo
@@ -132,7 +132,7 @@ def parse_args(args, conf):
         help="number of workers to spawn to read rpms")
     parser.add_option("--xz", default=False,
         action="store_true",
-        help="use xz for repodata compression")
+        help=SUPPRESS_HELP)
     parser.add_option("--compress-type", default='compat', dest="compress_type",
         help="which compression type to use")
         
