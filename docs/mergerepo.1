@@ -4,7 +4,7 @@
 mergerepo \- Merge multiple repositories together
 
 .SH "SYNOPSIS"
-\fBmergerepo\fP --repo repo1 --repo repo2
+\fBmergerepo\fP \-\-repo repo1 \-\-repo repo2
 .PP
 
 .SH "DESCRIPTION"
@@ -13,29 +13,29 @@ into a single repository while referring to the remote location for all
 packages.
 
 .SH "OPTIONS"
-.IP "\fB\-r --repo\fP <url>"
+.IP "\fB\-r \-\-repo\fP <url>"
 Url to a repository to be merged.
 
-.IP "\fB\-o --outputdir <directory>\fP"
+.IP "\fB\-o \-\-outputdir <directory>\fP"
 Path where merged repository metadata should be written to. If not specified
 repository metadata will be written to `pwd`/merged_repo/.
 
-.IP "\fB\-d --database\fP"
+.IP "\fB\-d \-\-database\fP"
 Generate sqlite databases of the merged repository metadata.
 
-.IP "\fB\-a --archlist\fP"
+.IP "\fB\-a \-\-archlist\fP"
 Specify a comma-separated list of architectures to use. Defaults to ALL.
 
-.IP "\fB\--nogroups\fP"
+.IP "\fB\-\-nogroups\fP"
 Do not merge/include groups metadata in the repository.
 
-.IP "\fB\--noupdateinfo\fP"
+.IP "\fB\-\-noupdateinfo\fP"
 Do not merge/include updateinfo metadata in the repository.
 
 
 .SH "EXAMPLES"
 .PP
-$ \fBmergerepo\fP --repo=http://myurl.org/repo1 --repo=http://myurl.org/repo2 -d -o /tmp/mymergedrepo 
+$ \fBmergerepo\fP \-\-repo=http://myurl.org/repo1 \-\-repo=http://myurl.org/repo2 \-d \-o /tmp/mymergedrepo
 
 .PP 
 .SH "SEE ALSO"
