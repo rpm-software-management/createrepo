@@ -24,6 +24,7 @@ import sys
 import re
 from optparse import OptionParser,SUPPRESS_HELP
 import time
+import errno
 
 import createrepo
 from createrepo import MDError
@@ -241,6 +242,12 @@ class MDCallBack(object):
 
 def main(args):
     """createrepo from cli main flow"""
+    try:
+        os.getcwd()
+    except OSError, e:
+        if e.errno != errno.ENOENT: raise
+        print ('No getcwd() access in current directory, moving to /')
+        os.chdir("/")
     start_st = time.time()
     conf = createrepo.MetaDataConfig()
     conf = parse_args(args, conf)
