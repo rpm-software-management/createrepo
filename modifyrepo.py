@@ -27,6 +27,7 @@
 # modified by Daniel Mach 2011
 
 import os
+import re
 import sys
 from createrepo import __version__
 from createrepo.utils import checksum_and_rename, compressOpen, MDError
@@ -180,13 +181,13 @@ def main(args):
                       help="compress the new repodata before adding it to the repo (default)")
     parser.add_option("--no-compress", action="store_false", dest="compress",
                       help="do not compress the new repodata before adding it to the repo")
-    parser.add_option("--compress-type", dest='compress_type', default='gz',
+    parser.add_option("--compress-type", dest='compress_type',
                       help="compression format to use")
-    parser.add_option("-s", "--checksum", default='sha256', dest='sumtype',
-        help="specify the checksum type to use (default: sha256)")
+    parser.add_option("-s", "--checksum", dest='sumtype',
+        help="specify the checksum type to use")
     parser.add_option("--unique-md-filenames", dest="unique_md_filenames",
-        help="include the file's checksum in the filename, helps with proxies (default)",
-        default=True, action="store_true")
+        help="include the file's checksum in the filename, helps with proxies",
+        action="store_true")
     parser.add_option("--simple-md-filenames", dest="unique_md_filenames",
         help="do not include the file's checksum in the filename",
         action="store_false")
@@ -204,6 +205,25 @@ def main(args):
         print "Could not access repository: %s" % str(e)
         return 1
 
+    try:
+        # try to extract defaults from primary entry
+        md = repomd.repoobj.getData('primary')
+        sumtype = md.checksum[0]
+        name = os.path.basename(md.location[1])
+        unique_md_filenames = re.match(r'[0-9a-f]{32,}-', name) != None
+        compress_type = name.rsplit('.', 1)[1]
+    except RepoMDError:
+        sumtype = 'sha256'
+        unique_md_filenames = True
+        compress_type = 'gz'
+
+    # apply defaults
+    if opts.sumtype is None:
+        opts.sumtype = sumtype
+    if opts.unique_md_filenames is None:
+        opts.unique_md_filenames = unique_md_filenames
+    if opts.compress_type is None:
+        opts.compress_type = compress_type
 
     repomd.checksum_type = opts.sumtype
     repomd.unique_md_filenames = opts.unique_md_filenames
