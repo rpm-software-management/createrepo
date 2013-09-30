@@ -60,6 +60,9 @@ class RepoMetadata:
         """ Get mdtype from existing mdtype or from a mdname. """
         if mdtype:
             return mdtype
+        mdname = os.path.basename(mdname)
+        if re.match(r'[0-9a-f]{32,}-', mdname):
+            mdname = mdname.split('-', 1)[1]
         return mdname.split('.')[0]
 
     def _print_repodata(self, repodata):
@@ -82,7 +85,8 @@ class RepoMetadata:
     def _remove_repodata_file(self, repodata):
         """ Remove a file specified in repodata location """
         try:
-            os.remove(repodata.location[1])
+            fname = os.path.basename(repodata.location[1])
+            os.remove(os.path.join(self.repodir, fname))
         except OSError, ex:
             if ex.errno != 2:
                 # continue on a missing file
@@ -243,7 +247,7 @@ def main(args):
     # remove
     if opts.remove:
         try:
-            repomd.remove(metadata)
+            repomd.remove(metadata, mdtype=opts.mdtype)
         except MDError, ex:
             print "Could not remove metadata: %s" % (metadata, str(ex))
             return 1
