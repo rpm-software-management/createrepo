@@ -32,7 +32,7 @@ import sys
 from createrepo import __version__
 from createrepo.utils import checksum_and_rename, compressOpen, MDError
 from createrepo.utils import _available_compression
-from yum.misc import checksum
+from yum.misc import checksum, _available_checksums
 
 from yum.repoMDObject import RepoMD, RepoMDError, RepoData
 from xml.dom import minidom
@@ -230,6 +230,9 @@ def main(args):
     repomd.compress = opts.compress
     if opts.compress_type not in _available_compression:
         print "Compression %s not available: Please choose from: %s" % (opts.compress_type, ', '.join(_available_compression))
+        return 1
+    if opts.sumtype not in _available_checksums:
+        print "Checksum %s not available: Please choose from: %s" % (opts.sumtype, ', '.join(_available_checksums))
         return 1
     repomd.compress_type = opts.compress_type
 
