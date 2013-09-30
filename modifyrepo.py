@@ -32,7 +32,7 @@ import sys
 from createrepo import __version__
 from createrepo.utils import checksum_and_rename, compressOpen, MDError
 from createrepo.utils import _available_compression
-from yum.misc import checksum, _available_checksums
+from yum.misc import checksum, _available_checksums, AutoFileChecksums
 
 from yum.repoMDObject import RepoMD, RepoMDError, RepoData
 from xml.dom import minidom
@@ -105,27 +105,25 @@ class RepoMetadata:
             mdname = 'updateinfo.xml'
         elif isinstance(metadata, str):
             if os.path.exists(metadata):
-                if metadata.split('.')[-1] in ('gz', 'bz2', 'xz'):
+                mdname = os.path.basename(metadata)
+                if mdname.split('.')[-1] in ('gz', 'bz2', 'xz'):
+                    mdname = mdname.rsplit('.', 1)[0]
                     oldmd = compressOpen(metadata, mode='rb')
                 else:
                     oldmd = file(metadata, 'r')
+                oldmd = AutoFileChecksums(oldmd, [self.checksum_type])
                 md = oldmd.read()
                 oldmd.close()
-                mdname = os.path.basename(metadata)
             else:
                 raise MDError, '%s not found' % metadata
         else:
             raise MDError, 'invalid metadata type'
 
-        do_compress = False
         ## Compress the metadata and move it into the repodata
-        if self.compress and mdname.split('.')[-1] not in ('gz', 'bz2', 'xz'):
-            do_compress = True
-            mdname += '.' + self.compress_type
         mdtype = self._get_mdtype(mdname, mdtype)
-
         destmd = os.path.join(self.repodir, mdname)
-        if do_compress:
+        if self.compress:
+            destmd += '.' + self.compress_type
             newmd = compressOpen(destmd, mode='wb', compress_type=self.compress_type)
         else:
             newmd = open(destmd, 'wb')
@@ -134,7 +132,6 @@ class RepoMetadata:
         newmd.close()
         print "Wrote:", destmd
 
-        open_csum = checksum(self.checksum_type, metadata)
         if self.unique_md_filenames:
             csum, destmd = checksum_and_rename(destmd, self.checksum_type)
         else:
@@ -149,9 +146,9 @@ class RepoMetadata:
         new_rd.location = (None, 'repodata/' + base_destmd)
         new_rd.checksum = (self.checksum_type, csum)
         new_rd.size = str(os.stat(destmd).st_size)
-        if do_compress:
-            new_rd.openchecksum = (self.checksum_type, open_csum)
-            new_rd.opensize = str(os.stat(metadata).st_size)
+        if self.compress:
+            new_rd.openchecksum = oldmd.checksums.hexdigests().popitem()
+            new_rd.opensize = str(oldmd.checksums.length)
         new_rd.timestamp = str(int(os.stat(destmd).st_mtime))
         self.repoobj.repoData[new_rd.type] = new_rd
         self._print_repodata(new_rd)
