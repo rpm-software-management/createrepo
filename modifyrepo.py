@@ -69,6 +69,8 @@ class RepoMetadata:
         print "       checksum =", repodata.checksum[1]
         print "      timestamp =", repodata.timestamp
         print "  open-checksum =", repodata.openchecksum[1]
+        print "           size =", repodata.size
+        print "      open-size =", repodata.opensize
 
     def _write_repomd(self):
         """ Write the updated repomd.xml. """
@@ -142,8 +144,10 @@ class RepoMetadata:
         new_rd.type = mdtype
         new_rd.location = (None, 'repodata/' + base_destmd)
         new_rd.checksum = (self.checksum_type, csum)
-        new_rd.openchecksum = (self.checksum_type, open_csum)
         new_rd.size = str(os.stat(destmd).st_size)
+        if do_compress:
+            new_rd.openchecksum = (self.checksum_type, open_csum)
+            new_rd.opensize = str(os.stat(metadata).st_size)
         new_rd.timestamp = str(int(os.stat(destmd).st_mtime))
         self.repoobj.repoData[new_rd.type] = new_rd
         self._print_repodata(new_rd)
