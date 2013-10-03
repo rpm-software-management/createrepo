@@ -108,7 +108,6 @@ class MetaDataConfig(object):
         self.read_pkgs_list = None # filepath/name to write out list of pkgs
                                    # read in this run of createrepo
         self.collapse_glibc_requires = True
-        self.workers = 1 # number of workers to fork off to grab metadata from the pkgs
         self.worker_cmd = '/usr/share/createrepo/worker.py'
         #self.worker_cmd = './worker.py' # helpful when testing
         self.retain_old_md = 0
@@ -618,7 +617,7 @@ class MetaDataGenerator:
             # add up the total pkg counts and return that value
             self._worker_tmp_path = tempfile.mkdtemp() # setting this in the base object so we can clean it up later
             if self.conf.workers < 1:
-                self.conf.workers = num_cpus_online()
+                self.conf.workers = min(num_cpus_online(), len(pkgfiles))
             pkgfiles.sort()
             worker_chunks = split_list_into_equal_chunks(pkgfiles, self.conf.workers)
             worker_cmd_dict = {}
