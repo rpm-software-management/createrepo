@@ -246,8 +246,8 @@ def main(args):
         os.getcwd()
     except OSError, e:
         if e.errno != errno.ENOENT: raise
-        print ('No getcwd() access in current directory, moving to /')
-        os.chdir("/")
+        print ('No getcwd() access in current directory.')
+        sys.exit(1)
     start_st = time.time()
     conf = createrepo.MetaDataConfig()
     conf = parse_args(args, conf)
