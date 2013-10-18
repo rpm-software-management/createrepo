@@ -1,3 +1,7 @@
+2013-10-18  Zdenek Pavlas <zpavlas@redhat.org>
+
+	* mark as 0.10
+
 2011-01-26  Seth Vidal <skvidal@fedoraproject.org>
 
 	* createrepo.spec, createrepo/__init__.py: mark as 0.9.9
