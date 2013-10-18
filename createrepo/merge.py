@@ -70,9 +70,7 @@ class RepoMergeBase:
 
         for repo in repos:
             for pkg in repo.sack:
-                others = self.yumbase.pkgSack.searchNevra(name=pkg.name, arch=pkg.arch)
-                # NOTE the above is definitely going to catch other versions which may
-                # be an invalid comparison
+                others = self.yumbase.pkgSack.searchNevra(pkg.name, pkg.epoch, pkg.version, pkg.release, pkg.arch)
                 if len(others) > 1:
                     for thatpkg in others:
                         if pkg.repoid == thatpkg.repoid: continue
