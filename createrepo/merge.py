@@ -83,7 +83,8 @@ class RepoMergeBase:
         # in the repolist
         count = 0
         for r in self.repolist:
-            if r[0] == '/':
+            if ':' not in r:
+                r = os.path.abspath(r)
                 r = 'file://' + r # just fix the file repos, this is silly.
             count +=1
             rid = 'repo%s' % count
