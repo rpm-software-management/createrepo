@@ -108,6 +108,7 @@ class MetaDataConfig(object):
         self.read_pkgs_list = None # filepath/name to write out list of pkgs
                                    # read in this run of createrepo
         self.collapse_glibc_requires = True
+        self.workers = 1 # number of workers to fork off to grab metadata from the pkgs
         self.worker_cmd = '/usr/share/createrepo/worker.py'
         #self.worker_cmd = './worker.py' # helpful when testing
         self.retain_old_md = 0
