@@ -287,6 +287,12 @@ def main(args):
 
     except MDError, errormsg:
         errorprint(_('%s') % errormsg)
+        # cleanup
+        tmp = os.path.join(conf.outputdir, conf.tempdir)
+        if os.path.exists(tmp):
+            for name in os.listdir(tmp):
+                os.unlink(os.path.join(tmp, name))
+            os.rmdir(tmp)
         sys.exit(1)
 
 
