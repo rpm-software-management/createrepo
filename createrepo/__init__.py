@@ -399,7 +399,17 @@ class MetaDataGenerator:
             self._setup_old_metadata_lookup()
         # rpms we're going to be dealing with
         if self.conf.pkglist:
-            packages = self.conf.pkglist
+            packages = []
+            for pkg in self.conf.pkglist:
+                if '://' in pkg: # remote
+                    packages.append(pkg)
+                    continue
+                path = os.path.join(self.conf.basedir, self.conf.directory, pkg)
+                if os.access(path, os.R_OK):
+                    packages.append(pkg)
+                    continue
+                # not fatal, yet
+                self.callback.errorlog('Cannot read file: %s' % path)
         else:
             packages = self.getFileList(self.package_dir, '.rpm')
 
@@ -670,6 +680,8 @@ class MetaDataGenerator:
                         return # EOF, EOF
                     if stream is job.stdout:
                         if line.startswith('*** '):
+                            if line == '*** \n':
+                                return True
                             # get data, save to local files
                             for out, size in zip(files, line[4:].split()):
                                 out.write(stream.read(int(size)))
@@ -678,12 +690,14 @@ class MetaDataGenerator:
                     else:
                         self.callback.errorlog('Worker %s: %s' % (num, line.rstrip()))
 
+            err = 0
             for i, pkg in enumerate(pkgfiles):
                 # insert cached packages
                 save_keptpkgs(pkg)
 
                 # save output to local files
-                log_messages(i % self.conf.workers)
+                if log_messages(i % self.conf.workers):
+                    err += 1
 
             for (num, job) in worker_jobs.items():
                 # process remaining messages on stderr
@@ -697,6 +711,9 @@ class MetaDataGenerator:
             if not self.conf.quiet:
                 self.callback.log("Workers Finished")
                     
+            if err:
+                raise MDError, "Failed to process %d package(s)." % err
+
             for pkgfile in pkgfiles:
                 if self.conf.deltas:
                     try:
