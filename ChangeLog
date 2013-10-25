@@ -1,3 +1,11 @@
+2013-11-28  Zdenek Pavlas <zpavlas@redhat.com>
+
+	* Removing the workers=1 default breaks API users, put it back.
+	* Make sure the "packages" attribute is always correct.
+	* Clean up tempdir on failures.
+	* Close lock file before unlink()
+	* mark as 0.10.1
+
 2013-10-18  Zdenek Pavlas <zpavlas@redhat.org>
 
 	* mark as 0.10
