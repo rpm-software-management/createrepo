@@ -1,3 +1,9 @@
+2013-10-25  Zdenek Pavlas <zpavlas@redhat.com>
+
+	* Removing the workers=1 default breaks API users, put it back.
+	* Make sure the "packages" attribute is always correct.
+	* Clean up tempdir on failures.
+
 2013-10-18  Zdenek Pavlas <zpavlas@redhat.org>
 
 	* mark as 0.10

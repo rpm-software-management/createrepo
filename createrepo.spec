@@ -14,7 +14,7 @@ BuildRequires: bash-completion
 
 Summary: Creates a common metadata repository
 Name: createrepo
-Version: 0.10
+Version: 0.10.1
 Release: 1
 License: GPL
 Group: System Environment/Base
