@@ -230,6 +230,7 @@ class MetaDataGenerator:
                 except (OSError, IOError), e:
                     raise MDError, _("Could not create exclusive lock in %s and sqlite database generation enabled. Is this path on nfs? Is your lockd running?") % direc
                 else:
+                    f.close()
                     os.unlink(direc + '/locktest')
                 
         if self.conf.deltas:
