@@ -1061,7 +1061,7 @@ class MetaDataGenerator:
             data = RepoData()
             data.type = ftype
             data.checksum = (sumtype, csum)
-            data.timestamp = str(timestamp)
+            data.timestamp = str(int(timestamp))
             data.size = str(os.stat(os.path.join(repopath, rpm_file)).st_size)
             data.opensize = str(unsize)
             data.openchecksum = (sumtype, uncsum)
