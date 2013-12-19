@@ -199,14 +199,15 @@ def parse_args(args, conf):
 
     lst = []
     if conf.pkglist:
-        pfo = open(conf.pkglist, 'r')
-        for line in pfo.readlines():
-            line = line.strip()
-            if re.match('^\s*\#.*', line) or re.match('^\s*$', line):
-                continue
-            lst.append(line)
-        pfo.close()
-
+        try:
+            for line in open(conf.pkglist):
+                line = line.strip()
+                if re.match('^\s*\#.*', line) or re.match('^\s*$', line):
+                    continue
+                lst.append(line)
+        except EnvironmentError, e:
+            print >> sys.stderr, e
+            sys.exit(1)
     conf.pkglist = lst
 
     if conf.includepkg:
