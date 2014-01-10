@@ -22,10 +22,12 @@ _cr_createrepo()
             ;;
         --basedir|-c|--cachedir|--update-md-path|-o|--outputdir|\
         --oldpackagedirs)
+            local IFS=$'\n'
             COMPREPLY=( $( compgen -d -- "$2" ) )
             return 0
             ;;
         -g|--groupfile)
+            local IFS=$'\n'
             COMPREPLY=( $( compgen -f -o plusdirs -X '!*.xml' -- "$2" ) )
             return 0
             ;;
@@ -34,10 +36,12 @@ _cr_createrepo()
             return 0
             ;;
         -i|--pkglist|--read-pkgs-list)
+            local IFS=$'\n'
             COMPREPLY=( $( compgen -f -o plusdirs -- "$2" ) )
             return 0
             ;;
         -n|--includepkg)
+            local IFS=$'\n'
             COMPREPLY=( $( compgen -f -o plusdirs -X '!*.rpm' -- "$2" ) )
             return 0
             ;;
@@ -71,6 +75,7 @@ _cr_createrepo()
             --revision --deltas --oldpackagedirs --num-deltas --read-pkgs-list
             --max-delta-rpm-size --workers --compress-type' -- "$2" ) )
     else
+        local IFS=$'\n'
         COMPREPLY=( $( compgen -d -- "$2" ) )
     fi
 } &&
@@ -85,6 +90,7 @@ _cr_mergerepo()
             return 0
             ;;
         -r|--repo|-o|--outputdir)
+            local IFS=$'\n'
             COMPREPLY=( $( compgen -d -- "$2" ) )
             return 0
             ;;
@@ -132,6 +138,7 @@ _cr_modifyrepo()
         fi
     done
 
+    local IFS=$'\n'
     case $argnum in
         1)
             COMPREPLY=( $( compgen -f -o plusdirs -- "$2" ) )
