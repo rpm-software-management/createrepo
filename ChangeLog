@@ -1,3 +1,9 @@
+2014-01-16  Zdenek Pavlas <zpavlas@redhat.com>
+
+	* catch IOErrors when loading pkglist. BZ 1044997
+	* Add missing int() on mtime
+	* Fix file/dir completions for names containing spaces or tabs
+
 2013-11-28  Zdenek Pavlas <zpavlas@redhat.com>
 
 	* Removing the workers=1 default breaks API users, put it back.
