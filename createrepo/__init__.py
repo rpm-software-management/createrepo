@@ -366,6 +366,7 @@ class MetaDataGenerator:
             #build the paths
             opts = {
                 'verbose' : self.conf.verbose,
+                'sumtype' : self.conf.sumtype,
                 'pkgdir'  : os.path.normpath(self.package_dir)
             }
 

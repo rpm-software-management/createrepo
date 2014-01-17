@@ -67,6 +67,8 @@ class MetadataIndex(object):
             print _("Scanning old repo data")
         self._repo.sack.populate(self._repo, 'all', None, False)
         for thispo in self._repo.sack:
+            if thispo.checksum_type != self.opts['sumtype']:
+                continue
             mtime = thispo.filetime
             size = thispo.size
             relpath = thispo.relativepath
