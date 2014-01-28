@@ -1,3 +1,7 @@
+2014-01-28  Zdenek Pavlas <zpavlas@redhat.com>
+	* createrepo --update: ignore cached rpm when checksum_type
+	  has changed.
+
 2014-01-16  Zdenek Pavlas <zpavlas@redhat.com>
 
 	* catch IOErrors when loading pkglist. BZ 1044997
