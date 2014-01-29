@@ -400,7 +400,9 @@ class MetaDataGenerator:
         if self.conf.update:
             self._setup_old_metadata_lookup()
         # rpms we're going to be dealing with
-        if self.conf.pkglist:
+        if isinstance(self.conf.pkglist, MetaSack):
+            packages = self.conf.pkglist
+        elif self.conf.pkglist:
             packages = []
             for pkg in self.conf.pkglist:
                 if '://' in pkg: # remote
