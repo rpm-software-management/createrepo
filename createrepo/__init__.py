@@ -866,9 +866,11 @@ class MetaDataGenerator:
                         with active_work_size.get_lock():
                             # As long as we have the lock we may as well refresh our view of the actual size
                             active_work_size.value += package[1]
-                            #Uncomment if you want to convince yourself that this really does keep the size sane
-                            callback_wrap.log("Inbound package size %d" % (package[1]))
-                            callback_wrap.log("Current in-flight work size: %d" % (active_work_size.value))
+                            #Turn on profiling if you want to convince yourself that this really does keep the size sane
+                            if self.conf.profile:
+                                callback_wrap.log("Adding package (%s) of size %d to deltarpm work queue" % (package[0], package[1]))
+                                callback_wrap.log("Current TOTAL in-flight work size: %d" % (active_work_size.value))
+                                callback_wrap.log("Packages remaining to process: %d" % (len(packages)-len(consumed)-1))
                             work_size_snap = active_work_size.value
                             # Note that we block here if the queue is full
                             pending_packages = work_queue.qsize() + 1
