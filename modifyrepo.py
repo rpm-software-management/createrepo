@@ -147,7 +147,7 @@ class RepoMetadata:
         new_rd.checksum = (self.checksum_type, csum)
         new_rd.size = str(os.stat(destmd).st_size)
         if self.compress:
-            new_rd.openchecksum = oldmd.checksums.hexdigests().popitem()
+            new_rd.openchecksum = (self.checksum_type, oldmd.checksums.hexdigests().popitem()[1])
             new_rd.opensize = str(oldmd.checksums.length)
         new_rd.timestamp = str(int(os.stat(destmd).st_mtime))
         self.repoobj.repoData[new_rd.type] = new_rd
@@ -236,7 +236,7 @@ def main(args):
     if opts.compress_type not in _available_compression:
         print "Compression %s not available: Please choose from: %s" % (opts.compress_type, ', '.join(_available_compression))
         return 1
-    if opts.sumtype not in _available_checksums:
+    if opts.sumtype != 'sha' and opts.sumtype not in _available_checksums:
         print "Checksum %s not available: Please choose from: %s" % (opts.sumtype, ', '.join(_available_checksums))
         return 1
     repomd.compress_type = opts.compress_type
