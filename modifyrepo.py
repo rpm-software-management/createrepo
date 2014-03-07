@@ -37,6 +37,7 @@ from yum.misc import checksum, _available_checksums, AutoFileChecksums
 from yum.repoMDObject import RepoMD, RepoMDError, RepoData
 from xml.dom import minidom
 from optparse import OptionParser
+from cStringIO import StringIO
 
 
 class RepoMetadata:
@@ -106,6 +107,8 @@ class RepoMetadata:
         if isinstance(metadata, minidom.Document):
             md = metadata.toxml()
             mdname = 'updateinfo.xml'
+            oldmd = AutoFileChecksums(StringIO(md), [self.checksum_type])
+            oldmd.read()
         elif isinstance(metadata, str):
             if os.path.exists(metadata):
                 mdname = os.path.basename(metadata)
