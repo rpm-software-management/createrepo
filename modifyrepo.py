@@ -46,6 +46,9 @@ class RepoMetadata:
         self.repodir = os.path.abspath(repo)
         self.repomdxml = os.path.join(self.repodir, 'repomd.xml')
         self.compress_type = _available_compression[-1] # best available
+        self.compress = True
+        self.checksum_type = 'sha256'
+        self.unique_md_filenames = True
 
         if not os.path.exists(self.repomdxml):
             raise MDError, '%s not found' % self.repomdxml
