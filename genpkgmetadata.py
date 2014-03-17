@@ -128,9 +128,15 @@ def parse_args(args, conf):
     parser.add_option("--max-delta-rpm-size", default=100000000,
         dest='max_delta_rpm_size', type='int',
         help="max size of an rpm that to run deltarpm against (in bytes)")
+    parser.add_option("--max-concurrent-delta-rpm-size", default=100000000,
+        dest='max_concurrent_delta_rpm_size', type='int',
+        help="max total payload size of concurrent deltarpm runs (in bytes)")
     parser.add_option("--workers", default=def_workers,
         dest='workers', type='int',
         help="number of workers to spawn to read rpms")
+    parser.add_option("--delta-workers", default=1,
+        dest='delta_workers', type='int',
+        help="number of workers to spawn to create delta rpms")
     parser.add_option("--xz", default=False,
         action="store_true",
         help=SUPPRESS_HELP)
@@ -155,6 +161,12 @@ def parse_args(args, conf):
     if opts.workers >= 128:
         errorprint(_('Warning: More than 128 workers is a lot. Limiting.'))
         opts.workers = 128
+    if opts.delta_workers > opts.workers:
+        errorprint(_('Warning: Requested more delta workers than workers. This is insane. Limiting.'))
+        opts.delta_workers = opts.workers
+    if opts.max_concurrent_delta_rpm_size < opts.max_delta_rpm_size:
+        errorprint(_('Warning: max_concurrent_delta_rpm_size < max_delta_rpm_size - this will deadlock. Setting them to the same value.'))
+        opts.max_concurrent_delta_rpm_size = opts.max_delta_rpm_size
     if opts.sumtype == 'sha1':
         errorprint(_('Warning: It is more compatible to use sha instead of sha1'))
 
