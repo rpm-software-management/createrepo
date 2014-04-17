@@ -26,8 +26,8 @@ Requires: python >= 2.1, rpm-python, rpm >= 0:4.1.1, libxml2-python
 Requires: yum-metadata-parser, yum >= 3.2.29, python-deltarpm, pyliblzma
 
 %description
-This utility will generate a common metadata repository from a directory of
-rpm packages
+A set of utilities for generating a common metadata repository
+from a directory of rpm packages and maintaining it.
 
 %prep
 %setup -q
