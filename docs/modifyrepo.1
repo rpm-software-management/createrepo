@@ -10,6 +10,37 @@ modifyrepo \- Modify a repomd (xml-rpm-metadata) repository
 .SH "DESCRIPTION"
 \fBmodifyrepo\fP is a program that allows you to insert arbitrary metadata into a repomd (xml-based rpm metadata) repository.
 
+.SH "OPTIONS"
+.IP "\fB\-\-mdtype <mdtype>\fP"
+Specify datatype of the metadata. If not specified, datatype will be derived from the filename.
+
+.IP "\fB\-\-remove\fP"
+Remove specified file from repodata.
+
+.IP "\fB\-\-compress\fP"
+Compress the new repodata before adding it to the repo. This is used by default.
+
+.IP "\fB\-\-no-compress\fP"
+Do not compress the new repodata before adding it to the repo.
+
+.IP "\fB\-\-compress-type <compress-type>\fP"
+Specify which compression type to use: compat (default), xz (may not be available), gz, bz2.
+
+.IP "\fB\-s, \-\-checksum <sumtype>\fP"
+Specify the checksum type to use.
+
+.IP "\fB\-\-unique-md-filenames\fP"
+Include the file's checksum in the metadata filename, helps with HTTP caching (default).
+
+.IP "\fB\-\-simple-md-filenames\fP"
+Do not include the file's checksum in the metadata filename.
+
+.IP "\fB\-\-version\fP"
+Output version.
+
+.IP "\fB\-h \-\-help\fP"
+Show help menu.
+
 .SH "EXAMPLES"
 .PP
 $ \fBmodifyrepo\fP \-\-mdtype=newmd metadata.xml /repository/repodata

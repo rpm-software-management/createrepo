@@ -21,7 +21,7 @@ Path where merged repository metadata should be written to. If not specified
 repository metadata will be written to `pwd`/merged_repo/.
 
 .IP "\fB\-d \-\-database\fP"
-Generate sqlite databases of the merged repository metadata.
+Generate sqlite databases of the merged repository metadata. This is now the default.
 
 .IP "\fB\-a \-\-archlist\fP"
 Specify a comma-separated list of architectures to use. Defaults to ALL.
@@ -32,6 +32,17 @@ Do not merge/include groups metadata in the repository.
 .IP "\fB\-\-noupdateinfo\fP"
 Do not merge/include updateinfo metadata in the repository.
 
+.IP "\fB\-\-no-database\fP"
+Do not generate sqlite databases in the repository.
+
+.IP "\fB\-\-compress-type <compress-type>\fP"
+Specify which compression type to use: compat (default), xz (may not be available), gz, bz2.
+
+.IP "\fB\-\-version\fP"
+Output version.
+
+.IP "\fB\-h \-\-help\fP"
+Show help menu.
 
 .SH "EXAMPLES"
 .PP
