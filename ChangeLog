@@ -1,3 +1,13 @@
+2015-03-13  Valentina Mukhamedzhanova <vmukhame@redhat.com>
+	* Support API users that set pkglist=<package sack>. BZ 1058975
+	* Add options for parallel deltarpm creation.
+	* Tweak work queue action logging.
+	* Fix several AttributeErrors in RepoMetadata.add().
+	* Fix open_checksum and open_size calculation in RepoMetadata.add().
+	* Allow 'sha' checksum type for modifyrepo.
+	* Improve package description. BZ 1088886
+	* Add options to modifyrepo and mergerepo manpages. BZ 1093713
+
 2014-01-28  Zdenek Pavlas <zpavlas@redhat.com>
 	* createrepo --update: ignore cached rpm when checksum_type
 	  has changed.
