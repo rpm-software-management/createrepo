@@ -108,7 +108,16 @@ class MetadataIndex(object):
         """
         if relpath in self.pkg_tups_by_path:
             pkgtup = self.pkg_tups_by_path[relpath]
-            return self._repo.sack.searchPkgTuple(pkgtup)[0]
+            pos = self._repo.sack.searchPkgTuple(pkgtup)
+            if len(pos) == 1:
+                return pos[0]
+            elif len(pos) > 1:
+                # Multiple matches for this pkgtup so look at their relpath
+                if self.opts.get('verbose'):
+                    print _("Warning: Duplicate nevra detected for %s") % relpath
+                for po in pos:
+                    if po.relativepath == relpath:
+                        return po
         return None
 
     
