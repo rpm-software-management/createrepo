@@ -268,6 +268,7 @@ def main(args):
         print ('start time: %0.3f' % (time.time() - start_st))
 
     mid_st = time.time()
+    mdgen = None
     try:
         if conf.split:
             mdgen = createrepo.SplitMetaDataGenerator(config_obj=conf,
@@ -296,6 +297,10 @@ def main(args):
         mdgen.doFinalMove()
         if conf.profile:
             print ('fm time: %0.3f' % (time.time() - fm_st))
+        cl_st = time.time()
+        mdgen.cleanup()
+        if conf.profile:
+            print ('cl time: %0.3f' % (time.time() - cl_st))
 
 
     except MDError, errormsg:
@@ -308,6 +313,9 @@ def main(args):
             os.rmdir(tmp)
         sys.exit(1)
 
+    finally:
+        if mdgen:
+            mdgen.cleanup()
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

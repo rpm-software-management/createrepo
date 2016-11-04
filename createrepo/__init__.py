@@ -1475,19 +1475,19 @@ class MetaDataGenerator:
                     msg = _('Could not restore old non-metadata file: %s -> %s') % (oldfile, finalfile)
                     msg += _('Error was %s') % e
                     raise MDError, msg
-
-        self._cleanup_tmp_repodata_dir()
-        self._cleanup_update_tmp_dir()        
         self._write_out_read_pkgs_list()
 
 
+    def cleanup(self):
+        self._cleanup_tmp_repodata_dir()
+        self._cleanup_update_tmp_dir()
+
+
     def _cleanup_update_tmp_dir(self):
-        if not self.conf.update:
-            return
-        
-        shutil.rmtree(self.oldData._repo.basecachedir, ignore_errors=True)
-        shutil.rmtree(self.oldData._repo.base_persistdir, ignore_errors=True)
-        
+        if self.conf.update:
+            self.oldData.cleanup()
+
+
     def _write_out_read_pkgs_list(self):
         # write out the read_pkgs_list file with self.read_pkgs
         if self.conf.read_pkgs_list:

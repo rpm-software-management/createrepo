@@ -147,3 +147,4 @@ class RepoMergeBase:
         mdgen.doPkgMetadata()
         mdgen.doRepoMetadata()
         mdgen.doFinalMove()
+        mdgen.cleanup()

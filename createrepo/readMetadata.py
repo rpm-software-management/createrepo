@@ -16,6 +16,7 @@
 # Copyright 2006 Red Hat
 
 import os
+import shutil
 import stat
 from utils import errorprint, _
 
@@ -120,7 +121,11 @@ class MetadataIndex(object):
                         return po
         return None
 
-    
+    def cleanup(self):
+        """Delete temporary files in /var/tmp."""
+        shutil.rmtree(self._repo.basecachedir, ignore_errors=True)
+        shutil.rmtree(self._repo.base_persistdir, ignore_errors=True)
+
 
 if __name__ == "__main__":
     cwd = os.getcwd()
@@ -133,4 +138,5 @@ if __name__ == "__main__":
         print po.xml_dump_primary_metadata()
         print po.xml_dump_filelists_metadata()
         print po.xml_dump_other_metadata()
+    idx.cleanup()
 
