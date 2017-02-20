@@ -1484,7 +1484,7 @@ class MetaDataGenerator:
 
 
     def _cleanup_update_tmp_dir(self):
-        if self.conf.update:
+        if self.conf.update and hasattr(self, 'oldData'):
             self.oldData.cleanup()
 
 
