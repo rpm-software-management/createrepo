@@ -447,11 +447,10 @@ class MetaDataGenerator:
 
     def _setupPrimary(self):
         # setup the primary metadata file
-        # FIXME - make this be  conf.compress_type once y-m-p is fixed
-        fpz = self.conf.primaryfile + '.' + 'gz'
+        fpz = self.conf.primaryfile + '.' + self.conf.compress_type
         primaryfilepath = os.path.join(self.conf.outputdir, self.conf.tempdir,
                                        fpz)
-        fo = compressOpen(primaryfilepath, 'w', 'gz')
+        fo = compressOpen(primaryfilepath, 'w', self.conf.compress_type)
         fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         fo.write('<metadata xmlns="http://linux.duke.edu/metadata/common"' \
             ' xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="%s">' %
@@ -460,11 +459,10 @@ class MetaDataGenerator:
 
     def _setupFilelists(self):
         # setup the filelist file
-        # FIXME - make this be  conf.compress_type once y-m-p is fixed        
-        fpz = self.conf.filelistsfile + '.' + 'gz'
+        fpz = self.conf.filelistsfile + '.' + self.conf.compress_type
         filelistpath = os.path.join(self.conf.outputdir, self.conf.tempdir,
                                     fpz)
-        fo = compressOpen(filelistpath, 'w', 'gz')
+        fo = compressOpen(filelistpath, 'w', self.conf.compress_type)
         fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         fo.write('<filelists xmlns="http://linux.duke.edu/metadata/filelists"' \
                  ' packages="%s">' % self.pkgcount)
@@ -472,11 +470,10 @@ class MetaDataGenerator:
 
     def _setupOther(self):
         # setup the other file
-        # FIXME - make this be  conf.compress_type once y-m-p is fixed        
-        fpz = self.conf.otherfile + '.' + 'gz'
+        fpz = self.conf.otherfile + '.' + self.conf.compress_type
         otherfilepath = os.path.join(self.conf.outputdir, self.conf.tempdir,
                                      fpz)
-        fo = compressOpen(otherfilepath, 'w', 'gz')
+        fo = compressOpen(otherfilepath, 'w', self.conf.compress_type)
         fo.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         fo.write('<otherdata xmlns="http://linux.duke.edu/metadata/other"' \
                  ' packages="%s">' %
@@ -1217,21 +1214,34 @@ class MetaDataGenerator:
             rp = sqlitecachec.RepodataParserSqlite(repopath, repomd.repoid, None)
 
         for (rpm_file, ftype) in workfiles:
-            # when we fix y-m-p and non-gzipped xml files - then we can make this just add
-            # self.conf.compress_type
-            if ftype in ('other', 'filelists', 'primary'):
-                rpm_file = rpm_file + '.' + 'gz'
-            elif rpm_file.find('.') != -1 and rpm_file.split('.')[-1] not in _available_compression:
+            unpath = os.path.join(repopath, rpm_file)
+            if (ftype in ('other', 'filelists', 'primary')
+                    or (rpm_file.find('.') != -1 and rpm_file.split('.')[-1]
+                        not in _available_compression)):
                 rpm_file = rpm_file + '.' + self.conf.compress_type
             complete_path = os.path.join(repopath, rpm_file)
             zfo = compressOpen(complete_path)
+            dfo = None
+            if (self.conf.compress_type == 'bz2' and self.conf.database and
+                    ftype in ('other', 'filelists', 'primary')):
+                # yum-metadata-parser doesn't understand bz2 so let's write the
+                # decompressed data to a file and pass that via gen_func
+                # instead of the compressed version
+                dfo = open(unpath, 'w')
             # This is misc.checksum() done locally so we can get the size too.
             data = misc.Checksums([sumtype])
-            while data.read(zfo, 2**16):
-                pass
+            while True:
+                chunk = data.read(zfo, 2**16)
+                if not chunk:
+                    break
+                if dfo is not None:
+                    dfo.write(chunk)
             uncsum = data.hexdigest(sumtype)
             unsize = len(data)
             zfo.close()
+            if dfo is not None:
+                dfo.close()
+
             csum = misc.checksum(sumtype, complete_path)
             timestamp = os.stat(complete_path)[8]
 
@@ -1244,21 +1254,29 @@ class MetaDataGenerator:
                         self.callback.log("Starting %s db creation: %s" % (ftype,
                                                                   time.ctime()))
 
+                gen_func = None
                 if ftype == 'primary':
-                    #FIXME - in theory some sort of try/except  here
-                    # TypeError appears to be raised, sometimes :(
-                    rp.getPrimary(complete_path, csum)
-
+                    gen_func = rp.getPrimary
                 elif ftype == 'filelists':
-                    #FIXME and here
-                    rp.getFilelists(complete_path, csum)
-
+                    gen_func = rp.getFilelists
                 elif ftype == 'other':
-                    #FIXME and here
-                    rp.getOtherdata(complete_path, csum)
+                    gen_func = rp.getOtherdata
+                if gen_func is not None:
+                    if dfo is None:
+                        #FIXME - in theory some sort of try/except  here
+                        # TypeError appears to be raised, sometimes :(
+                        gen_func(complete_path, csum)
+                    else:
+                        #FIXME and here
+                        gen_func(unpath, uncsum)
+                        os.unlink(unpath)
 
                 if ftype in ['primary', 'filelists', 'other']:
-                    tmp_result_name = '%s.xml.gz.sqlite' % ftype
+                    if dfo is None:
+                        compress_ext = '.%s' % self.conf.compress_type
+                    else:
+                        compress_ext = ''
+                    tmp_result_name = '%s.xml%s.sqlite' % (ftype, compress_ext)
                     tmp_result_path = os.path.join(repopath, tmp_result_name)
                     good_name = '%s.sqlite' % ftype
                     resultpath = os.path.join(repopath, good_name)
@@ -1323,13 +1341,8 @@ class MetaDataGenerator:
             data.openchecksum = (sumtype, uncsum)
 
             if self.conf.unique_md_filenames:
-                if ftype in ('primary', 'filelists', 'other'):
-                    compress = 'gz'
-                else:
-                    compress = self.conf.compress_type
-                
                 main_name = '.'.join(rpm_file.split('.')[:-1])
-                res_file = '%s-%s.%s' % (csum, main_name, compress)
+                res_file = '%s-%s.%s' % (csum, main_name, self.conf.compress_type)
                 orig_file = os.path.join(repopath, rpm_file)
                 dest_file = os.path.join(repopath, res_file)
                 os.rename(orig_file, dest_file)
