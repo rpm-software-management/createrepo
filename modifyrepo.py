@@ -125,6 +125,9 @@ class RepoMetadata:
         else:
             raise MDError, 'invalid metadata type'
 
+        if not md and self.compress_type == 'xz':
+            raise MDError, 'LZMA does not support compressing empty files'
+
         ## Compress the metadata and move it into the repodata
         mdtype = self._get_mdtype(mdname, mdtype)
         destmd = os.path.join(self.repodir, mdname)
