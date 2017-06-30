@@ -41,7 +41,7 @@ def main(args):
     globalopts = {}
     
     for strs in opts.pkgoptions:
-        k,v = strs.split('=')
+        k,v = strs.split('=', 1)
         if v in ['True', 'true', 'yes', '1', 1]:
             v = True
         elif v in ['False', 'false', 'no', '0', 0]:
@@ -51,7 +51,7 @@ def main(args):
         external_data[k] = v
 
     for strs in opts.globalopts:
-        k,v = strs.split('=')
+        k,v = strs.split('=', 1)
         if v in ['True', 'true', 'yes', '1', 1]:
             v = True
         elif v in ['False', 'false', 'no', '0', 0]:
